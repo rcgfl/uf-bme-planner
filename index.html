@@ -313,9 +313,9 @@ input[type="checkbox"]{cursor:pointer}
     <strong style="font-size:13px">Pathways</strong>
     <div class="small" style="color:#556;max-width:900px;margin-top:2px">Curated, departmental focus areas — a themed alternative to picking electives independently. Courses you check here count as one of your 4 BME electives. Some courses build on each other across semesters — check the prerequisite icon once placed.</div>
     <div class="elective-chooser-row" style="margin-top:6px">
-      <label>Add a theme to track
-        <select id="themeAddSelect"><option value="">— select a theme —</option></select>
-      </label>
+      <span>Add a theme to track
+        <select id="themeAddSelect" aria-label="Add a theme to track"><option value="">— select a theme —</option></select>
+      </span>
       <button onclick="addActiveTheme()">Track this theme</button>
     </div>
     <div id="themeActiveCards" style="margin-top:8px"></div>
@@ -503,7 +503,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.6';
+const PLANNER_VERSION = '2.9.7';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2190,6 +2190,31 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //            accessible pattern WAVE itself recommends in place of a true
 //            jump menu, so this reads as an automated-tool false
 //            positive rather than a real barrier. Left as-is.
+
+// 2.9.7 — Accessibility: post-2.9.6 WAVE rescan confirmed the device-
+//          dependent handlers remaining are exactly the term-card
+//          <section onclick="setSelectedTerm(...)"> case flagged (and
+//          deliberately left alone) in 2.9.6 — confirms that diagnosis
+//          was right, no action needed.
+//          A second, different orphaned-label instance surfaced:
+//          themeAddSelect's "Add a theme to track" label. Structurally
+//          this looked identical to other working label+input pairs
+//          elsewhere on the page (Course code, Title, Credit hours —
+//          none of which were flagged) — checked whether
+//          renderThemePanel() was rewriting the <select> itself out from
+//          under its label at runtime (which would break the
+//          association even though the static source looks fine), but
+//          confirmed it only does addSel.innerHTML=... on the select's
+//          own children, never replaces the select node itself, so
+//          that's not the cause. Couldn't pin down WAVE's exact trigger
+//          with confidence given the structural similarity to unflagged
+//          labels elsewhere — rather than guess at WAVE's heuristic,
+//          applied the same defensive fix used throughout this session:
+//          stopped relying on implicit label-wraps-control nesting,
+//          added aria-label="Add a theme to track" directly on the
+//          select, changed the wrapping <label> to a plain <span> (no
+//          CSS targets `label` in this container specifically, just the
+//          unrelated .controls-bar one, so no visual change expected).
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
