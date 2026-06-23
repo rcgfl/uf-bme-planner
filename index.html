@@ -40,7 +40,7 @@ select,input[type="number"],input[type="text"]{font-size:13px;padding:3px 7px;bo
 input[type="checkbox"]{cursor:pointer}
 .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .small{font-size:12px;color:#556}
-.xsmall{font-size:11px;color:#778}
+.xsmall{font-size:11px;color:#666678}
 
 /* ── Tags / Badges ── */
 .tag{display:inline-block;border:1px solid #b8c0cc;border-radius:4px;padding:0 5px;font-size:11px;color:#334;background:#f6f7f9;vertical-align:middle}
@@ -59,7 +59,7 @@ input[type="checkbox"]{cursor:pointer}
 .term-header h3{margin:0;font-size:14px;font-weight:700;flex:1}
 .term-actions{display:flex;gap:3px;align-items:center}
 .term-actions button{width:22px;height:22px;min-width:22px;padding:0;margin:0;line-height:20px;text-align:center;border-radius:4px;font-size:12px;font-weight:700}
-.term-blocked-msg{font-weight:700;color:#778;margin:4px 0}
+.term-blocked-msg{font-weight:700;color:#666678;margin:4px 0}
 
 /* ── Course rows ── */
 .course-row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:4px 0;border-bottom:1px solid #f0f2f5;font-size:13px}
@@ -91,7 +91,7 @@ input[type="checkbox"]{cursor:pointer}
 .credit-su-aid{color:#0d47a1}
 .credit-su-full{color:#1f6f3d;font-weight:700}
 .credit-su-heavy{color:#b00020;font-weight:700}
-.credit-note{font-size:11px;color:#778;margin-top:1px}
+.credit-note{font-size:11px;color:#666678;margin-top:1px}
 
 /* ── Pin / generated badges ── */
 .pin-badge{display:inline-block;margin-left:4px;border:1px solid #9aa4b2;border-radius:4px;padding:0 4px;font-size:10px;color:#334;background:#f6f7f9;vertical-align:middle}
@@ -503,7 +503,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.3';
+const PLANNER_VERSION = '2.9.4';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2109,6 +2109,19 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          in the file before fixing only this one instance — none found,
 //          so this was a single one-off color choice, not a repeated
 //          class like pin-btn was.
+
+// 2.9.4 — Cosmetic: down to 12 contrast errors after 2.9.3. Next one
+//          flagged was .credit-note's text color #778, measuring 4.39:1
+//          (11px, normal text, needs 4.5) — same family of issue as the
+//          lock icon, a too-light gray-blue, not an opacity problem.
+//          Checked for other uses of #778 before fixing just one spot —
+//          found it shared across 5 places: .xsmall, .term-blocked-msg,
+//          .credit-note, and two inline milestone/theme-notes colors.
+//          Replaced all 5 at once with #666678 (5.62:1, comfortable
+//          margin above 4.5). Since this color was reused this widely,
+//          expect this single fix to clear more than one of the
+//          remaining 12 WAVE flags — re-running WAVE next will confirm
+//          how many.
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
@@ -4590,7 +4603,7 @@ function renderCriticalTracking() {
     const term=s.key?termLabelFromKey(s.key):`Semester ${s.semester}`;
     const cls=s.ok?'ct-ok':(s.key?'ct-bad':'ct-warn');
     const missing=s.ok?'Milestone met.':`Missing by this milestone: ${s.missing.slice(0,6).join(', ')}${s.missing.length>6?' …':''}`;
-    return `<div class="ct-milestone"><strong>Semester ${s.semester} — ${term}</strong> <span class="ct-status ${cls}">${s.count}/${s.cumulative}</span><div class="small" style="margin-top:3px">${s.note}</div><div class="small">${missing}</div><div class="small" style="margin-top:3px;color:#778">C min within 2 attempts; 2.8 lower-div critical-tracking GPA; 2.0 UF GPA.</div></div>`;
+    return `<div class="ct-milestone"><strong>Semester ${s.semester} — ${term}</strong> <span class="ct-status ${cls}">${s.count}/${s.cumulative}</span><div class="small" style="margin-top:3px">${s.note}</div><div class="small">${missing}</div><div class="small" style="margin-top:3px;color:#666678">C min within 2 attempts; 2.8 lower-div critical-tracking GPA; 2.0 UF GPA.</div></div>`;
   }).join('');
 }
 
@@ -5055,7 +5068,7 @@ function renderThemePanel() {
     const poolGroup={type:'chooseCreditsUpTo', maxCredits:theme.electiveSpaceCap||12, label:'Theme elective pool', courses:theme.electiveCourses||[]};
     const poolStatus=pathwayGroupStatus(poolGroup);
     const poolHtml=renderGroupRowsHtml([{group:poolGroup,status:poolStatus}], theme.title);
-    const notes=(theme.notes||[]).map(n=>`<div class="small" style="color:#778">${n}</div>`).join('');
+    const notes=(theme.notes||[]).map(n=>`<div class="small" style="color:#666678">${n}</div>`).join('');
     const validatedEntries=(theme.minorsAndCertificates||[]).filter(m=>m.status==='validated'&&m.pathwayId&&CATALOG_PATHWAYS[m.pathwayId]);
     const pendingEntries=(theme.minorsAndCertificates||[]).filter(m=>!(m.status==='validated'&&m.pathwayId&&CATALOG_PATHWAYS[m.pathwayId]));
     const validatedHtml=validatedEntries.map(m=>{
