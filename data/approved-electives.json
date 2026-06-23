@@ -2,14 +2,13 @@
   "schemaVersion": "1.0",
   "source": "UF BME Approved Elective List",
   "lastUpdated": "2026-06",
-  "description": "UF BME approved technical electives. Offering data is advisory only \u2014 verify with department before registering.",
+  "description": "UF BME approved technical electives. Offering data is advisory only — verify with department before registering.",
   "courses": {
     "ABE3000C": {
       "id": "ABE3000C",
       "title": "Applications in Biological Engineering",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -31,7 +30,6 @@
       "title": "Fundamentals and Applications of Biosensors",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -63,8 +61,7 @@
       "title": "Quantification of Biological Processes",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "MAC2312"
@@ -87,7 +84,6 @@
       "title": "Recent Developments and Applications in Biosensors",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -109,8 +105,7 @@
       "title": "Advanced Agricultural Process Engineering",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [],
       "coreq": [],
@@ -182,8 +177,7 @@
       "credits": 4,
       "offered": [
         "F",
-        "S",
-        "Su"
+        "S"
       ],
       "prereq": [],
       "coreq": [],
@@ -266,7 +260,6 @@
       "title": "Introduction to Biomolecular Engineering",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -286,10 +279,7 @@
     "BME3219": {
       "title": "Engineering Analysis of Musculoskeletal Biomechanics",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "COP2271",
         "EGM2511"
@@ -343,7 +333,8 @@
       "credits": 0,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -363,10 +354,7 @@
       "id": "BME4160",
       "title": "Magnetic Biomaterials",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "PHY2048",
         "CHM2046"
@@ -397,10 +385,7 @@
       "id": "BME4220",
       "title": "Biomolecular Cell Mechanics",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "BME3060"
       ],
@@ -421,10 +406,7 @@
       "id": "BME4321",
       "title": "Dynamics of Cellular Processes",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "BME4311"
       ],
@@ -450,7 +432,6 @@
       "title": "Neural Engineering",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -499,10 +480,7 @@
       "id": "BME4648",
       "title": "Biomaterials for Drug Delivery",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "BME3060",
         "BME4632"
@@ -524,10 +502,7 @@
       "id": "BME4760",
       "title": "Biomedical Data Science",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "BME3053C",
         "COP2271",
@@ -583,7 +558,6 @@
       "title": "Statistical Methods for Biomedical Engineering",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -604,10 +578,7 @@
       "id": "BME5704",
       "title": "Advanced Computational Methods for Biomedical Engineers",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [],
       "coreq": [],
       "approvedBmeElective": true,
@@ -626,10 +597,7 @@
       "id": "BME5743",
       "title": "Applied Data Mathematics",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "COP2271",
         "BME3053C"
@@ -685,10 +653,7 @@
       "id": "BME6164",
       "title": "Magnetic Biomaterials",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [],
       "coreq": [],
       "approvedBmeElective": true,
@@ -707,10 +672,7 @@
       "id": "BME6324",
       "title": "Stem Cell Engineering",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [],
       "coreq": [],
       "approvedBmeElective": true,
@@ -730,8 +692,7 @@
       "title": "Cell and Tissue Engineering",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "GMS6421",
@@ -761,7 +722,6 @@
       "title": "Neural Engineering",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -783,7 +743,6 @@
       "title": "Biomedical Multivariate Signal Processing",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -804,10 +763,7 @@
       "id": "BME6533",
       "title": "Radiologic Anatomy",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "BME6590"
       ],
@@ -834,8 +790,7 @@
       "title": "Radiological Physics, Measurements and Dosimetry",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [],
       "coreq": [],
@@ -856,8 +811,7 @@
       "title": "Mathematical Modeling of Biological and Physiological Systems",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [],
       "coreq": [],
@@ -870,15 +824,14 @@
       "equivalencies": {},
       "instructorPermissionMaySubstitute": false,
       "displayId": "BME6705",
-      "rawPrereq": "Credits: 3; Prereq: calculus, linear algebra, and passing knowledge of di\ufb00erential equations.",
+      "rawPrereq": "Credits: 3; Prereq: calculus, linear algebra, and passing knowledge of diﬀerential equations.",
       "notes": ""
     },
     "BSC4434C": {
       "title": "Introduction to Bioinformatics",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "MCB3020"
@@ -909,8 +862,7 @@
       "title": "Applications and Technologies of Synthetic Biology",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "BSC2010"
@@ -932,8 +884,7 @@
       "title": "Introduction to Data Science",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [],
       "coreq": [],
@@ -992,8 +943,7 @@
       "title": "Introduction to Bioinformatic Algorithms",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "COT3100",
@@ -1238,7 +1188,8 @@
       "credits": 4,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [
         "CHM2046",
@@ -1262,8 +1213,7 @@
       "title": "Bioprocess Engineering and Bioseparations",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "ECH3023"
@@ -1286,8 +1236,7 @@
       "title": "Pharmaceutical Bioengineering",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "ECH3023"
@@ -1332,10 +1281,7 @@
       "id": "EEE4260C",
       "title": "Bioelectrical Systems",
       "credits": 4,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "EEL3008",
         "EEL3112"
@@ -1384,7 +1330,6 @@
       "title": "Neural Signals, Systems and Technology",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -1406,8 +1351,7 @@
       "title": "Foundations of Digital Signal Processing",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EEL4750"
@@ -1429,10 +1373,7 @@
       "id": "EEE6561",
       "title": "Fundamentals of Biometric Identification",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "EEE6512"
       ],
@@ -1489,7 +1430,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -1510,8 +1452,7 @@
       "title": "Foundations of Digital Signal Processing",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EEL3135"
@@ -1560,7 +1501,6 @@
       "title": "Spectral Estimation",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -1585,8 +1525,7 @@
       "title": "Pattern Recognition and Intelligent Systems",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [],
       "coreq": [],
@@ -1630,7 +1569,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [
         "MAC2313",
@@ -1708,10 +1648,7 @@
       "id": "EGM4313",
       "title": "Intermediate Engineering Analysis",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "MAP2302",
         "EGM3344"
@@ -1734,8 +1671,7 @@
       "title": "Modeling and Control of Biomolecular Machines",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "MAP2302"
@@ -1758,7 +1694,6 @@
       "title": "Biodynamics",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -1788,8 +1723,7 @@
       "title": "Bio-Solid Mechanics",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EGM3520"
@@ -1811,10 +1745,7 @@
       "id": "EGM4853",
       "title": "Bio-Fluid Mechanics and Bio-Heat Transfer",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "EGN3353C"
       ],
@@ -1836,7 +1767,6 @@
       "title": "Advanced Finite Element Methods",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -1860,7 +1790,6 @@
       "title": "Continuum Methods",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -1883,10 +1812,7 @@
       "id": "EGM6671",
       "title": "Inelastic Materials",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "EGM6611"
       ],
@@ -1908,8 +1834,7 @@
       "title": "Fluid Mechanics I",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EGN3353C"
@@ -1932,7 +1857,6 @@
       "title": "Fluid Mechanics II",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -1955,10 +1879,7 @@
       "id": "EGM6855",
       "title": "Bio-Fluid Mechanics and Bio-Heat Transfer",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [],
       "coreq": [],
       "approvedBmeElective": true,
@@ -2220,7 +2141,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -2242,7 +2164,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -2314,7 +2237,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [
         "MAC2312"
@@ -2336,7 +2260,6 @@
       "title": "Workplace Ergonomics and Biomechanics",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -2364,7 +2287,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -2385,7 +2309,6 @@
       "title": "Fundamental Principles of Materials",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -2409,8 +2332,7 @@
       "title": "Introduction to Inorganic Materials",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EMA3010"
@@ -2433,8 +2355,7 @@
       "title": "Introduction to Organic Materials",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EMA3010"
@@ -2463,7 +2384,6 @@
       "title": "Electronic Properties of Materials",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -2487,7 +2407,6 @@
       "title": "Analysis of the Structure of Materials",
       "credits": 4,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -2559,7 +2478,6 @@
       "title": "Biopolymers: Manufacture, Stability and Biocompatibility",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -2583,8 +2501,7 @@
       "title": "Physical Properties of Polymers",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EMA3066",
@@ -2608,8 +2525,7 @@
       "title": "Science of Biomaterials I",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "CHM2045"
@@ -2636,7 +2552,6 @@
       "title": "Polymeric Biomaterials",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -2668,7 +2583,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -2692,7 +2608,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -2737,8 +2654,7 @@
       "title": " Microfluidics and BioMEMS",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "EGN3353C"
@@ -2788,10 +2704,7 @@
       "id": "EML5595",
       "title": "Mechanics of the Human Locomotor Systems",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "EGM3401",
         "EGM3520"
@@ -2814,7 +2727,6 @@
       "title": "Orthopedic Biomechanics",
       "credits": 3,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [],
@@ -2836,8 +2748,7 @@
       "title": "Radiation Interactions and Sources 1",
       "credits": 4,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [],
       "coreq": [],
@@ -2858,8 +2769,7 @@
       "title": "Fundamental Aspects of Radiation Shielding",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "ENU4605"
@@ -2882,7 +2792,6 @@
       "title": "Applied Radiation Protection",
       "credits": 2,
       "offered": [
-        "F",
         "S"
       ],
       "prereq": [
@@ -2906,10 +2815,7 @@
       "id": "ENU5626",
       "title": "Radiation Biology",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [],
       "coreq": [],
       "approvedBmeElective": true,
@@ -2928,10 +2834,7 @@
       "id": "ENU6659",
       "title": "Nuclear Medicine Instrumentation and Procedure",
       "credits": 3,
-      "offered": [
-        "F",
-        "S"
-      ],
+      "offered": [],
       "prereq": [
         "ENU5615C"
       ],
@@ -3039,7 +2942,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [],
       "coreq": [],
@@ -3105,9 +3009,7 @@
       "title": "Medical Terminology",
       "credits": 3,
       "offered": [
-        "F",
-        "S",
-        "Su"
+        "F"
       ],
       "prereq": [],
       "coreq": [],
@@ -3127,8 +3029,7 @@
       "title": "Modeling in Mathematical Biology",
       "credits": 3,
       "offered": [
-        "F",
-        "S"
+        "F"
       ],
       "prereq": [
         "MAP2302",
@@ -3247,7 +3148,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [
         "BSC2010",
@@ -3279,7 +3181,8 @@
       "credits": 2,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [
         "MCB3023"
@@ -3490,7 +3393,8 @@
       "credits": 3,
       "offered": [
         "F",
-        "S"
+        "S",
+        "Su"
       ],
       "prereq": [
         "STA2023"
