@@ -449,17 +449,24 @@ async function loadCatalog() {
   let coreData, elecData, pwData, pfData;
   const failures = [];
 
-  try { coreData = await fetchJson(DATA_URLS.core); }
-  catch(e) { coreData = { courses: FALLBACK_CORE }; failures.push('core courses'); }
+  const [coreRes, elecRes, pwRes, pfRes] = await Promise.allSettled([
+    fetchJson(DATA_URLS.core),
+    fetchJson(DATA_URLS.electives),
+    fetchJson(DATA_URLS.pathways),
+    fetchJson(DATA_URLS.prefixes)
+  ]);
 
-  try { elecData = await fetchJson(DATA_URLS.electives); }
-  catch(e) { elecData = { courses: FALLBACK_ELECTIVES }; failures.push('approved electives'); }
+  if (coreRes.status === 'fulfilled') coreData = coreRes.value;
+  else { coreData = { courses: FALLBACK_CORE }; failures.push('core courses'); }
 
-  try { pwData = await fetchJson(DATA_URLS.pathways); }
-  catch(e) { pwData = { pathways: FALLBACK_PW_PATHWAYS, themes: FALLBACK_PW_THEMES }; failures.push('pathways'); }
+  if (elecRes.status === 'fulfilled') elecData = elecRes.value;
+  else { elecData = { courses: FALLBACK_ELECTIVES }; failures.push('approved electives'); }
 
-  try { pfData = await fetchJson(DATA_URLS.prefixes); }
-  catch(e) { pfData = { prefixes: FALLBACK_COURSE_PREFIXES }; failures.push('course prefixes'); }
+  if (pwRes.status === 'fulfilled') pwData = pwRes.value;
+  else { pwData = { pathways: FALLBACK_PW_PATHWAYS, themes: FALLBACK_PW_THEMES }; failures.push('pathways'); }
+
+  if (pfRes.status === 'fulfilled') pfData = pfRes.value;
+  else { pfData = { prefixes: FALLBACK_COURSE_PREFIXES }; failures.push('course prefixes'); }
 
   // Merge: core first (authoritative), then electives, then pathway provisional
   const merged = {};
@@ -503,7 +510,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.7';
+const PLANNER_VERSION = '2.9.8';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2215,6 +2222,35 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          select, changed the wrapping <label> to a plain <span> (no
 //          CSS targets `label` in this container specifically, just the
 //          unrelated .controls-bar one, so no visual change expected).
+
+// 2.9.8 — Performance: mobile Lighthouse run came back 68/100, but the
+//          report itself flagged the run as distorted by Chrome
+//          extensions (Capital One Shopping, 1Password, Adobe Acrobat,
+//          a translation extension, etc. accounted for the overwhelming
+//          majority of "unused JavaScript" and main-thread time —
+//          extension code, not this site's). Re-running in Incognito
+//          (extensions off) needed for an accurate number.
+//          One real, fixable issue WAS visible underneath that noise
+//          though: the Network Dependency Tree showed the four /data
+//          JSON fetches completing at steadily climbing times (675ms,
+//          786ms, 1,133ms, 1,221ms) — the signature of sequential
+//          requests, not parallel ones. Confirmed in loadCatalog(): each
+//          of the four fetchJson() calls was awaited one at a time
+//          (await core, THEN await electives, THEN await pathways, THEN
+//          await prefixes) rather than firing together. Switched to
+//          Promise.allSettled() so all four fire concurrently; the
+//          per-source fallback logic (each independently falls back to
+//          its own FALLBACK_* constant on failure) is unchanged — same
+//          outcome either way, just no longer artificially serialized.
+//          Should meaningfully cut the network-chain contribution to
+//          LCP/FCP, roughly from "sum of all four" down to "the single
+//          slowest one." Did not touch the separate ~1,476ms of script
+//          eval/parse time attributed to the site itself in the
+//          report — that's the cost of parsing the embedded fallback
+//          data baked into this single-file build, a known, deliberate
+//          tradeoff (offline resilience) flagged back when the
+//          fallback-sync architecture was set up, not something to
+//          casually trade away here.
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
