@@ -9,6 +9,7 @@
 *,*::before,*::after{box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;margin:0;background:#f0f2f5;color:#102033;font-size:14px}
 a{color:#0021A5}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* ── Header ── */
 header{background:#0021A5;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -202,6 +203,7 @@ input[type="checkbox"]{cursor:pointer}
 </style>
 </head>
 <body>
+<div id="srAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <header>
   <div class="uf-logo">UF</div>
@@ -268,7 +270,7 @@ input[type="checkbox"]{cursor:pointer}
 <div class="panel" id="electivePanel">
   <div class="flex" style="align-items:baseline;flex-wrap:wrap;gap:10px">
     <h2 style="margin:0">BME Electives</h2>
-    <span id="electiveStatus" class="small"></span>
+    <span id="electiveStatus" class="small">0/9 approved cr selected (min) + 0/3 free cr (max 1 course off-list) = 0/12 cr; 4 slot(s) remaining</span>
   </div>
   <div>
     <strong style="font-size:13px">Chosen electives</strong>
@@ -394,6 +396,28 @@ input[type="checkbox"]{cursor:pointer}
 'use strict';
 
 /* ═══════════════════════════════════════════════════════════════════
+   SECTION 0 — ACCESSIBILITY: STATUS MESSAGE ANNOUNCER (WCAG 4.1.3)
+   Most of this app's UI updates happen via innerHTML rewrites triggered
+   by user actions (add/remove a course, pin, block a semester, etc.).
+   Sighted users see the change immediately; screen reader users got no
+   indication anything happened at all — silence, not "Course added."
+   announce() pushes a short message into a visually-hidden aria-live
+   region so assistive tech speaks it, without anything visible
+   changing on screen. The clear-then-set pattern (instead of just
+   setting text directly) exists because aria-live only fires on an
+   actual content change — setting the SAME message twice in a row
+   (e.g. removing two different courses back-to-back, both saying
+   "Course removed") would silently fail to re-announce the second one
+   without this.
+═══════════════════════════════════════════════════════════════════ */
+function announce(message) {
+  const el = document.getElementById('srAnnouncer');
+  if (!el) return;
+  el.textContent = '';
+  setTimeout(() => { el.textContent = message; }, 50);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    SECTION 1 — REMOTE DATA FETCH + CATALOG MERGE
 ═══════════════════════════════════════════════════════════════════ */
 
@@ -510,7 +534,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.9';
+const PLANNER_VERSION = '2.9.11';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2278,6 +2302,46 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          the closed-state display is. Re-running Lighthouse next to
 //          confirm CLS actually drops.
 
+// 2.9.11 — Two changes bundled here since neither had shipped yet:
+//          (1) #electiveStatus placeholder fix from the CLS investigation
+//          (pre-filled with placeholder text matching a fresh plan's real
+//          status string, instead of starting empty) — turned out NOT to
+//          be the dominant CLS contributor (Chris confirmed via DevTools
+//          trace that the already-shipped 2.9.9 fix cleared its own
+//          target fine, just didn't move the score because something
+//          else — the term cards — was the bigger contributor). Decision
+//          per Chris: chasing CLS further isn't worth it for this tool —
+//          real users aren't clicking mid-shift in any meaningful way,
+//          and the actual fix would mean restructuring how render()
+//          depends on the catalog fetch, real architecture work for a
+//          synthetic score with no real accessibility payoff. Leaving
+//          this one small change in since it's harmless and already
+//          done, but NOT pursuing the term-card structural fix.
+//          (2) The real follow-up: built out WCAG 4.1.3 (Status
+//          Messages) support. Most of this app's actions silently
+//          rewrite the DOM via innerHTML — sighted users see the
+//          change, screen reader users got nothing. Added a hidden
+//          aria-live="polite" region (#srAnnouncer) plus an announce()
+//          helper (clear-then-set with a 50ms delay, since identical
+//          consecutive messages won't re-announce otherwise — e.g.
+//          removing two different courses back-to-back would both say
+//          "Course removed" and the second would silently fail to fire
+//          without the clear step). Wired into the core actions: add/
+//          remove course, pin/unpin, mark completed, add/remove
+//          semester, block/unblock semester (all paths), clear semester,
+//          add approved/free elective, track/untrack theme — 14 call
+//          sites total. NOT yet covered: the modal-routed block/unblock
+//          paths (openBlockChoiceModal) and the bulk import flow
+//          (importCompletedFromFile) — flagging as a known gap rather
+//          than silently incomplete, worth a follow-up pass.
+//          Context for why this got prioritized: UF's push to officially
+//          offer this tool, with third-party conformance obligations
+//          landing on the tool itself rather than the university per
+//          their current stance — makes a real (not just
+//          automated-score) accessibility gap like this one worth
+//          closing properly, independent of where the CLS conversation
+//          landed.
+
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
 ═══════════════════════════════════════════════════════════════════
@@ -2932,11 +2996,18 @@ function pathwayStatus(pid) {
 }
 function addActiveTheme() {
   const sel=document.getElementById('themeAddSelect');
-  if(sel?.value){ activeThemes.add(sel.value); sel.value=''; render(); }
+  if(sel?.value){
+    const themeTitle=CATALOG_THEMES[sel.value]?.title||sel.value;
+    activeThemes.add(sel.value); sel.value='';
+    announce(`Now tracking theme: ${themeTitle}.`);
+    render();
+  }
 }
 function removeActiveTheme(themeId) {
   if(!confirm(`Stop tracking "${CATALOG_THEMES[themeId]?.title||themeId}"? Courses you've already chosen stay exactly where they are in your plan — only this tracking card goes away.`)) return;
+  const themeTitle=CATALOG_THEMES[themeId]?.title||themeId;
   activeThemes.delete(themeId);
+  announce(`Stopped tracking theme: ${themeTitle}.`);
   render();
 }
 // Checkbox handler: routes through the exact same functions the regular
@@ -3194,6 +3265,7 @@ function addCourse(termKey) {
   delete addSelections[termKey];
   promptCompanionMove(termKey, id);
   selectedTerm=termKey;
+  announce(`${COURSES[id]?.displayId||id} added to ${t.label}.`);
   render();
 }
 
@@ -3251,6 +3323,7 @@ function removeCourse(termKey, id) {
   }
   delete pinnedCourses[id]; generatedCourses.delete(id);
   selectedTerm=termKey;
+  announce(`${COURSES[id]?.displayId||id} removed from ${t.label}.`);
   render();
 }
 
@@ -3367,10 +3440,12 @@ function promptPinCompanion(termKey, id) {
 }
 
 function togglePin(termKey, id) {
-  if(pinnedCourses[id]===termKey) delete pinnedCourses[id];
+  const wasPinned = pinnedCourses[id]===termKey;
+  if(wasPinned) delete pinnedCourses[id];
   else pinnedCourses[id]=termKey;
   generatedCourses.delete(id);
   promptPinCompanion(termKey, id);
+  announce(`${COURSES[id]?.displayId||id} ${wasPinned?'unpinned from':'pinned to'} ${termByKey(termKey)?.label||termKey}.`);
   render();
 }
 
@@ -3387,6 +3462,7 @@ function addCompleted() {
   // Prompt for unsatisfied prerequisites one level up
   promptPrereqCompanionsCompleted(id);
   syncIncomingCredits();
+  announce(`${COURSES[id]?.displayId||id} added as completed.`);
   render();
 }
 
@@ -3532,6 +3608,7 @@ function insertTerm() {
   terms.push({key,label:termLabelFromKey(key),season:seasonFromKey(key),courses:[]});
   sortTerms();
   selectedTerm=key;
+  announce(`${termLabelFromKey(key)} added to your plan.`);
   render();
 }
 
@@ -3552,6 +3629,7 @@ function removeTermCard(key) {
   blocked.delete(key);
   delete addSelections[key];
   if(selectedTerm===key) selectedTerm=terms[0]?.key||'';
+  announce(`${t.label} removed from your plan.`);
   render();
 }
 
@@ -3830,6 +3908,7 @@ function toggleBlockTermCard(key) {
       return;
     }
     selectedTerm=key;
+    announce(`${termByKey(key)?.label||key} unblocked.`);
     render();
     return;
   }
@@ -3851,6 +3930,7 @@ function toggleBlockTermCard(key) {
     addYearAndRelocateSpine(key);
     fixBME3012Adjacency(key);
     selectedTerm=key;
+    announce(`${t.label} blocked.`);
     render();
     return;
   }
@@ -3878,6 +3958,7 @@ function toggleBlockTermCard(key) {
   const t2=termByKey(key);
   if(t2) t2.courses=[];
   selectedTerm=key;
+  announce(`${t.label} blocked.`);
   render();
 }
 
@@ -3900,6 +3981,7 @@ function clearTermCourses(key) {
   });
   t.courses=[];
   selectedTerm=key;
+  announce(`All courses cleared from ${t.label}.`);
   render();
 }
 
@@ -5114,6 +5196,7 @@ function addFreeElective() {
   if(COURSES[id]) {
     autoSubElective(id);
     if(codeEl) codeEl.value='';
+    announce(`${COURSES[id]?.displayId||id} added as an elective.`);
     return;
   }
 
@@ -5144,6 +5227,7 @@ function addFreeElective() {
   if(codeEl) codeEl.value='';
   if(titleEl) titleEl.value='';
   if(creditsEl) creditsEl.value='';
+  announce(`${id} added as a free elective.`);
 }
 
 function renderElectiveDropdown() {
