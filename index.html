@@ -69,7 +69,7 @@ input[type="checkbox"]{cursor:pointer}
 .course-row .course-btns button{font-size:11px;padding:1px 5px;min-width:20px}
 .course-invalid{color:#b00020;font-weight:600}
 .course-risk{color:#7a5200;font-weight:600}
-.flag-icon-hover{cursor:help;display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:5px;vertical-align:middle;border:1px solid currentColor}
+.flag-icon-hover{cursor:help;display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:5px;vertical-align:middle;border:1px solid currentColor;font-family:inherit;line-height:normal;appearance:none;-webkit-appearance:none;background-image:none}
 .flag-icon-hover.flag-red{background:#fde0e4;color:#b00020}
 .flag-icon-hover.flag-amber{background:#ffe9cf;color:#7a5200}
 .flag-icon-hover.flag-yellow{background:#fff8e1;color:#7a5200}
@@ -105,7 +105,7 @@ input[type="checkbox"]{cursor:pointer}
 /* ── Requirements panel ── */
 .req-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
 .req-box{margin-bottom:10px}
-.req-box h4{margin:4px 0 6px;font-size:13px;font-weight:700}
+.req-box h3{margin:4px 0 6px;font-size:13px;font-weight:700}
 
 /* ── Completed chips ── */
 .chip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:5px;margin-top:6px}
@@ -219,14 +219,14 @@ input[type="checkbox"]{cursor:pointer}
 <!-- Top controls -->
 <div class="controls-bar" id="topControls">
   <label>Student name <input id="studentName" type="text" placeholder="optional" style="width:160px"></label>
-  <label>Start
-    <select id="studentStartSeason">
+  <span style="display:flex;align-items:center;gap:4px;white-space:nowrap">Start
+    <select id="studentStartSeason" aria-label="Start season">
       <option value="F" selected>Fall</option>
       <option value="S">Spring</option>
       <option value="Su">Summer</option>
     </select>
-    <input id="startYear" type="number" value="2026" style="width:72px">
-  </label>
+    <input id="startYear" type="number" value="2026" aria-label="Start year" style="width:72px">
+  </span>
   <button onclick="applyStartTerm()">Apply start / reset plan</button>
   <label><input id="compactToggle" type="checkbox" onchange="render()"> Spacious view</label>
   <label><input id="advisorToggle" type="checkbox" onchange="render()"> <span id="advisorLabel">Advisor mode</span></label>
@@ -503,7 +503,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.5';
+const PLANNER_VERSION = '2.9.6';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2137,6 +2137,59 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          landmarks, etc.) — nothing to act on there. 22 Alerts remain
 //          as a separate, lower-priority review pass (human judgment
 //          calls, not automatic failures) — not tackled in this entry.
+
+// 2.9.6 — Accessibility: addressed 3 of the 22 WAVE Alerts from the
+//          post-2.9.5 scan (orphaned label, skipped heading level,
+//          device-dependent event handlers); left the 8 "JavaScript jump
+//          menu" alerts alone as a likely false positive (see below).
+//          - Orphaned label: the "Start" label wrapped two controls
+//            (#studentStartSeason select + #startYear input) — a label
+//            can only implicitly bind to one, leaving the other
+//            effectively unlabeled. Split into a plain <span> group
+//            label plus individual aria-labels ("Start season" / "Start
+//            year") on each control. Caught and corrected a near-miss
+//            while doing this: first pass added class="small" + bold for
+//            the group span, which would have shrunk/bolded text that
+//            was never styled that way before — replaced with the exact
+//            inline flex/gap/nowrap the original <label> got from
+//            .controls-bar's CSS, so visual output is unchanged.
+//          - Skipped heading level: "Remaining requirements" (h2) jumped
+//            straight to h4 for its sub-boxes (Available to add, Locked
+//            by prerequisites, etc.), skipping h3. Changed both box() and
+//            collapsedBox() to emit h3 instead, and updated the matching
+//            .req-box h4 CSS selector to .req-box h3 so styling didn't
+//            silently break. Term cards elsewhere already correctly use
+//            h3 under their own h2 ("Plan of study") — no conflict, both
+//            are one level below their own distinct h2 ancestor.
+//          - Device-dependent handlers: 8 instances of
+//            <span class="flag-icon-hover" onclick="...alert(...)">
+//            (the Provisional / Free-elective-only / Unverified /
+//            Placeholder / risk-flag badges) had a click handler but no
+//            keyboard path at all — not focusable, no tabindex, no
+//            keydown handler. Converted all 8 from <span> to
+//            <button type="button">, same classes/attributes otherwise.
+//            Buttons are natively keyboard-operable (Enter/Space) with no
+//            extra JS needed. Added resets to .flag-icon-hover
+//            (font-family:inherit, line-height:normal, appearance:none,
+//            background-image:none) so the button doesn't pick up
+//            browser-default chrome the old span never had — visual
+//            output should be unchanged.
+//            Left one device-dependent case alone: the term-card
+//            <section onclick="setSelectedTerm(...)">. It has the same
+//            theoretical gap, but a keyboard-accessible equivalent
+//            already exists — tabbing into that term's course-add
+//            dropdown fires onfocus="...setSelectedTermOnly(...)", same
+//            effect. Not fixed here; flagging in case it's worth a
+//            cleaner fix later, but not a true dead-end today.
+//          - Jump menu alerts (8, NOT fixed): these are the per-term
+//            add_${t.key} selects, one per semester in the plan. WAVE
+//            flags any <select onchange=...> as a possible jump menu,
+//            but the actual handler only stages a value
+//            (addSelections[t.key]=this.value) — the real action needs a
+//            separate, clearly-labeled "Add" button click. That's the
+//            accessible pattern WAVE itself recommends in place of a true
+//            jump menu, so this reads as an automated-tool false
+//            positive rather than a real barrier. Left as-is.
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
@@ -5032,7 +5085,7 @@ function renderElectiveList() {
       const planned=plannedAll().has(id), done=completed.has(id), assigned=chosenElectives.has(id);
       const flags=(planned?` <span class="tag tag-blue">planned</span>`:'')+(done?` <span class="tag tag-green">completed</span>`:'')
         +(!planned&&!done&&assigned?` <span class="tag tag-orange">assigned</span>`:'')
-        +((isProvisional(id)&&!isPathwayOnlyCourse(id))?` <span class="flag-icon-hover flag-yellow" title="Verify with your advisor — not yet committee-approved" onclick="event.stopPropagation();alert(this.title)">Provisional</span>`:'');
+        +((isProvisional(id)&&!isPathwayOnlyCourse(id))?` <button type="button" class="flag-icon-hover flag-yellow" title="Verify with your advisor — not yet committee-approved" onclick="event.stopPropagation();alert(this.title)">Provisional</button>`:'');
       const note=c.rawPrereq||'No prereq note';
       return `<div><button class="link-btn" onclick="autoSubElective('${id}')" ${planned||done?'disabled':''}>${c.displayId||id}</button> — ${c.title||''}${flags}</div><div>${c.credits||0}</div><div class="small">${note}</div>`;
     }).join('')
@@ -5057,7 +5110,7 @@ function renderGroupRowsHtml(groups, contextLabel) {
       // that will never be a departmentally-approved technical elective,
       // kept here only because it satisfies this minor/certificate's
       // requirements. Wording deliberately avoids "pending"/"not yet."
-      const freeOnlyNote=isPathwayOnlyCourse(id)?` <span class="flag-icon-hover flag-yellow" title="Counts as your free elective, not a technical elective — this course will not be a departmentally-approved BME elective." onclick="event.stopPropagation();alert(this.title)">Free elective only</span>`:'';
+      const freeOnlyNote=isPathwayOnlyCourse(id)?` <button type="button" class="flag-icon-hover flag-yellow" title="Counts as your free elective, not a technical elective — this course will not be a departmentally-approved BME elective." onclick="event.stopPropagation();alert(this.title)">Free elective only</button>`:'';
       return `<label class="path-course-row"><input type="checkbox" ${checked?'checked':''} ${isDone?'disabled':''} onchange="togglePathwayCourse('${id}',this.checked)"> ${c.displayId||id} — ${c.title} (${c.credits} cr)${isDone?' <span class="small">(completed)</span>':''}${sharedNote}${freeOnlyNote}</label>`;
     }).join('');
     return `<div class="path-group"><div class="small" style="font-weight:700;margin-top:6px">${group.label||''} — ${status.detail}${status.satisfied?' ✓':''}</div>${rows}</div>`;
@@ -5312,13 +5365,13 @@ function renderRequirements() {
 
   function box(title,items,type) {
     let body='';
-    if(type==='plain') body=items.map(id=>`<div class="req-chip">${label(id)}${(isProvisional(id)&&!isPathwayOnlyCourse(id))?` <span class="flag-icon-hover flag-yellow" title="Verify with your advisor — not yet committee-approved" onclick="event.stopPropagation();alert(this.title)">Provisional</span>`:''}</div>`).join('');
+    if(type==='plain') body=items.map(id=>`<div class="req-chip">${label(id)}${(isProvisional(id)&&!isPathwayOnlyCourse(id))?` <button type="button" class="flag-icon-hover flag-yellow" title="Verify with your advisor — not yet committee-approved" onclick="event.stopPropagation();alert(this.title)">Provisional</button>`:''}</div>`).join('');
     else body=items.map(x=>`<div class="req-chip"><strong>${label(x[0])}</strong><span class="small">${x[1].join('; ')}</span></div>`).join('');
-    return `<div class="req-box"><h4>${title}</h4><div class="req-chip-grid">${body||'<div class="small">None</div>'}</div></div>`;
+    return `<div class="req-box"><h3>${title}</h3><div class="req-chip-grid">${body||'<div class="small">None</div>'}</div></div>`;
   }
   function collapsedBox(title,items) {
     const body=items.map(id=>`<div class="req-chip"><span style="font-weight:600">${COURSES[id]?.displayId||id}</span><span class="small">${COURSES[id]?.title||''}</span></div>`).join('');
-    return `<details class="req-box"><summary><h4 style="display:inline">${title} (${items.length})</h4></summary><div class="req-chip-grid">${body||'<div class="small">None</div>'}</div></details>`;
+    return `<details class="req-box"><summary><h3 style="display:inline">${title} (${items.length})</h3></summary><div class="req-chip-grid">${body||'<div class="small">None</div>'}</div></details>`;
   }
   const req=document.getElementById('requirements');
   if(req) req.innerHTML=box('Available to add',buckets.available,'plain')+box('Available with instructor permission',buckets.instructorOk)+box('Locked by prerequisites',buckets.locked)+box('Not offered this season',buckets.notoffered)+collapsedBox('Satisfied or planned',buckets.satisfied);
@@ -5431,7 +5484,7 @@ function renderTerms() {
       const flagColorClass=isBlocked?'flag-red':'flag-amber';
       const flagWord=isBlocked?'Missing':(ev.blockedTermRisk?'Risk':(ev.instructorOverridable?'Missing':'Risk'));
       const icon=(isBlocked||isSoftFail||risk)
-        ?` <span class="flag-icon-hover ${flagColorClass}" title="${iconReasonText.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();alert(this.title)">${isBlocked?'⚠':'⧗'} ${flagWord}</span>`
+        ?` <button type="button" class="flag-icon-hover ${flagColorClass}" title="${iconReasonText.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();alert(this.title)">${isBlocked?'⚠':'⧗'} ${flagWord}</button>`
         :'';
       const lbl=(isElect?electiveDisplayLabel(id):courseLabel(id));
       const pinBadge=(advisor&&isPinned)?` <span class="pin-badge">pinned</span>`:'';
@@ -5444,9 +5497,9 @@ function renderTerms() {
       // matters; showing both reads as two different cautions when there's
       // really just one (the course will never be a technical elective,
       // which isn't a "pending verification" situation at all).
-      const provBadge=(isProvisional(id)&&!isPathwayOnlyCourse(id))?` <span class="flag-icon-hover flag-yellow" title="Verify with your advisor — not yet committee-approved" onclick="event.stopPropagation();alert(this.title)">Provisional</span>`:'';
+      const provBadge=(isProvisional(id)&&!isPathwayOnlyCourse(id))?` <button type="button" class="flag-icon-hover flag-yellow" title="Verify with your advisor — not yet committee-approved" onclick="event.stopPropagation();alert(this.title)">Provisional</button>`:'';
       // Per Chris: distinct from provisional — permanent, not pending.
-      const freeOnlyBadge=isPathwayOnlyCourse(id)?` <span class="flag-icon-hover flag-yellow" title="Counts as your free elective, not a technical elective — this course will not be a departmentally-approved BME elective." onclick="event.stopPropagation();alert(this.title)">Free elective only</span>`:'';
+      const freeOnlyBadge=isPathwayOnlyCourse(id)?` <button type="button" class="flag-icon-hover flag-yellow" title="Counts as your free elective, not a technical elective — this course will not be a departmentally-approved BME elective." onclick="event.stopPropagation();alert(this.title)">Free elective only</button>`:'';
       // CHM3217 hover note: only surfaces while CHM2210 is completed and neither
       // CHM2211 nor an alternate CHM3217 placement has been chosen yet (i.e. this
       // is still an open either/or decision). Disappears once a path is chosen.
@@ -5461,7 +5514,7 @@ function renderTerms() {
       // text block.
       const unverifiedText='Unverified free elective — not on the approved list, prerequisites not checked. Confirm with your advisor before registering.';
       const unverifiedIcon=COURSES[id]?.unverifiedFreeElective
-        ?` <span class="flag-icon-hover flag-amber" title="${unverifiedText.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();alert(this.title)">⚠ Unverified</span>`:'';
+        ?` <button type="button" class="flag-icon-hover flag-amber" title="${unverifiedText.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();alert(this.title)">⚠ Unverified</button>`:'';
       const unverifiedWarn=(advisor&&COURSES[id]?.unverifiedFreeElective)?`<div class="lab-warn">${unverifiedText}</div>`:'';
       // Per Chris: this is benign, not a warning — yellow, not amber/red, and
       // worded as an explanation rather than a flag. Generic elective slots
@@ -5469,7 +5522,7 @@ function renderTerms() {
       // them on its own; this is purely an informational hint, not masking
       // an actual problem.
       const placeholderIcon=isBmeElectiveSlot(id)
-        ?` <span class="flag-icon-hover flag-yellow" title="Placeholder — will be replaced once an elective is selected for this slot." onclick="event.stopPropagation();alert(this.title)">Placeholder</span>`:'';
+        ?` <button type="button" class="flag-icon-hover flag-yellow" title="Placeholder — will be replaced once an elective is selected for this slot." onclick="event.stopPropagation();alert(this.title)">Placeholder</button>`:'';
       // Inline listing: advisor-only now. Students get the same information via
       // the icon's hover title above instead of a permanent block under the card.
       const warnMsg=advisor
