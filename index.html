@@ -314,7 +314,7 @@ input[type="checkbox"]{cursor:pointer}
     <div class="small" style="color:#556;max-width:900px;margin-top:2px">Curated, departmental focus areas — a themed alternative to picking electives independently. Courses you check here count as one of your 4 BME electives. Some courses build on each other across semesters — check the prerequisite icon once placed.</div>
     <div class="elective-chooser-row" style="margin-top:6px">
       <span>Add a theme to track
-        <select id="themeAddSelect" aria-label="Add a theme to track"><option value="">— select a theme —</option></select>
+        <select id="themeAddSelect" aria-label="Add a theme to track" style="width:min(320px,60vw);max-width:320px;min-width:200px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden"><option value="">— select a theme —</option></select>
       </span>
       <button onclick="addActiveTheme()">Track this theme</button>
     </div>
@@ -510,7 +510,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.8';
+const PLANNER_VERSION = '2.9.9';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2251,6 +2251,32 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          tradeoff (offline resilience) flagged back when the
 //          fallback-sync architecture was set up, not something to
 //          casually trade away here.
+
+// 2.9.9 — Performance: desktop Lighthouse re-run (after 2.9.8's parallel
+//          fetch, mostly extension-free) came back 88/100, network chain
+//          latency down from 1,221ms to 347ms as expected — confirms the
+//          2.9.8 fix worked. Remaining issue was CLS 0.245, attributed
+//          almost entirely to #electivePanel. Chris pinpointed the
+//          visual location: the "Add a theme to track" select + "Track
+//          this theme" button. Root cause: #themeAddSelect had no width
+//          constraint, so its rendered width auto-sized to its widest
+//          <option> — fine at first paint (just the short placeholder
+//          option exists), but once the catalog loads and
+//          renderThemePanel() injects real theme titles (some long,
+//          e.g. "Engineering Design, Innovation, & Entrepreneurship"),
+//          the select balloons in width. Parent row is flex-wrap, so the
+//          wider select pushed "Track this theme" onto a new line,
+//          growing the row's height and shifting everything below.
+//          Fix: reserved a fixed width up front (min(320px,60vw),
+//          200-320px range, same pattern as #completedSelect already
+//          uses) plus text-overflow:ellipsis so long titles truncate
+//          instead of forcing the box wider. Worth flagging as a real,
+//          if minor, visual tradeoff (not a pure no-op like most fixes
+//          this session) — a very long theme title will now show with
+//          "..." instead of displaying in full; full text is still
+//          available since the <option> itself isn't truncated, only
+//          the closed-state display is. Re-running Lighthouse next to
+//          confirm CLS actually drops.
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
