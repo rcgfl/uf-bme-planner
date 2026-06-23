@@ -175,7 +175,7 @@ input[type="checkbox"]{cursor:pointer}
 .import-ignored{color:#556}
 
 /* ── Pin icon button ── */
-.pin-btn{border:0;background:transparent;padding:1px 4px;margin:0;cursor:pointer;font-size:13px;opacity:.35;line-height:1}
+.pin-btn{border:0;background:transparent;padding:1px 4px;margin:0;cursor:pointer;font-size:13px;opacity:.6;line-height:1}
 .pin-btn:hover{opacity:.7}
 .pin-btn.pinned{opacity:1}
 
@@ -503,7 +503,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.0';
+const PLANNER_VERSION = '2.9.1';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2062,6 +2062,22 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          FALLBACK_ELECTIVES/etc. constants (working as designed, but
 //          those are a stale snapshot). Push the data files before
 //          treating this build as fully live.
+
+// 2.9.1 — Cosmetic: ran a live WAVE accessibility scan against the now-
+//          deployed GitHub Pages site (1 error, 66 contrast errors, AIM
+//          score 3.3/10). Root-caused the bulk of the 66 contrast errors
+//          to a single rule: .pin-btn's default (unpinned) opacity of
+//          .35, which is applied per-course-row across every term in the
+//          plan — one faint icon repeated dozens of times, not 66 unique
+//          issues. Raised default opacity to .6. Kept the same visual
+//          hierarchy (still visibly dimmer than a pinned course's full-
+//          opacity icon, :hover at .7 and .pinned at 1 both unchanged) —
+//          intent is to narrow the contrast gap without losing the
+//          deliberate "quiet until pinned" design. One change at a time
+//          per usual; re-running WAVE next to see how much of the 66 this
+//          actually clears before considering further adjustment (e.g.
+//          dropping opacity-based dimming for an outline-vs-filled icon
+//          approach instead, if .6 isn't enough on its own).
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
