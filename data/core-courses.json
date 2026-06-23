@@ -1,0 +1,1103 @@
+{
+  "schemaVersion": "1.0",
+  "source": "UF BME Department",
+  "lastUpdated": "2026-06",
+  "description": "UF BME core curriculum courses. Hand-maintained. Changes only when curriculum changes.",
+  "courses": {
+    "BME1008": {
+      "title": "Introduction to Biomedical Engineering",
+      "credits": 1,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [],
+      "id": "BME1008",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME3012": {
+      "title": "Clinically-Inspired Engineering Design",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "BME3060",
+        "PCB3713C"
+      ],
+      "coreq": [
+        "BME3101",
+        "EGM2511"
+      ],
+      "id": "BME3012",
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME3053C": {
+      "title": "Computer Applications for BME",
+      "credits": 2,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "COP2271",
+        "COP2271L",
+        "MAC2312"
+      ],
+      "id": "BME3053C",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME3060": {
+      "title": "Biomedical Fundamentals",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "CHM2046",
+        "MAC2313"
+      ],
+      "coreq": [
+        "PHY2049",
+        "MAP2302",
+        "BME1008"
+      ],
+      "id": "BME3060",
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME3101": {
+      "title": "Biomedical Materials",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "BME3060",
+        "CHM3217"
+      ],
+      "id": "BME3101",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": "",
+      "equivalencies": {
+        "CHM3217": [
+          "CHM2211"
+        ]
+      }
+    },
+    "BME3323L": {
+      "title": "Cellular Engineering Lab",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "PCB3713C"
+      ],
+      "coreq": [
+        "BME4311"
+      ],
+      "id": "BME3323L",
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": "",
+      "instructorPermissionMaySubstitute": false,
+      "graduateLevel": false,
+      "variableCredit": false,
+      "equivalentCreditOnly": false,
+      "maxCredits": null,
+      "rawPrereq": "",
+      "equivalencies": {
+        "BME4311": [
+          "BCH4024"
+        ]
+      }
+    },
+    "BME3508": {
+      "title": "Biosignals and Systems",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "EEL3003",
+        "MAC2313"
+      ],
+      "id": "BME3508",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME4311": {
+      "title": "Molecular Biomedical Engineering",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "BSC2010",
+        "CHM3217",
+        "PCB3713C"
+      ],
+      "id": "BME4311",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": "",
+      "equivalencies": {
+        "CHM3217": [
+          "CHM2211"
+        ]
+      }
+    },
+    "BME4409": {
+      "title": "Quantitative Physiology",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "BME3060",
+        "PCB3713C",
+        "BME3508",
+        "BME3053C"
+      ],
+      "id": "BME4409",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME4503C": {
+      "title": "Biomedical Instrumentation",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "MAC2313",
+        "MAP2302",
+        "PHY2049",
+        "EEL3003"
+      ],
+      "coreq": [
+        "BME3508"
+      ],
+      "id": "BME4503C",
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME4531": {
+      "title": "Medical Imaging",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "MAC2313",
+        "MAP2302",
+        "BME3508",
+        "BME3053C",
+        "PHY2049"
+      ],
+      "id": "BME4531",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME4621": {
+      "title": "Biomedical Thermodynamics and Kinetics",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "CHM3217",
+        "BME3060",
+        "BME4311"
+      ],
+      "id": "BME4621",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": "",
+      "equivalencies": {
+        "CHM3217": [
+          "CHM2211"
+        ],
+        "BME4311": [
+          "BCH4024"
+        ]
+      },
+      "instructorPermissionMaySubstitute": false,
+      "graduateLevel": false,
+      "variableCredit": false,
+      "equivalentCreditOnly": false,
+      "maxCredits": null,
+      "rawPrereq": ""
+    },
+    "BME4632": {
+      "title": "Biomedical Transport Phenomena",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "BME3060"
+      ],
+      "id": "BME4632",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME4882": {
+      "title": "Senior Design, Professionalism and Ethics 1",
+      "credits": 3,
+      "offered": [
+        "F"
+      ],
+      "prereq": [
+        "BME3012"
+      ],
+      "id": "BME4882",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BME4883": {
+      "title": "Senior Design, Professionalism and Ethics 2",
+      "credits": 3,
+      "offered": [
+        "S"
+      ],
+      "prereq": [
+        "BME4882"
+      ],
+      "id": "BME4883",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BSC2010": {
+      "title": "Integrated Principles of Biology 1",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "BSC2010",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "BSC2010L": {
+      "title": "Integrated Principles of Biology 1 Lab",
+      "credits": 1,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "BSC2010L",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "CHM2045": {
+      "title": "General Chemistry",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "CHM2045",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "CHM2045L": {
+      "title": "General Chemistry Laboratory",
+      "credits": 1,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "CHM2045L",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "CHM2046": {
+      "title": "General Chemistry 2",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "CHM2045"
+      ],
+      "id": "CHM2046",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "CHM2046L": {
+      "title": "General Chemistry 2 Lab",
+      "credits": 1,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "CHM2045L"
+      ],
+      "id": "CHM2046L",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "CHM2095": {
+      "title": "Applied General Chemistry 1",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "CHM2095",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Engineering-track equivalent of CHM2045. Accepted as CHM2045 substitute for downstream prereqs."
+    },
+    "CHM2210": {
+      "title": "Organic Chemistry 1",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "CHM2046"
+      ],
+      "id": "CHM2210",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": "First half of CHM2210/CHM2211 sequence. Transfer-pathway alternative to CHM3217; CHM2211 is treated as equivalent to CHM3217 for downstream prereqs (see CHM2211's equivalencies)."
+    },
+    "CHM2211": {
+      "title": "Organic Chemistry 2",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "CHM2210"
+      ],
+      "id": "CHM2211",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalencies": {},
+      "notes": "Second half of CHM2210/CHM2211 sequence. Transfer-pathway alternative to CHM3217. CHM2210 is its own prereq, so completing CHM2211 implies CHM2210 was completed."
+    },
+    "CHM3217": {
+      "title": "Organic Chemistry/Biochemistry 1",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "CHM2046",
+        "CHM2046L"
+      ],
+      "id": "CHM3217",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "COP2271": {
+      "title": "Computer Programming for Engineers",
+      "credits": 2,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "COP2271",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "COP2271L": {
+      "title": "Computer Programming for Engineers Lab",
+      "credits": 1,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "COP2271L",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "EEL3003": {
+      "title": "Elements of Electrical Engineering",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2313",
+        "PHY2049"
+      ],
+      "id": "EEL3003",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "EEL3135": {
+      "title": "Introduction to Signals and Systems",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2313"
+      ],
+      "id": "EEL3135",
+      "coreq": [
+        "MAP2302"
+      ],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Electrical Engineering equivalent of BME3508 (Signals and Systems). Accepted as BME3508 substitute for downstream prereq checks in elective courses."
+    },
+    "EGM2511": {
+      "title": "Engineering Mechanics: Statics",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "PHY2048"
+      ],
+      "coreq": [
+        "MAC2313"
+      ],
+      "id": "EGM2511",
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "ELECTIVE_SLOT": {
+      "id": "ELECTIVE_SLOT",
+      "title": "BME Elective (unassigned)",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "coreq": [],
+      "placeholder": true,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "displayId": "ELECTIVE_SLOT",
+      "notes": "Generic placeholder — interchangeable, no numbered identity. Offering season is not meaningful for this record; depends on whichever course replaces it."
+    },
+    "ENC1101": {
+      "title": "Expository and Argumentative Writing",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "ENC1101",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "ENC1102": {
+      "title": "Argument and Persuasion",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "ENC1101"
+      ],
+      "id": "ENC1102",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Satisfies the same Composition Gen Ed requirement as ENC1101. Engineering majors take one or the other, not both."
+    },
+    "GENED_COMP": {
+      "title": "Gen Ed Composition",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "placeholder": true,
+      "id": "GENED_COMP",
+      "coreq": [],
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "GENED_H": {
+      "title": "State Core Humanities",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "placeholder": true,
+      "id": "GENED_H",
+      "coreq": [],
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "GENED_S": {
+      "title": "State Core Social and Behavioral Science",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "placeholder": true,
+      "id": "GENED_S",
+      "coreq": [],
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "MAC2233": {
+      "title": "Survey of Calculus 1",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "MAC2233",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Transfer/AP equivalent of MAC2311. UF awards credit for at most one of MAC2233 or MAC2311."
+    },
+    "MAC2311": {
+      "title": "Analytic Geometry and Calculus 1",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "MAC2311",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "MAC2312": {
+      "title": "Analytic Geometry and Calculus 2",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2311"
+      ],
+      "id": "MAC2312",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "MAC2313": {
+      "title": "Analytic Geometry and Calculus 3",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2312"
+      ],
+      "id": "MAC2313",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "MAC2512": {
+      "title": "Analytic Geometry and Calculus 2",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2311"
+      ],
+      "id": "MAC2512",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "AP/UF Online equivalent of MAC2312. UF awards credit for at most one of MAC2312, MAC2512, or MAC3473."
+    },
+    "MAC3472": {
+      "title": "Honors Calculus 1",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [],
+      "id": "MAC3472",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Honors equivalent of MAC2311. UF awards credit for at most one of MAC2311 or MAC3472."
+    },
+    "MAC3473": {
+      "title": "Honors Calculus 2",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "MAC3472"
+      ],
+      "id": "MAC3473",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Honors equivalent of MAC2312. UF awards credit for at most one of MAC2312, MAC2512, or MAC3473."
+    },
+    "MAP2302": {
+      "title": "Elementary Differential Equations",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2312"
+      ],
+      "id": "MAP2302",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "PCB3713C": {
+      "title": "Cellular and Systems Physiology",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "BSC2010",
+        "CHM2046",
+        "PHY2048"
+      ],
+      "coreq": [
+        "PHY2049"
+      ],
+      "id": "PCB3713C",
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "PHY2048": {
+      "title": "Physics with Calculus 1",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2311"
+      ],
+      "id": "PHY2048",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "PHY2048L": {
+      "title": "Lab for Physics with Calculus 1",
+      "credits": 1,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "PHY2048L",
+      "coreq": [
+        "PHY2048"
+      ],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "PHY2049": {
+      "title": "Physics with Calculus 2",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "PHY2048"
+      ],
+      "id": "PHY2049",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "PHY2049L": {
+      "title": "Lab for Physics with Calculus 2",
+      "credits": 1,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "id": "PHY2049L",
+      "coreq": [
+        "PHY2049"
+      ],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "PHY2060": {
+      "title": "Enriched Physics with Calculus 1",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "MAC2311"
+      ],
+      "id": "PHY2060",
+      "coreq": [
+        "MAC2312"
+      ],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Honors/enriched equivalent of PHY2048. Covers same material with additional advanced topics. Accepted as PHY2048 substitute for downstream prereqs."
+    },
+    "PHY2061": {
+      "title": "Physics with Calculus 2 (Honors)",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "PHY2048"
+      ],
+      "id": "PHY2061",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Honors equivalent of PHY2049. Accepted as PHY2049 substitute for downstream prereqs."
+    },
+    "PHY3063": {
+      "title": "Physics with Calculus 3 (Honors)",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "PHY2061"
+      ],
+      "id": "PHY3063",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Honors equivalent of PHY3101. Accepted as PHY3101 substitute for downstream prereqs."
+    },
+    "PHY3101": {
+      "title": "Modern Physics",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "PHY2049"
+      ],
+      "id": "PHY3101",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Standard Modern Physics course. Prerequisite for PHY4604 (elective). PHY3063 (Honors) is its equivalent."
+    },
+    "QUEST1": {
+      "title": "Quest 1",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "placeholder": true,
+      "id": "QUEST1",
+      "coreq": [],
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "QUEST2": {
+      "title": "Quest 2",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [],
+      "placeholder": true,
+      "id": "QUEST2",
+      "coreq": [],
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    },
+    "STA3032": {
+      "title": "Engineering Statistics",
+      "credits": 3,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "prereq": [
+        "MAC2311"
+      ],
+      "id": "STA3032",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "notes": ""
+    }
+  }
+}

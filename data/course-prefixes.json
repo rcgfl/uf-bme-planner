@@ -1,0 +1,2355 @@
+{
+  "_meta": {
+    "purpose": "Validation whitelist for the planner's free-elective format check (3-letter prefix + 4-digit number, optionally followed by C/L). Presence of a prefix here means it is a real UF/SCNS course prefix as of the source catalogs used -- it does NOT mean every number under that prefix exists, and it does NOT mean the specific course is BME-approved. It is the first filter in a three-step check: format -> known prefix + number>=2000 -> (separately) approved-elective list.",
+    "source": "Primary source: University of Florida 2011-12 Undergraduate Catalog 'Index to Course Prefixes' (https://archive.catalog.ufl.edu/ugrad/1112/courses/Pages/prefix.html) -- found by Chris, more current and far more complete than the 2003-04 archive originally used. Short subject titles (where available) carried over from the 2003-04 archive for readability. Two additions confirmed newer than the 2011-12 catalog and already in active use in the planner's own course data: EGS (Engineering Studies/Leadership) and MDU (Medicine, intro-to-professions courses). Cross-checked: every prefix already used in core-courses.json/approved-electives.json is present.",
+    "known_limitations": "Department names reflect the 2011-12 catalog and may have since been renamed/reorganized (e.g., department mergers) even where the prefix itself is unchanged -- SCNS prefixes themselves rarely retire. This is not a live scrape of the current (2025-26) catalog department-by-department; a small number of prefixes created since 2011-12 may still be missing beyond the two already added. Recommend periodic spot-check the same way core-courses.json/approved-electives.json already get reviewed.",
+    "compiled": "2026-06-21",
+    "count": 355
+  },
+  "prefixes": {
+    "ABE": {
+      "title": "Agricultural Engineering",
+      "departments": [
+        "Agricultural and Biological Engineering",
+        "Chemical Engineering"
+      ]
+    },
+    "ABT": {
+      "title": "Arabic in Translation",
+      "departments": [
+        "Languages, Literatures and Cultures - Arabic"
+      ]
+    },
+    "ACG": {
+      "title": "Accounting: General",
+      "departments": [
+        "Accounting"
+      ]
+    },
+    "ADV": {
+      "title": "Advertising",
+      "departments": [
+        "Advertising",
+        "Mass Communication"
+      ]
+    },
+    "AEB": {
+      "title": "Agr. Economics & Business",
+      "departments": [
+        "Agriculture",
+        "Agricultural Operations Management",
+        "Food and Resource Economics",
+        "Mechanical/Aerospace Engineering"
+      ]
+    },
+    "AEC": {
+      "title": "Agricultural Education and Communication",
+      "departments": [
+        "Agricultural Education and Communication"
+      ]
+    },
+    "AEE": {
+      "title": "Agr. & Extension Education",
+      "departments": [
+        "Agriculture",
+        "Food and Resource Economics"
+      ]
+    },
+    "AFA": {
+      "title": "African-American Studies",
+      "departments": [
+        "African-American Studies",
+        "African Studies"
+      ]
+    },
+    "AFH": {
+      "title": "African History",
+      "departments": [
+        "African Studies",
+        "History"
+      ]
+    },
+    "AFR": {
+      "title": "Aerospace Studies",
+      "departments": [
+        "Military Science - Air Force"
+      ]
+    },
+    "AFS": {
+      "title": "African Studies",
+      "departments": [
+        "African Studies",
+        "Anthropology"
+      ]
+    },
+    "AGG": {
+      "title": "Agriculture - General",
+      "departments": [
+        "Agricultural Education and Communication",
+        "Agronomy"
+      ]
+    },
+    "AGR": {
+      "title": "Agronomy",
+      "departments": [
+        "Agronomy"
+      ]
+    },
+    "AHM": {
+      "title": "Languages, Literatures and Cultures - Amharic",
+      "departments": [
+        "Languages, Literatures and Cultures - Amharic"
+      ]
+    },
+    "AKA": {
+      "title": "Akan Language",
+      "departments": [
+        "Languages, Literatures and Cultures - Akan"
+      ]
+    },
+    "ALS": {
+      "title": "Agriculture - General",
+      "departments": [
+        "Agricultural Education and Communication",
+        "Agricultural Operations Management",
+        "Agriculture",
+        "Agronomy",
+        "Animal Sciences",
+        "Entomology and Nematology",
+        "Environmental Horticulture",
+        "Food and Resource Economics",
+        "Horticultural Sciences",
+        "Plant Pathology",
+        "Soil and Water Science"
+      ]
+    },
+    "AMH": {
+      "title": "American History",
+      "departments": [
+        "African Studies",
+        "American Studies",
+        "History"
+      ]
+    },
+    "AML": {
+      "title": "American Literature",
+      "departments": [
+        "English"
+      ]
+    },
+    "ANG": {
+      "title": "Anthropology - Graduate",
+      "departments": [
+        "Anthropology"
+      ]
+    },
+    "ANS": {
+      "title": "Animal Science",
+      "departments": [
+        "Animal Sciences"
+      ]
+    },
+    "ANT": {
+      "title": "Anthropology",
+      "departments": [
+        "Anthropology",
+        "Religion"
+      ]
+    },
+    "AOM": {
+      "title": "Agricultural Operations Management",
+      "departments": [
+        "Agricultural and Biological Engineering",
+        "Agricultural Operations Management"
+      ]
+    },
+    "APK": {
+      "title": "Applied Physiology and Kinesiology",
+      "departments": [
+        "Applied Physiology and Kinesiology",
+        "Health Education and Behavior",
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "ARA": {
+      "title": "Arabic Language",
+      "departments": [
+        "African Studies",
+        "Languages, Literatures and Cultures - Arabic"
+      ]
+    },
+    "ARC": {
+      "title": "Architecture",
+      "departments": [
+        "Architecture",
+        "Design, Construction and Planning"
+      ]
+    },
+    "ARE": {
+      "title": "Art Education",
+      "departments": [
+        "Art and Art History",
+        "Education - Teaching and Learning"
+      ]
+    },
+    "ARH": {
+      "title": "Art History",
+      "departments": [
+        "Art and Art History"
+      ]
+    },
+    "ART": {
+      "title": "Art",
+      "departments": [
+        "Art and Art History"
+      ]
+    },
+    "ASH": {
+      "title": "Asian History",
+      "departments": [
+        "History"
+      ]
+    },
+    "ASL": {
+      "title": "Speech, Language and Hearing Sciences",
+      "departments": [
+        "Speech, Language and Hearing Sciences"
+      ]
+    },
+    "ASN": {
+      "title": "Asian Studies",
+      "departments": [
+        "Asian Studies",
+        "Languages, Literatures and Cultures"
+      ]
+    },
+    "AST": {
+      "title": "Astronomy",
+      "departments": [
+        "Astronomy",
+        "Biology - Zoology",
+        "Physics"
+      ]
+    },
+    "ATE": {
+      "title": "Animal Sciences",
+      "departments": [
+        "Animal Sciences"
+      ]
+    },
+    "ATR": {
+      "title": "Applied Physiology and Kinesiology",
+      "departments": [
+        "Applied Physiology and Kinesiology"
+      ]
+    },
+    "BCC": {
+      "title": "Medicine",
+      "departments": [
+        "Medicine - All Departments"
+      ]
+    },
+    "BCH": {
+      "title": "Biochemistry",
+      "departments": [
+        "Agriculture",
+        "Biology - Botany",
+        "Food Science and Human Nutrition",
+        "Medicine - Biochemistry"
+      ]
+    },
+    "BCN": {
+      "title": "Building Construction",
+      "departments": [
+        "Building Construction"
+      ]
+    },
+    "BME": {
+      "title": "Biomedical Engineering",
+      "departments": [
+        "Biomedical Engineering",
+        "Chemical Engineering",
+        "Electrical and Computer Engineering",
+        "Materials Science and Engineering",
+        "Mechanical and Aerospace Engineering"
+      ]
+    },
+    "BMS": {
+      "title": "Basic Medical Sciences",
+      "departments": [
+        "Medicine - All Departments"
+      ]
+    },
+    "BOT": {
+      "title": "Botany",
+      "departments": [
+        "Biology - Botany",
+        "Biology - Zoology",
+        "Geological Sciences"
+      ]
+    },
+    "BSC": {
+      "title": "Biological Sciences",
+      "departments": [
+        "Biology - Biological Sciences",
+        "Biology - Zoology",
+        "Health Professions",
+        "Medicine - Physiology and Functional Genomics"
+      ]
+    },
+    "BUL": {
+      "title": "Business Law",
+      "departments": [
+        "Management"
+      ]
+    },
+    "CAP": {
+      "title": "Computer Applications",
+      "departments": [
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "CAS": {
+      "title": "Clinical Audiology/Speech",
+      "departments": [
+        "Speech, Language and Hearing Sciences"
+      ]
+    },
+    "CAT": {
+      "title": "Catalan",
+      "departments": [
+        "Spanish and Portuguese - Portuguese",
+        "Spanish and Portuguese - Spanish"
+      ]
+    },
+    "CBH": {
+      "title": "Comp. Psy. & Animal Behavior",
+      "departments": [
+        "Psychology"
+      ]
+    },
+    "CCE": {
+      "title": "Civil Construction Engineering",
+      "departments": [
+        "Civil and Coastal Engineering"
+      ]
+    },
+    "CCJ": {
+      "title": "Criminology & Criminal Justice",
+      "departments": [
+        "Sociology, Criminology and Law - Criminology"
+      ]
+    },
+    "CDA": {
+      "title": "Computer Design/Architecture",
+      "departments": [
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "CEG": {
+      "title": "Civil Engineering Geotechnical",
+      "departments": [
+        "Civil and Coastal Engineering"
+      ]
+    },
+    "CEN": {
+      "title": "Computer Engineering",
+      "departments": [
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "CES": {
+      "title": "Civil Engineering Structures",
+      "departments": [
+        "Civil and Coastal Engineering"
+      ]
+    },
+    "CGN": {
+      "title": "Civil Engineering",
+      "departments": [
+        "Civil and Coastal Engineering"
+      ]
+    },
+    "CGS": {
+      "title": "Computer General Studies",
+      "departments": [
+        "Computer and Information Science and Engineering",
+        "Industrial and Systems Engineering"
+      ]
+    },
+    "CHI": {
+      "title": "Chinese",
+      "departments": [
+        "Languages, Literatures and Cultures - Chinese"
+      ]
+    },
+    "CHM": {
+      "title": "Chemistry",
+      "departments": [
+        "Chemical Engineering",
+        "Chemistry"
+      ]
+    },
+    "CHT": {
+      "title": "Chinese Literature in Translation",
+      "departments": [
+        "Languages, Literatures and Cultures - Chinese"
+      ]
+    },
+    "CHW": {
+      "title": "Languages, Literatures and Cultures - Chinese",
+      "departments": [
+        "Languages, Literatures and Cultures - Chinese"
+      ]
+    },
+    "CIS": {
+      "title": "Computer & Info. Systems",
+      "departments": [
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "CJC": {
+      "title": "Sociology, Criminology and Law - Criminology",
+      "departments": [
+        "Sociology, Criminology and Law - Criminology"
+      ]
+    },
+    "CJE": {
+      "title": "Sociology, Criminology and Law - Criminology",
+      "departments": [
+        "Sociology, Criminology and Law - Criminology"
+      ]
+    },
+    "CJJ": {
+      "title": "Sociology, Criminology and Law - Criminology",
+      "departments": [
+        "Sociology, Criminology and Law - Criminology"
+      ]
+    },
+    "CJL": {
+      "title": "Sociology, Criminology and Law - Criminology",
+      "departments": [
+        "Sociology, Criminology and Law - Criminology"
+      ]
+    },
+    "CLA": {
+      "title": "Classical & Ancient Studies",
+      "departments": [
+        "Classics"
+      ]
+    },
+    "CLP": {
+      "title": "Clinical Psychology",
+      "departments": [
+        "Clinical and Health Psychology",
+        "Psychology"
+      ]
+    },
+    "CLT": {
+      "title": "Classical Literature in Translation",
+      "departments": [
+        "Classics",
+        "Religion"
+      ]
+    },
+    "CNT": {
+      "title": "Computer and Information Science and Engineering",
+      "departments": [
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "COM": {
+      "title": "Communication",
+      "departments": [
+        "Center for Written and Oral Communication",
+        "Speech, Language and Hearing Sciences",
+        "Mass Communication"
+      ]
+    },
+    "COP": {
+      "title": "Computer Programming",
+      "departments": [
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "COT": {
+      "title": "Computing Theory",
+      "departments": [
+        "Chemical Engineering",
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "CPO": {
+      "title": "Comparative Politics",
+      "departments": [
+        "Political Science"
+      ]
+    },
+    "CRW": {
+      "title": "Creative Writing",
+      "departments": [
+        "English"
+      ]
+    },
+    "CTS": {
+      "title": "Computer and Information Science and Engineering",
+      "departments": [
+        "Computer and Information Science and Engineering"
+      ]
+    },
+    "CWR": {
+      "title": "Civil/Water Resources",
+      "departments": [
+        "Agricultural and Biological Engineering",
+        "Civil and Coastal Engineering",
+        "Environmental Engineering Sciences",
+        "Soil and Water Sciences"
+      ]
+    },
+    "CZE": {
+      "title": "Czech",
+      "departments": [
+        "Languages, Literatures and Cultures - Czech"
+      ]
+    },
+    "CZT": {
+      "title": "Languages, Literatures and Cultures - Czech",
+      "departments": [
+        "Languages, Literatures and Cultures - Czech"
+      ]
+    },
+    "DAA": {
+      "title": "Dance Activities",
+      "departments": [
+        "Tourism, Recreation and Sport Management",
+        "Theatre and Dance"
+      ]
+    },
+    "DAE": {
+      "title": "Dance Education",
+      "departments": [
+        "Theatre and Dance"
+      ]
+    },
+    "DAN": {
+      "title": "Dance",
+      "departments": [
+        "Theatre and Dance"
+      ]
+    },
+    "DCP": {
+      "title": "Sustainability and the Built Environment",
+      "departments": [
+        "Sustainability and the Built Environment"
+      ]
+    },
+    "DEN": {
+      "title": "Dentistry",
+      "departments": [
+        "Dentistry - All Departments"
+      ]
+    },
+    "DEP": {
+      "title": "Developmental Psychology",
+      "departments": [
+        "Clinical and Health Psychology",
+        "Psychology"
+      ]
+    },
+    "DIE": {
+      "title": "Dietetics",
+      "departments": [
+        "Food Science and Human Nutrition"
+      ]
+    },
+    "DIG": {
+      "title": "Art and Art History",
+      "departments": [
+        "Art and Art History",
+        "Digital Worlds Institute",
+        "Fine Arts",
+        "Music"
+      ]
+    },
+    "DUT": {
+      "title": "Languages, Literatures and Cultures - Dutch",
+      "departments": [
+        "Languages, Literatures and Cultures - Dutch"
+      ]
+    },
+    "EAB": {
+      "title": "Experimental Analysis of Behavior",
+      "departments": [
+        "Psychology"
+      ]
+    },
+    "EAP": {
+      "title": "Linguistics",
+      "departments": [
+        "Linguistics"
+      ]
+    },
+    "EAS": {
+      "title": "Aerospace Engineering",
+      "departments": [
+        "Mechanical and Aerospace Engineering"
+      ]
+    },
+    "EBD": {
+      "title": "Education - Special Education, School Psychology and Early Childhood Studies",
+      "departments": [
+        "Education - Special Education, School Psychology and Early Childhood Studies"
+      ]
+    },
+    "ECH": {
+      "title": "Engineering: Chemical",
+      "departments": [
+        "Chemical Engineering",
+        "Materials Science and Engineering"
+      ]
+    },
+    "ECO": {
+      "title": "Economics",
+      "departments": [
+        "Economics"
+      ]
+    },
+    "ECP": {
+      "title": "Economics: Problems & Policy",
+      "departments": [
+        "Economics"
+      ]
+    },
+    "ECS": {
+      "title": "Economic Systems & Development",
+      "departments": [
+        "Economics"
+      ]
+    },
+    "EDA": {
+      "title": "Education: Administration",
+      "departments": [
+        "Education - Human Development and Organizational Studies"
+      ]
+    },
+    "EDE": {
+      "title": "Education: Elementary",
+      "departments": [
+        "Education - Teaching and Learning"
+      ]
+    },
+    "EDF": {
+      "title": "Education: Foundations & Policy Studies",
+      "departments": [
+        "Education - Human Development and Organizational Studies",
+        "Education - Special Education, School Psychology and Early Childhood Studies",
+        "Education - Teaching and Learning"
+      ]
+    },
+    "EDG": {
+      "title": "Education: General",
+      "departments": [
+        "Education - Human Development and Organizational Studies",
+        "Education - Teaching and Learning"
+      ]
+    },
+    "EDH": {
+      "title": "Education: Higher",
+      "departments": [
+        "Education - Human Development and Organizational Studies"
+      ]
+    },
+    "EDM": {
+      "title": "Education: Middle School",
+      "departments": [
+        "Education - Teaching and Learning"
+      ]
+    },
+    "EDP": {
+      "title": "Education - Human Development and Organizational Studies",
+      "departments": [
+        "Education - Human Development and Organizational Studies"
+      ]
+    },
+    "EDS": {
+      "title": "Education: Supervision",
+      "departments": [
+        "Education - Human Development and Organizational Studies"
+      ]
+    },
+    "EEC": {
+      "title": "Education: Early Childhood",
+      "departments": [
+        "Education - Special Education, School Psychology and Early Childhood Studies"
+      ]
+    },
+    "EEE": {
+      "title": "Engineering: Electrical",
+      "departments": [
+        "Electrical and Computer Engineering"
+      ]
+    },
+    "EEL": {
+      "title": "Engineering: Electrical",
+      "departments": [
+        "Electrical and Computer Engineering"
+      ]
+    },
+    "EES": {
+      "title": "Environmental Engineering Science",
+      "departments": [
+        "Environmental Engineering Sciences"
+      ]
+    },
+    "EEX": {
+      "title": "Education: Exceptional Child",
+      "departments": [
+        "Education - Special Education, School Psychology and Early Childhood Studies"
+      ]
+    },
+    "EGI": {
+      "title": "Education: Gifted",
+      "departments": [
+        "Education - Special Education, School Psychology and Early Childhood Studies"
+      ]
+    },
+    "EGM": {
+      "title": "Engineering: Mechanics",
+      "departments": [
+        "Civil and Coastal Engineering",
+        "Mechanical and Aerospace Engineering"
+      ]
+    },
+    "EGN": {
+      "title": "Engineering: General",
+      "departments": [
+        "Biomedical Engineering",
+        "Computer and Information Science and Engineering",
+        "Engineering - All Departments"
+      ]
+    },
+    "EGS": {
+      "departments": [
+        "Engineering Leadership"
+      ],
+      "title": "Engineering Studies/Leadership"
+    },
+    "EIN": {
+      "title": "Engineering: Industrial",
+      "departments": [
+        "Industrial and Systems Engineering"
+      ]
+    },
+    "EMA": {
+      "title": "Materials Engineering",
+      "departments": [
+        "Materials Science and Engineering"
+      ]
+    },
+    "EME": {
+      "title": "Education: Technology",
+      "departments": [
+        "Education - Teaching and Learning"
+      ]
+    },
+    "EML": {
+      "title": "Engineering: Mechanical",
+      "departments": [
+        "Mechanical and Aerospace Engineering",
+        "Nuclear and Radiological Engineering"
+      ]
+    },
+    "ENC": {
+      "title": "English Composition",
+      "departments": [
+        "Center for Written and Oral Communication",
+        "English",
+        "Writing Program"
+      ]
+    },
+    "ENG": {
+      "title": "English - General",
+      "departments": [
+        "English",
+        "Environmental Engineering Science",
+        "Writing Program"
+      ]
+    },
+    "ENL": {
+      "title": "English Literature",
+      "departments": [
+        "English"
+      ]
+    },
+    "ENT": {
+      "title": "Finance, Insurance and Real Estate",
+      "departments": [
+        "Finance, Insurance and Real Estate"
+      ]
+    },
+    "ENU": {
+      "title": "Engineering: Nuclear",
+      "departments": [
+        "Microbiology and Cell Science",
+        "Nuclear and Radiological Engineering"
+      ]
+    },
+    "ENV": {
+      "title": "Engineering: Environmental",
+      "departments": [
+        "Civil and Coastal Engineering",
+        "Environmental Engineering Sciences",
+        "Nuclear and Radiological Engineering"
+      ]
+    },
+    "ENY": {
+      "title": "Entomology",
+      "departments": [
+        "Entomology and Nematology"
+      ]
+    },
+    "EOC": {
+      "title": "Engineering & Oceanography",
+      "departments": [
+        "Civil and Coastal Engineering"
+      ]
+    },
+    "EPH": {
+      "title": "Physical & Multiple Handicaps",
+      "departments": [
+        "Education - Special Education, School Psychology and Early Childhood Studies"
+      ]
+    },
+    "ESC": {
+      "title": "Geological Sciences",
+      "departments": [
+        "Geological Sciences"
+      ]
+    },
+    "ESE": {
+      "title": "Education: Secondary",
+      "departments": [
+        "Education - Teaching and Learning"
+      ]
+    },
+    "ESI": {
+      "title": "Industrial Engineering Systems",
+      "departments": [
+        "Industrial and Systems Engineering"
+      ]
+    },
+    "EUH": {
+      "title": "European History",
+      "departments": [
+        "History"
+      ]
+    },
+    "EUS": {
+      "title": "Center for European Studies",
+      "departments": [
+        "Center for European Studies"
+      ]
+    },
+    "EVR": {
+      "title": "Natural Resources",
+      "departments": [
+        "Environmental Horticulture",
+        "Natural Resources and Environment"
+      ]
+    },
+    "EVS": {
+      "title": "Natural Resources",
+      "departments": [
+        "Natural Resources and Environment"
+      ]
+    },
+    "EXP": {
+      "title": "Experimental Psychology",
+      "departments": [
+        "Psychology"
+      ]
+    },
+    "FAS": {
+      "title": "Fisheries & Aquaculture",
+      "departments": [
+        "Fisheries and Aquatic Sciences",
+        "Forest Resources and Conservation"
+      ]
+    },
+    "FES": {
+      "title": "Fire & Emergency Services",
+      "departments": [
+        "Building Construction"
+      ]
+    },
+    "FIL": {
+      "title": "Film",
+      "departments": [
+        "Journalism",
+        "Mass Communication"
+      ]
+    },
+    "FIN": {
+      "title": "Finance",
+      "departments": [
+        "Finance, Insurance and Real Estate"
+      ]
+    },
+    "FLE": {
+      "title": "Education - Teaching and Learning",
+      "departments": [
+        "Education - Teaching and Learning"
+      ]
+    },
+    "FNR": {
+      "title": "Forestry & Natural Resources",
+      "departments": [
+        "Forest Resources and Conservation",
+        "Wildlife Ecology and Conservation"
+      ]
+    },
+    "FOL": {
+      "title": "Spanish and Portuguese - Spanish",
+      "departments": [
+        "Spanish and Portuguese - Spanish",
+        "Languages, Literatures and Cultures - French"
+      ]
+    },
+    "FOR": {
+      "title": "Forestry",
+      "departments": [
+        "Forest Resources and Conservation"
+      ]
+    },
+    "FOS": {
+      "title": "Food Science",
+      "departments": [
+        "Food Science and Human Nutrition"
+      ]
+    },
+    "FOT": {
+      "title": "Latin American Studies",
+      "departments": [
+        "Latin American Studies"
+      ]
+    },
+    "FOW": {
+      "title": "Spanish and Portuguese - Portuguese",
+      "departments": [
+        "Spanish and Portuguese - Portuguese",
+        "Spanish and Portuguese - Spanish",
+        "Languages, Literatures and Cultures - French",
+        "Languages, Literatures and Cultures - Haitian/Creole",
+        "Languages, Literatures and Cultures - Italian"
+      ]
+    },
+    "FRC": {
+      "title": "Fruit Crops",
+      "departments": [
+        "Horticultural Sciences"
+      ]
+    },
+    "FRE": {
+      "title": "French Language",
+      "departments": [
+        "Languages, Literatures and Cultures - French"
+      ]
+    },
+    "FRT": {
+      "title": "Languages, Literatures and Cultures - French",
+      "departments": [
+        "Languages, Literatures and Cultures - French"
+      ]
+    },
+    "FRW": {
+      "title": "Languages, Literatures and Cultures - French",
+      "departments": [
+        "Languages, Literatures and Cultures - French"
+      ]
+    },
+    "FYC": {
+      "title": "Family, Youth & Community",
+      "departments": [
+        "Agriculture",
+        "Family, Youth and Community Sciences"
+      ]
+    },
+    "GEA": {
+      "title": "Geography - Regional",
+      "departments": [
+        "Geography"
+      ]
+    },
+    "GEB": {
+      "title": "General Business",
+      "departments": [
+        "Business Administration - General",
+        "Finance, Insurance and Real Estate"
+      ]
+    },
+    "GEO": {
+      "title": "Geography - Systematic",
+      "departments": [
+        "Geography"
+      ]
+    },
+    "GER": {
+      "title": "German",
+      "departments": [
+        "Languages, Literatures and Cultures - Dutch",
+        "Languages, Literatures and Cultures - German"
+      ]
+    },
+    "GET": {
+      "title": "Languages, Literatures and Cultures - German",
+      "departments": [
+        "Languages, Literatures and Cultures - German"
+      ]
+    },
+    "GEW": {
+      "title": "Languages, Literatures and Cultures - German",
+      "departments": [
+        "Languages, Literatures and Cultures - German"
+      ]
+    },
+    "GEY": {
+      "title": "Gerontology",
+      "departments": [
+        "Gerontology",
+        "Psychology",
+        "Rehabilitation Counseling"
+      ]
+    },
+    "GIS": {
+      "title": "Geography",
+      "departments": [
+        "Geography"
+      ]
+    },
+    "GLY": {
+      "title": "Geology",
+      "departments": [
+        "Biology - Zoology",
+        "Geological Sciences"
+      ]
+    },
+    "GMS": {
+      "title": "Graduate Medical Sciences",
+      "departments": [
+        "Epidemiology Health Policy Research",
+        "Medicine - All Departments",
+        "Veterinary Medical Sciences",
+        "Veterinary Medicine - Physiological Science"
+      ]
+    },
+    "GMT": {
+      "title": "Classics",
+      "departments": [
+        "Classics"
+      ]
+    },
+    "GRA": {
+      "title": "Graphic Design",
+      "departments": [
+        "Art and Art History"
+      ]
+    },
+    "GRE": {
+      "title": "Classical Greek Language",
+      "departments": [
+        "Classics - Greek"
+      ]
+    },
+    "GRK": {
+      "title": "Modern Greek Language",
+      "departments": [
+        "Classics - Greek"
+      ]
+    },
+    "GRW": {
+      "title": "Classics - Greek",
+      "departments": [
+        "Classics - Greek"
+      ]
+    },
+    "HAI": {
+      "title": "Haitian Creole",
+      "departments": [
+        "Languages, Literatures and Cultures - Haitian Creole"
+      ]
+    },
+    "HAT": {
+      "title": "Languages, Literatures and Cultures - Haitian Creole",
+      "departments": [
+        "Languages, Literatures and Cultures - Haitian Creole"
+      ]
+    },
+    "HBR": {
+      "title": "Modern Hebrew Language",
+      "departments": [
+        "Languages, Literatures and Cultures - Hebrew"
+      ]
+    },
+    "HBT": {
+      "title": "Languages, Literatures and Cultures - Hebrew",
+      "departments": [
+        "Languages, Literatures and Cultures - Hebrew"
+      ]
+    },
+    "HFT": {
+      "title": "Tourism, Recreation and Sport Management",
+      "departments": [
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "HIN": {
+      "title": "Languages, Literatures and Cultures - Hindi",
+      "departments": [
+        "Languages, Literatures and Cultures - Hindi"
+      ]
+    },
+    "HIS": {
+      "title": "History - General",
+      "departments": [
+        "Civil and Coastal Engineering",
+        "History"
+      ]
+    },
+    "HLP": {
+      "title": "Health, Leisure & Physical Education",
+      "departments": [
+        "Applied Physiology and Kinesiology",
+        "Health Education and Behavior",
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "HMW": {
+      "title": "Languages, Literatures and Cultures - Hebrew",
+      "departments": [
+        "Languages, Literatures and Cultures - Hebrew"
+      ]
+    },
+    "HNG": {
+      "title": "Center for European Studies",
+      "departments": [
+        "Center for European Studies"
+      ]
+    },
+    "HOS": {
+      "title": "Horticultural Sciences",
+      "departments": [
+        "Agriculture",
+        "Environmental Horticulture",
+        "Horticultural Sciences"
+      ]
+    },
+    "HPS": {
+      "title": "History",
+      "departments": [
+        "History"
+      ]
+    },
+    "HSA": {
+      "title": "Health Services Administration",
+      "departments": [
+        "Economics",
+        "Health Professions",
+        "Health Services Administration"
+      ]
+    },
+    "HSC": {
+      "title": "Health Science",
+      "departments": [
+        "Education - Teaching and Learning",
+        "Health Education and Behavior",
+        "Health Professions",
+        "Medicine - Physician Assistant",
+        "Physical Therapy",
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "HUM": {
+      "title": "Humanities",
+      "departments": [
+        "Art and Art History",
+        "Fine Arts",
+        "Music",
+        "Languages, Literatures and Cultures"
+      ]
+    },
+    "HUN": {
+      "title": "Human Nutrition",
+      "departments": [
+        "Food Science and Human Nutrition"
+      ]
+    },
+    "ICM": {
+      "title": "International Construction Management",
+      "departments": [
+        "Building Construction"
+      ]
+    },
+    "IDC": {
+      "title": "Art and Art History",
+      "departments": [
+        "Art and Art History",
+        "Fine Arts"
+      ]
+    },
+    "IDH": {
+      "title": "Interdisciplinary Honors",
+      "departments": [
+        "Chemistry",
+        "Speech, Language and Hearing Sciences",
+        "Dentistry - General",
+        "History",
+        "Physics",
+        "Sociology, Criminology and Law - Criminology"
+      ]
+    },
+    "IDS": {
+      "title": "Interdisciplinary Studies",
+      "departments": [
+        "Career Development Program",
+        "Languages, Literatures and Cultures",
+        "Liberal Arts and Sciences - Interdisciplinary Studies"
+      ]
+    },
+    "IND": {
+      "title": "Interior Design",
+      "departments": [
+        "Interior Design"
+      ]
+    },
+    "INP": {
+      "title": "Correspondence Study",
+      "departments": [
+        "Correspondence Study"
+      ]
+    },
+    "INR": {
+      "title": "International Relations",
+      "departments": [
+        "Political Science"
+      ]
+    },
+    "IPM": {
+      "title": "Agronomy",
+      "departments": [
+        "Agronomy",
+        "Pest Management - Plant Protection"
+      ]
+    },
+    "ISC": {
+      "title": "Integrated Science",
+      "departments": [
+        "Physics - Interdisciplinary Sciences"
+      ]
+    },
+    "ISM": {
+      "title": "Information Systems Management",
+      "departments": [
+        "Information Systems and Operations Management"
+      ]
+    },
+    "ISS": {
+      "title": "Liberal Arts and Sciences - Interdisciplinary Studies",
+      "departments": [
+        "Liberal Arts and Sciences - Interdisciplinary Studies"
+      ]
+    },
+    "ITA": {
+      "title": "Italian Language",
+      "departments": [
+        "Languages, Literatures and Cultures - Italian"
+      ]
+    },
+    "ITT": {
+      "title": "Languages, Literatures and Cultures - Italian",
+      "departments": [
+        "Languages, Literatures and Cultures - Italian"
+      ]
+    },
+    "ITW": {
+      "title": "Languages, Literatures and Cultures - Italian",
+      "departments": [
+        "Languages, Literatures and Cultures - Italian"
+      ]
+    },
+    "JOU": {
+      "title": "Journalism",
+      "departments": [
+        "Journalism",
+        "Mass Communication"
+      ]
+    },
+    "JPN": {
+      "title": "Japanese Language",
+      "departments": [
+        "Languages, Literatures and Cultures - Japanese"
+      ]
+    },
+    "JPT": {
+      "title": "Languages, Literatures and Cultures - Japanese",
+      "departments": [
+        "Languages, Literatures and Cultures - Japanese"
+      ]
+    },
+    "JPW": {
+      "title": "Languages, Literatures and Cultures - Japanese",
+      "departments": [
+        "Languages, Literatures and Cultures - Japanese"
+      ]
+    },
+    "JST": {
+      "title": "Judaic Studies",
+      "departments": [
+        "Jewish Studies"
+      ]
+    },
+    "KOR": {
+      "title": "Languages, Literatures and Cultures - Korean",
+      "departments": [
+        "Languages, Literatures and Cultures - Korean"
+      ]
+    },
+    "LAA": {
+      "title": "Landscape Architecture",
+      "departments": [
+        "Landscape Architecture"
+      ]
+    },
+    "LAE": {
+      "title": "Language Arts & English Education",
+      "departments": [
+        "Education - Teaching and Learning",
+        "English"
+      ]
+    },
+    "LAH": {
+      "title": "Latin American History",
+      "departments": [
+        "History"
+      ]
+    },
+    "LAS": {
+      "title": "Latin American Studies",
+      "departments": [
+        "Latin American Studies"
+      ]
+    },
+    "LAT": {
+      "title": "Latin",
+      "departments": [
+        "Classics - Latin"
+      ]
+    },
+    "LAW": {
+      "title": "Environmental Engineering Science",
+      "departments": [
+        "Environmental Engineering Science",
+        "Law"
+      ]
+    },
+    "LDE": {
+      "title": "Environmental Horticulture",
+      "departments": [
+        "Environmental Horticulture"
+      ]
+    },
+    "LEI": {
+      "title": "Leisure",
+      "departments": [
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "LGL": {
+      "title": "African Studies",
+      "departments": [
+        "African Studies",
+        "Languages, Literatures and Cultures"
+      ]
+    },
+    "LIN": {
+      "title": "Linguistics",
+      "departments": [
+        "Speech, Language and Hearing Sciences",
+        "Education - Special Education, School Psychology and Early Childhood Studies",
+        "English",
+        "Linguistics"
+      ]
+    },
+    "LIT": {
+      "title": "Literature",
+      "departments": [
+        "English",
+        "Jewish Studies",
+        "Religion"
+      ]
+    },
+    "LNW": {
+      "title": "Classics - Latin",
+      "departments": [
+        "Classics - Latin"
+      ]
+    },
+    "MAA": {
+      "title": "Mathematics: Analysis",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MAC": {
+      "title": "Math: Calculus & Pre-calculus",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MAD": {
+      "title": "Mathematics: Discrete",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MAE": {
+      "title": "Mathematics Education",
+      "departments": [
+        "Education - Teaching and Learning",
+        "Mathematics"
+      ]
+    },
+    "MAN": {
+      "title": "Management",
+      "departments": [
+        "Finance, Insurance and Real Estate",
+        "Information Systems and Operations Management",
+        "Management"
+      ]
+    },
+    "MAP": {
+      "title": "Mathematics: Applied",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MAR": {
+      "title": "Marketing",
+      "departments": [
+        "Marketing"
+      ]
+    },
+    "MAS": {
+      "title": "Mathematics: Algebraic Structures",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MAT": {
+      "title": "Mathematics",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MCB": {
+      "title": "Microbiology",
+      "departments": [
+        "Microbiology and Cell Science",
+        "Pharmacy - Pharmacodynamics"
+      ]
+    },
+    "MDU": {
+      "departments": [
+        "Medicine"
+      ],
+      "title": "Medicine"
+    },
+    "MED": {
+      "title": "Medicine",
+      "departments": [
+        "Medicine"
+      ]
+    },
+    "MEL": {
+      "title": "Epidemiology Health Policy Research",
+      "departments": [
+        "Epidemiology Health Policy Research",
+        "Medicine - All Departments"
+      ]
+    },
+    "MEM": {
+      "title": "History",
+      "departments": [
+        "History",
+        "Medieval and Early Modern Studies",
+        "Languages, Literatures and Cultures - German"
+      ]
+    },
+    "MET": {
+      "title": "Meteorology",
+      "departments": [
+        "Atmospheric Sciences",
+        "Geography",
+        "Physics"
+      ]
+    },
+    "MGF": {
+      "title": "Math: General & Finite",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MHF": {
+      "title": "Math: History & Foundations",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MHS": {
+      "title": "Education - Human Development and Organizational Studies",
+      "departments": [
+        "Education - Human Development and Organizational Studies",
+        "Rehabilitation Counseling"
+      ]
+    },
+    "MMC": {
+      "title": "Mass Media Communication",
+      "departments": [
+        "Journalism",
+        "Mass Communication"
+      ]
+    },
+    "MSL": {
+      "title": "Military Science - Army",
+      "departments": [
+        "Military Science - Army"
+      ]
+    },
+    "MTG": {
+      "title": "Math: Topology & Geometry",
+      "departments": [
+        "Mathematics"
+      ]
+    },
+    "MUC": {
+      "title": "Music: Composition",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUE": {
+      "title": "Music Education",
+      "departments": [
+        "Education - Teaching and Learning",
+        "Music"
+      ]
+    },
+    "MUG": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUH": {
+      "title": "Music: History/Musicology",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUL": {
+      "title": "Music: Music Language",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUN": {
+      "title": "Music: Music Ensembles",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUO": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUR": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUS": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MUT": {
+      "title": "Music: Theory",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MVB": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MVK": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MVO": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MVP": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MVS": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "MVV": {
+      "title": "Music",
+      "departments": [
+        "Music",
+        "Theatre and Dance"
+      ]
+    },
+    "MVW": {
+      "title": "Music",
+      "departments": [
+        "Music"
+      ]
+    },
+    "NEM": {
+      "title": "Nematology",
+      "departments": [
+        "Entomology and Nematology"
+      ]
+    },
+    "NGR": {
+      "title": "Nursing - All Departments",
+      "departments": [
+        "Nursing - All Departments"
+      ]
+    },
+    "NSC": {
+      "title": "Military Science - Navy",
+      "departments": [
+        "Military Science - Navy"
+      ]
+    },
+    "NUR": {
+      "title": "Nursing",
+      "departments": [
+        "Nursing - All Departments"
+      ]
+    },
+    "OCE": {
+      "title": "Oceanography",
+      "departments": [
+        "Civil and Coastal Engineering",
+        "Geological Sciences"
+      ]
+    },
+    "OCP": {
+      "title": "Civil and Coastal Engineering",
+      "departments": [
+        "Civil and Coastal Engineering"
+      ]
+    },
+    "ORH": {
+      "title": "Ornamental Horticulture",
+      "departments": [
+        "Environmental Horticulture"
+      ]
+    },
+    "ORI": {
+      "title": "Theatre and Dance",
+      "departments": [
+        "Theatre and Dance"
+      ]
+    },
+    "OTH": {
+      "title": "Occupational Therapy",
+      "departments": [
+        "Health Professions",
+        "Occupational Therapy"
+      ]
+    },
+    "PAD": {
+      "title": "Public Administration",
+      "departments": [
+        "Political Science"
+      ]
+    },
+    "PAS": {
+      "title": "Physician Assistant",
+      "departments": [
+        "Medicine - Physician Assistant"
+      ]
+    },
+    "PCB": {
+      "title": "Process/Cell Biology",
+      "departments": [
+        "Agronomy",
+        "Biology - Botany",
+        "Biology - Zoology",
+        "Forest Resources and Conservation",
+        "Geological Sciences",
+        "Horticultural Sciences",
+        "Microbiology and Cell Science",
+        "Natural Resources and Environment"
+      ]
+    },
+    "PCO": {
+      "title": "Psychology for Counseling",
+      "departments": [
+        "Education - Human Development and Organizational Studies",
+        "Psychology"
+      ]
+    },
+    "PCY": {
+      "title": "Art and Art History",
+      "departments": [
+        "Art and Art History"
+      ]
+    },
+    "PEL": {
+      "title": "Phys. Ed. Activities",
+      "departments": [
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "PEM": {
+      "title": "Phys. Ed. Activities",
+      "departments": [
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "PEN": {
+      "title": "Tourism, Recreation and Sport Management",
+      "departments": [
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "PEO": {
+      "title": "Tourism, Recreation and Sport Management",
+      "departments": [
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "PEQ": {
+      "title": "Applied Physiology and Kinesiology",
+      "departments": [
+        "Applied Physiology and Kinesiology",
+        "Health Education and Behavior",
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "PET": {
+      "title": "Phys. Ed. Theory",
+      "departments": [
+        "Applied Physiology and Kinesiology",
+        "Education - Teaching and Learning",
+        "Health Education and Behavior",
+        "Sport and Fitness",
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "PGY": {
+      "title": "Photography",
+      "departments": [
+        "Art and Art History",
+        "Journalism"
+      ]
+    },
+    "PHA": {
+      "title": "Pharmacy",
+      "departments": [
+        "Medicine - Pharmacology",
+        "Pharmacy - Pharmaceuticals",
+        "Pharmacy - Pharmacodynamics"
+      ]
+    },
+    "PHC": {
+      "title": "Public Health Care",
+      "departments": [
+        "Clinical and Health Psychology",
+        "Epidemiology and Biostatistics",
+        "Health Education and Behavior",
+        "Health Professions",
+        "Health Services Administration",
+        "Public Health"
+      ]
+    },
+    "PHH": {
+      "title": "Philosophy",
+      "departments": [
+        "Philosophy"
+      ]
+    },
+    "PHI": {
+      "title": "Philosophy",
+      "departments": [
+        "Philosophy",
+        "Religion"
+      ]
+    },
+    "PHM": {
+      "title": "Philosophy",
+      "departments": [
+        "Philosophy"
+      ]
+    },
+    "PHP": {
+      "title": "Philosophy",
+      "departments": [
+        "Philosophy"
+      ]
+    },
+    "PHT": {
+      "title": "Physical Therapy",
+      "departments": [
+        "Physical Therapy"
+      ]
+    },
+    "PHY": {
+      "title": "Physics",
+      "departments": [
+        "Physics"
+      ]
+    },
+    "PHZ": {
+      "title": "Physics",
+      "departments": [
+        "Physics"
+      ]
+    },
+    "PKG": {
+      "title": "Packaging Science",
+      "departments": [
+        "Packaging Science"
+      ]
+    },
+    "PLP": {
+      "title": "Plant Pathology",
+      "departments": [
+        "Biology - Botany",
+        "Plant Pathology"
+      ]
+    },
+    "PLS": {
+      "title": "Plant Science",
+      "departments": [
+        "Agronomy",
+        "Environmental Horticulture"
+      ]
+    },
+    "PLT": {
+      "title": "Languages, Literatures and Cultures - Polish",
+      "departments": [
+        "Languages, Literatures and Cultures - Polish"
+      ]
+    },
+    "PLW": {
+      "title": "Languages, Literatures and Cultures - Polish",
+      "departments": [
+        "Languages, Literatures and Cultures - Polish"
+      ]
+    },
+    "PMA": {
+      "title": "Entomology and Nematology",
+      "departments": [
+        "Entomology and Nematology",
+        "Pest Management - Plant Protection"
+      ]
+    },
+    "POL": {
+      "title": "Languages, Literatures and Cultures - Polish",
+      "departments": [
+        "Languages, Literatures and Cultures - Polish"
+      ]
+    },
+    "POR": {
+      "title": "Portuguese Language",
+      "departments": [
+        "Spanish and Portuguese - Portuguese"
+      ]
+    },
+    "POS": {
+      "title": "Political Science",
+      "departments": [
+        "Latin American Studies",
+        "Political Science",
+        "Religion"
+      ]
+    },
+    "POT": {
+      "title": "Political Science",
+      "departments": [
+        "Political Science"
+      ]
+    },
+    "POW": {
+      "title": "Spanish and Portuguese - Portuguese",
+      "departments": [
+        "Spanish and Portuguese - Portuguese"
+      ]
+    },
+    "PPE": {
+      "title": "Psychology in Personality",
+      "departments": [
+        "Psychology"
+      ]
+    },
+    "PRT": {
+      "title": "Spanish and Portuguese - Portuguese",
+      "departments": [
+        "Spanish and Portuguese - Portuguese"
+      ]
+    },
+    "PSB": {
+      "title": "Psychology",
+      "departments": [
+        "Psychology"
+      ]
+    },
+    "PSY": {
+      "title": "Psychology",
+      "departments": [
+        "Clinical and Health Psychology",
+        "Psychology"
+      ]
+    },
+    "PUP": {
+      "title": "Public Policy",
+      "departments": [
+        "Political Science"
+      ]
+    },
+    "PUR": {
+      "title": "Public Relations",
+      "departments": [
+        "Mass Communication",
+        "Public Relations"
+      ]
+    },
+    "QMB": {
+      "title": "Quantitative Methods in Business",
+      "departments": [
+        "Information Systems and Operations Management"
+      ]
+    },
+    "RCS": {
+      "title": "Health Professions",
+      "departments": [
+        "Health Professions",
+        "Rehabilitation Counseling"
+      ]
+    },
+    "RED": {
+      "title": "Education - Special Education, School Psychology and Early Childhood Studies",
+      "departments": [
+        "Education - Special Education, School Psychology and Early Childhood Studies",
+        "Education - Teaching and Learning",
+        "English",
+        "Writing Program"
+      ]
+    },
+    "REE": {
+      "title": "Real Estate",
+      "departments": [
+        "Finance, Insurance and Real Estate"
+      ]
+    },
+    "REL": {
+      "title": "Religion",
+      "departments": [
+        "Jewish Studies",
+        "Philosophy",
+        "Religion"
+      ]
+    },
+    "RMI": {
+      "title": "Risk Management & Insurance",
+      "departments": [
+        "Finance, Insurance and Real Estate"
+      ]
+    },
+    "RSD": {
+      "title": "Health Professions",
+      "departments": [
+        "Health Professions",
+        "Occupational Therapy",
+        "Rehabilitation Science"
+      ]
+    },
+    "RTV": {
+      "title": "Radio-Television",
+      "departments": [
+        "Journalism",
+        "Mass Communication",
+        "Telecommunication"
+      ]
+    },
+    "RUS": {
+      "title": "Russian Language",
+      "departments": [
+        "Languages, Literatures and Cultures - Russian"
+      ]
+    },
+    "RUT": {
+      "title": "Languages, Literatures and Cultures - Russian",
+      "departments": [
+        "Languages, Literatures and Cultures - Russian"
+      ]
+    },
+    "RUW": {
+      "title": "Languages, Literatures and Cultures - Russian",
+      "departments": [
+        "Languages, Literatures and Cultures - Russian"
+      ]
+    },
+    "SCA": {
+      "title": "Languages, Literatures and Cultures - Swedish",
+      "departments": [
+        "Languages, Literatures and Cultures - Swedish"
+      ]
+    },
+    "SCE": {
+      "title": "Education - Teaching and Learning",
+      "departments": [
+        "Education - Teaching and Learning"
+      ]
+    },
+    "SCT": {
+      "title": "Languages, Literatures and Cultures - Swedish",
+      "departments": [
+        "Languages, Literatures and Cultures - Swedish"
+      ]
+    },
+    "SDS": {
+      "title": "Education - Human Development and Organizational Studies",
+      "departments": [
+        "Education - Human Development and Organizational Studies",
+        "Rehabilitation Counseling"
+      ]
+    },
+    "SLS": {
+      "title": "Career Development Program",
+      "departments": [
+        "Career Development Program",
+        "First Year Florida"
+      ]
+    },
+    "SOP": {
+      "title": "Social Psychology",
+      "departments": [
+        "Psychology"
+      ]
+    },
+    "SPA": {
+      "title": "Speech Pathology & Audiology",
+      "departments": [
+        "Speech, Language and Hearing Sciences",
+        "Rehabilitation Science"
+      ]
+    },
+    "SPC": {
+      "title": "Speech Communication",
+      "departments": [
+        "Communication Sciences and Disorders",
+        "English",
+        "Written and Oral Communication"
+      ]
+    },
+    "SPM": {
+      "title": "Applied Physiology and Kinesiology",
+      "departments": [
+        "Applied Physiology and Kinesiology",
+        "Tourism, Recreation and Sport Management"
+      ]
+    },
+    "SPN": {
+      "title": "Spanish Language",
+      "departments": [
+        "Spanish and Portuguese - Spanish"
+      ]
+    },
+    "SPS": {
+      "title": "School Psychology",
+      "departments": [
+        "Education - Counselor Education",
+        "Education - Special Education, School Psychology and Early Childhood Studies"
+      ]
+    },
+    "SPT": {
+      "title": "Spanish and Portuguese - Spanish",
+      "departments": [
+        "Spanish and Portuguese - Spanish"
+      ]
+    },
+    "SPW": {
+      "title": "Spanish and Portuguese - Spanish",
+      "departments": [
+        "Spanish and Portuguese - Spanish"
+      ]
+    },
+    "SRK": {
+      "title": "Religion",
+      "departments": [
+        "Religion"
+      ]
+    },
+    "SSA": {
+      "title": "African Studies",
+      "departments": [
+        "African Studies",
+        "Languages, Literatures and Cultures",
+        "Languages, Literatures and Cultures - Yoruba"
+      ]
+    },
+    "SSE": {
+      "title": "Education - Teaching and Learning",
+      "departments": [
+        "Education - Teaching and Learning"
+      ]
+    },
+    "SST": {
+      "title": "Languages, Literatures and Cultures",
+      "departments": [
+        "Languages, Literatures and Cultures"
+      ]
+    },
+    "SSW": {
+      "title": "Languages, Literatures and Cultures",
+      "departments": [
+        "Languages, Literatures and Cultures",
+        "Languages, Literatures and Cultures - Swahili"
+      ]
+    },
+    "STA": {
+      "title": "Statistics",
+      "departments": [
+        "Epidemiology Health Policy Research",
+        "Public Health",
+        "Statistics",
+        "Statistics - CALS"
+      ]
+    },
+    "SUR": {
+      "title": "Surveying",
+      "departments": [
+        "Forest Resources and Conservation - Geomatics"
+      ]
+    },
+    "SWA": {
+      "title": "African Studies",
+      "departments": [
+        "African Studies",
+        "Languages, Literatures and Cultures - Swahili"
+      ]
+    },
+    "SWS": {
+      "title": "Soil and Water Sciences",
+      "departments": [
+        "Soil and Water Sciences"
+      ]
+    },
+    "SWW": {
+      "title": "Languages, Literatures and Cultures - Swahili",
+      "departments": [
+        "Languages, Literatures and Cultures - Swahili"
+      ]
+    },
+    "SYA": {
+      "title": "Sociological Analysis",
+      "departments": [
+        "Agriculture",
+        "Sociology, Criminology and Law - Sociology"
+      ]
+    },
+    "SYD": {
+      "title": "Sociology of Demography",
+      "departments": [
+        "Sociology, Criminology and Law - Sociology"
+      ]
+    },
+    "SYG": {
+      "title": "General Sociology",
+      "departments": [
+        "Agriculture",
+        "Sociology, Criminology and Law - Sociology"
+      ]
+    },
+    "SYO": {
+      "title": "Social Organization",
+      "departments": [
+        "Religion",
+        "Sociology, Criminology and Law - Sociology"
+      ]
+    },
+    "SYP": {
+      "title": "Social Processes",
+      "departments": [
+        "Sociology, Criminology and Law - Sociology"
+      ]
+    },
+    "TAX": {
+      "title": "Taxation",
+      "departments": [
+        "Accounting"
+      ]
+    },
+    "THE": {
+      "title": "Theatre",
+      "departments": [
+        "Theatre and Dance"
+      ]
+    },
+    "TPA": {
+      "title": "Theatre and Dance",
+      "departments": [
+        "Theatre and Dance"
+      ]
+    },
+    "TPP": {
+      "title": "Theatre and Dance",
+      "departments": [
+        "Theatre and Dance"
+      ]
+    },
+    "TSL": {
+      "title": "Teaching English as a Second Language",
+      "departments": [
+        "Education - Teaching and Learning",
+        "Linguistics"
+      ]
+    },
+    "TTE": {
+      "title": "Civil and Coastal Engineering",
+      "departments": [
+        "Civil and Coastal Engineering"
+      ]
+    },
+    "TUR": {
+      "title": "Center for European Studies",
+      "departments": [
+        "Center for European Studies"
+      ]
+    },
+    "URP": {
+      "title": "Urban & Regional Planning",
+      "departments": [
+        "Urban and Regional Planning"
+      ]
+    },
+    "VEC": {
+      "title": "Horticultural Sciences",
+      "departments": [
+        "Horticultural Sciences"
+      ]
+    },
+    "VEM": {
+      "title": "Veterinary Medicine",
+      "departments": [
+        "Veterinary Medicine - Infectious Disease",
+        "Veterinary Medicine - Large Animal Clinical Sciences",
+        "Veterinary Medicine - Physiological Sciences",
+        "Veterinary Medicine - Small Animal Clinical Sciences"
+      ]
+    },
+    "VME": {
+      "title": "Veterinary Medicine",
+      "departments": [
+        "Animal Sciences",
+        "Medicine",
+        "Public Health",
+        "Veterinary Medicine - General",
+        "Veterinary Medicine - Infectious Disease",
+        "Veterinary Medicine - Large Animal Clinical Sciences",
+        "Veterinary Medicine - Pathobiology",
+        "Veterinary Medicine - Physiological Sciences",
+        "Veterinary Medical Sciences"
+      ]
+    },
+    "VTN": {
+      "title": "African and Asian Languages and Literatures - Vietnamese",
+      "departments": [
+        "African and Asian Languages and Literatures - Vietnamese"
+      ]
+    },
+    "WIS": {
+      "title": "Wildlife Ecology & Conservation",
+      "departments": [
+        "Forest Resources and Conservation",
+        "Wildlife Ecology and Conservation"
+      ]
+    },
+    "WOH": {
+      "title": "World History",
+      "departments": [
+        "History"
+      ]
+    },
+    "WOL": {
+      "title": "African Studies",
+      "departments": [
+        "African Studies",
+        "Languages, Literatures and Cultures - Wolof"
+      ]
+    },
+    "WST": {
+      "title": "Women's Studies",
+      "departments": [
+        "Women's Studies"
+      ]
+    },
+    "XHO": {
+      "title": "African Studies",
+      "departments": [
+        "African Studies",
+        "Languages, Literatures and Cultures - Xhosa"
+      ]
+    },
+    "YOR": {
+      "title": "Languages, Literatures and Cultures - Yoruba",
+      "departments": [
+        "Languages, Literatures and Cultures - Yoruba"
+      ]
+    },
+    "YOT": {
+      "title": "Languages, Literatures and Cultures - Yoruba",
+      "departments": [
+        "Languages, Literatures and Cultures - Yoruba"
+      ]
+    },
+    "YRW": {
+      "title": "Languages, Literatures and Cultures - Yoruba",
+      "departments": [
+        "Languages, Literatures and Cultures - Yoruba"
+      ]
+    },
+    "ZOO": {
+      "title": "Zoology",
+      "departments": [
+        "Biology - Zoology",
+        "Microbiology and Cell Science"
+      ]
+    }
+  }
+}

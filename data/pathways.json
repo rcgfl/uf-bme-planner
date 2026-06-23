@@ -1,0 +1,365 @@
+{
+  "schemaVersion": "2.1",
+  "source": "UF BME Department",
+  "lastUpdated": "2026-06",
+  "description": "UF BME thematic pathway definitions. Themes are the primary browsing entry point; each theme has its own curated elective course pool plus references to validated minors/certificates (pathways) and ones pending validation. Course data (including provisional entries) lives entirely in approved-electives.json now \u2014 this file only references course IDs by string, never defines what a course is. Verify official requirements before advising.",
+  "themes": {
+    "biomaterials_and_regenerative_medicine": {
+      "id": "biomaterials_and_regenerative_medicine",
+      "title": "Biomaterials & Regenerative Medicine",
+      "description": "For students who are interested in developing advanced materials for nanoparticles, microfabricated devices, controlled release systems, vaccines, and tissue regeneration scaffolds.",
+      "electiveCourses": [
+        "APK2105C",
+        "BCH4024",
+        "EMA3010",
+        "EMA3011",
+        "EMA3050",
+        "EMA3066",
+        "EMA3513C",
+        "EMA4061",
+        "EMA4061L",
+        "EMA4161",
+        "HSC4507",
+        "PCB3063",
+        "PCB4522"
+      ],
+      "electiveSpaceCap": 12,
+      "minorsAndCertificates": [
+        {
+          "title": "Materials Science and Engineering Minor",
+          "department": "Materials Science and Engineering",
+          "status": "validated",
+          "pathwayId": "mse_minor"
+        },
+        {
+          "title": "Biomolecular Engineering Minor",
+          "department": "Chemical Engineering",
+          "status": "validated",
+          "pathwayId": "biomolecular_engineering_minor"
+        }
+      ],
+      "notes": []
+    },
+    "biomechanics_bionics": {
+      "id": "biomechanics_bionics",
+      "title": "Biomechanics & Bionics",
+      "description": "For students who are interested in applying mechanics to improve diagnostics, devices, and models, while integrating robotics and bioengineering technologies with life sciences to advance bionics.",
+      "electiveCourses": [
+        "APK2100C",
+        "APK2105C",
+        "APK3220C",
+        "BME3219",
+        "BME3234",
+        "EGM4585",
+        "EGM4590",
+        "EGM4592",
+        "EGM4853",
+        "EIN4242C",
+        "EML2023",
+        "EML4292"
+      ],
+      "electiveSpaceCap": 12,
+      "minorsAndCertificates": [
+        {
+          "title": "Biomechanics Minor",
+          "department": "Mechanical & Aerospace Engineering",
+          "status": "validated",
+          "pathwayId": "biomechanics_minor"
+        }
+      ],
+      "notes": []
+    },
+    "biomedical_imaging": {
+      "id": "biomedical_imaging",
+      "title": "Biomedical Imaging & Applications",
+      "description": "For students who are interested in creating tools that allow physicians to see inside the body for accurate diagnosis and treatment. Applications range from cancer detection and brain activity monitoring to tracking cells in gene therapy. Research includes both conventional (x-ray, ultrasound, CT, MRI) and emerging modalities (optical imaging, functional MRI, PET, contrast-enhanced ultrasound).",
+      "electiveCourses": [
+        "EEL3872",
+        "ENU4605"
+      ],
+      "electiveSpaceCap": 12,
+      "minorsAndCertificates": [
+        {
+          "title": "Health Professions Minor",
+          "department": "Health Science",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "Nuclear and Radiological Engineering Minor",
+          "department": "Material Science and Engineering",
+          "status": "pending_validation",
+          "pathwayId": null
+        }
+      ],
+      "notes": []
+    },
+    "engineering_design_innovation": {
+      "id": "engineering_design_innovation",
+      "title": "Engineering Design, Innovation, & Entrepreneurship",
+      "description": "For students who are interested in developing product and service solutions while exploring ventures applicable to both the for-profit sector and initiatives focused on social impact and the public good.",
+      "electiveCourses": [
+        "BME4931",
+        "EGN4641",
+        "EGN4643",
+        "EGS4038",
+        "EGS4100",
+        "EGS4625",
+        "EGS4680",
+        "EIN3354",
+        "EML2023"
+      ],
+      "electiveSpaceCap": 12,
+      "minorsAndCertificates": [
+        {
+          "title": "Business Administration Minor",
+          "department": "Heavener School of Business",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "Engineering Innovation Certificate",
+          "department": "Engineering Innovation Institute",
+          "status": "validated",
+          "pathwayId": "engineering_innovation_certificate"
+        },
+        {
+          "title": "Engineering Innovation Minor",
+          "department": "Engineering Innovation Institute",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "Engineering Leadership Certificate",
+          "department": "Engineering Leadership Institute",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "Engineering Project Management Certificate",
+          "department": "Herbert Wertheim College of Engineering",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "Sales Engineering Minor",
+          "department": "Industrial & Systems Engineering",
+          "status": "pending_validation",
+          "pathwayId": null
+        }
+      ],
+      "notes": []
+    },
+    "modeling_data_science": {
+      "id": "modeling_data_science",
+      "title": "Modeling & Biomedical Data Science",
+      "description": "For students who are interested in using computational methods, algorithms, and IT to process and analyze biological and medical data across multiple scales.",
+      "electiveCourses": [
+        "BME4760",
+        "CDA3101",
+        "COP3530",
+        "COP4600",
+        "COT3100",
+        "EEL3872",
+        "PCB3063"
+      ],
+      "electiveSpaceCap": 12,
+      "minorsAndCertificates": [
+        {
+          "title": "Artificial Intelligence Fundamentals and Applications Certificate",
+          "department": "College of Engineering",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "AI in Public Health and Healthcare Certificate",
+          "department": "College of Public Health and Health Professions",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "Bioinformatics Minor",
+          "department": "Microbiology & Cell Science",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "Statistics Minor",
+          "department": "Statistics",
+          "status": "pending_validation",
+          "pathwayId": null
+        },
+        {
+          "title": "CISE Minor",
+          "department": "Computer & Information Science & Engineering",
+          "status": "pending_validation",
+          "pathwayId": null
+        }
+      ],
+      "notes": []
+    }
+  },
+  "pathways": {
+    "biomechanics_minor": {
+      "title": "Biomechanics Minor",
+      "type": "minor",
+      "totalCredits": 15,
+      "electiveSpaceCap": 12,
+      "sourceLabel": "pending validation theme reference",
+      "majorSatisfiedPrereqs": [
+        "BME4409",
+        "BME4632"
+      ],
+      "groups": [
+        {
+          "id": "group_1",
+          "label": "Choose 3",
+          "type": "choose",
+          "courses": [
+            "BME3219",
+            "BME3234",
+            "EGM4585",
+            "EGM4590",
+            "EGM4592",
+            "EGM4853",
+            "EML4292"
+          ],
+          "count": 3
+        }
+      ],
+      "notes": [
+        "Created from theme-listed minor: Biomechanics & Bionics. Verify official requirements before advising."
+      ],
+      "id": "biomechanics_minor"
+    },
+    "biomolecular_engineering_minor": {
+      "id": "biomolecular_engineering_minor",
+      "type": "minor",
+      "title": "Biomolecular Engineering Minor",
+      "totalCredits": 9,
+      "electiveSpaceCap": 12,
+      "majorSatisfiedPrereqs": [
+        "CHM2045",
+        "CHM2046",
+        "MAC2311",
+        "MAC2312",
+        "MAC2313",
+        "MAP2302",
+        "PHY2048",
+        "PHY2049"
+      ],
+      "groups": [
+        {
+          "id": "biomol_select_one",
+          "label": "Select one",
+          "type": "choose",
+          "count": 1,
+          "courses": [
+            "BCH4024",
+            "BME2402",
+            "CHM3218",
+            "ECH3023",
+            "ECH4742"
+          ]
+        },
+        {
+          "id": "biomol_select_two",
+          "label": "Select two",
+          "type": "choose",
+          "count": 2,
+          "courses": [
+            "ABE3000C",
+            "ABE4033",
+            "ABE4662",
+            "ABE5442",
+            "BME4220",
+            "BME4321",
+            "BME4648",
+            "BME4931",
+            "BME6330",
+            "BSC4467",
+            "ECH4744",
+            "ECH4905",
+            "EGM4585",
+            "EGN4912"
+          ]
+        }
+      ],
+      "notes": [
+        "Prerequisites for minor application are BME core/preprofessional courses and are treated as satisfied for pathway-warning purposes only.",
+        "BME2402 is not treated as BME-major-satisfied."
+      ],
+      "sourceLabel": "proof-of-concept"
+    },
+    "engineering_innovation_certificate": {
+      "id": "engineering_innovation_certificate",
+      "type": "certificate",
+      "title": "Engineering Innovation Certificate",
+      "totalCredits": 9,
+      "electiveSpaceCap": 12,
+      "majorSatisfiedPrereqs": [],
+      "groups": [
+        {
+          "id": "ei_required",
+          "label": "Required course",
+          "type": "all",
+          "courses": [
+            "EGN4643"
+          ]
+        },
+        {
+          "id": "ei_choose2",
+          "label": "Choose 2",
+          "type": "choose",
+          "count": 2,
+          "courses": [
+            "EGN4641",
+            "EGS4038",
+            "EGS4100",
+            "EGS4625"
+          ]
+        }
+      ],
+      "notes": [
+        "9-credit certificate proof of concept."
+      ],
+      "sourceLabel": "proof-of-concept"
+    },
+    "mse_minor": {
+      "id": "mse_minor",
+      "type": "minor",
+      "title": "Materials Science and Engineering Minor",
+      "totalCredits": 15,
+      "electiveSpaceCap": 12,
+      "majorSatisfiedPrereqs": [],
+      "groups": [
+        {
+          "id": "mse_required",
+          "label": "Required course",
+          "type": "all",
+          "courses": [
+            "EMA3010"
+          ]
+        },
+        {
+          "id": "mse_choose3",
+          "label": "Choose 3",
+          "type": "choose",
+          "count": 3,
+          "courses": [
+            "EMA3011",
+            "EMA3050",
+            "EMA3066",
+            "EMA4061",
+            "EMA4061L",
+            "EMA4161"
+          ]
+        }
+      ],
+      "notes": [
+        "15-credit proof-of-concept minor. EMA courses intentionally overlap with Biomaterials specialization."
+      ],
+      "sourceLabel": "proof-of-concept"
+    }
+  }
+}
