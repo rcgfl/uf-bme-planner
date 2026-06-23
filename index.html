@@ -175,8 +175,8 @@ input[type="checkbox"]{cursor:pointer}
 .import-ignored{color:#556}
 
 /* ── Pin icon button ── */
-.pin-btn{border:0;background:transparent;padding:1px 4px;margin:0;cursor:pointer;font-size:13px;opacity:.6;line-height:1}
-.pin-btn:hover{opacity:.7}
+.pin-btn{border:0;background:transparent;padding:1px 4px;margin:0;cursor:pointer;font-size:13px;opacity:.75;line-height:1}
+.pin-btn:hover{opacity:.88}
 .pin-btn.pinned{opacity:1}
 
 /* ── Compact layout (default; Spacious view disables these rules) ── */
@@ -503,7 +503,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.1';
+const PLANNER_VERSION = '2.9.3';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2078,6 +2078,37 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          actually clears before considering further adjustment (e.g.
 //          dropping opacity-based dimming for an outline-vs-filled icon
 //          approach instead, if .6 isn't enough on its own).
+
+// 2.9.2 — Cosmetic: re-ran WAVE post-deploy. .6 opacity (2.9.1) brought
+//          .pin-btn's contrast to 4.4:1 — closer, but still short of AA's
+//          4.5:1 normal-text threshold (icon is 13px, not bold, so it
+//          doesn't qualify for the more lenient 3:1 large-text bar;
+//          worth noting AAA's 7:1 isn't actually the relevant bar here,
+//          AA's 4.5:1 is, and 4.4 was just under that, not just under the
+//          stricter tier). Raised default opacity .6 -> .75, hover bumped
+//          .7 -> .88 to preserve it reading as a step up from default
+//          rather than converging on the same value. Pinned state (1)
+//          unchanged. Next: re-run WAVE again to confirm .75 actually
+//          clears 4.5:1 — if it's still short, the fallback plan is
+//          dropping the opacity-dimming approach for an outline-vs-filled
+//          icon distinction instead, since opacity has a hard ceiling on
+//          how subtle it can be made before contrast math takes over.
+
+// 2.9.3 — Cosmetic: separate WAVE finding, different root cause from the
+//          pin-btn opacity issue — the unblock/lock toggle icon (🔓/🔒 on
+//          each term card) used #aab for its idle (unblocked) state,
+//          measuring 2.29:1 against the white term card, well under AA's
+//          4.5:1 (15px, not bold, so normal-text threshold applies, not
+//          the 3:1 large-text one). Unlike pin-btn this wasn't an opacity
+//          problem — #aab is a fully-opaque but simply too-light
+//          gray-blue. Replaced with #6b6b88, same muted gray-blue family
+//          but dark enough to clear 4.5:1 with margin (computed 5.14:1).
+//          Blocked-state color (#0021A5, used for the locked/🔒 icon)
+//          left untouched — that one's UF blue at full saturation and
+//          was never flagged. Checked for other uses of #aab elsewhere
+//          in the file before fixing only this one instance — none found,
+//          so this was a single one-off color choice, not a repeated
+//          class like pin-btn was.
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
@@ -5428,7 +5459,7 @@ function renderTerms() {
       <div class="term-header">
         <h3>${t.label}</h3>
         <div class="term-actions">
-          <button title="${isBlk?'Unblock this semester (allow classes)':'Block this semester (no classes)'}" onclick="event.stopPropagation();toggleBlockTermCard('${t.key}')" style="font-size:15px;border:none;background:transparent;padding:1px 4px;cursor:pointer;color:${isBlk?'#0021A5':'#aab'}">${isBlk?'🔒':'🔓'}</button>
+          <button title="${isBlk?'Unblock this semester (allow classes)':'Block this semester (no classes)'}" onclick="event.stopPropagation();toggleBlockTermCard('${t.key}')" style="font-size:15px;border:none;background:transparent;padding:1px 4px;cursor:pointer;color:${isBlk?'#0021A5':'#6b6b88'}">${isBlk?'🔒':'🔓'}</button>
           <button title="Clear all courses from this semester" onclick="event.stopPropagation();clearTermCourses('${t.key}')" style="font-size:13px;border:none;background:transparent;padding:1px 4px;cursor:pointer;color:#666">🧹</button>
           <button title="Remove this semester from the plan" onclick="event.stopPropagation();removeTermCard('${t.key}')" style="font-size:13px;border:none;background:transparent;padding:1px 4px;cursor:pointer;color:#b00020">✕</button>
         </div>
