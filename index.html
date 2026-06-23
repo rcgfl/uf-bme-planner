@@ -176,9 +176,23 @@ input[type="checkbox"]{cursor:pointer}
 .import-ignored{color:#556}
 
 /* ── Pin icon button ── */
-.pin-btn{border:0;background:transparent;padding:1px 4px;margin:0;cursor:pointer;font-size:13px;opacity:.75;line-height:1}
-.pin-btn:hover{opacity:.88}
-.pin-btn.pinned{opacity:1}
+/* 2.9.13: replaced the opacity-based dimming from 2.9.1/2.9.2 with an
+   outline-vs-filled icon. Those two patches were a stopgap raising default
+   opacity (.35 -> .6 -> .75) to chase AA's 4.5:1 contrast threshold on the
+   unpinned state — both changelogs flagged the same fallback plan if opacity
+   ever stopped being enough: drop dimming entirely for an outline/filled
+   distinction instead, since contrast math has a hard ceiling on how subtle
+   an opacity-based "dim" state can be. Doing that now, per Chris. Stroke
+   color/opacity is identical in both states (#0021A5, full saturation,
+   same blue already validated for contrast on the lock icon in 2.9.3) —
+   only the fill differs (none vs currentColor), so contrast no longer
+   depends on state at all. */
+.pin-btn{border:0;background:transparent;padding:2px 5px;margin:0;cursor:pointer;line-height:1;color:#0021A5;border-radius:4px;display:inline-flex;align-items:center}
+.pin-btn svg{width:13px;height:13px;display:block}
+.pin-btn path{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linejoin:round}
+.pin-btn.pinned path{fill:currentColor}
+.pin-btn:hover{background:#eef3ff}
+.pin-btn:focus-visible{outline:2px solid #0021A5;outline-offset:1px}
 
 /* ── Compact layout (default; Spacious view disables these rules) ── */
 .compact .term{padding:7px 9px}
@@ -337,7 +351,7 @@ input[type="checkbox"]{cursor:pointer}
     <button onclick="insertTerm()">Add</button>
     <span class="small">Remove, block, or clear-courses on individual semesters using the buttons on each semester card.</span>
   </div>
-  <div class="small" style="margin-top:6px">Pinned courses (📌) and the capstone course sequence are never moved automatically. Added semesters aren't used automatically — place courses into them yourself.</div>
+  <div class="small" style="margin-top:6px">Pinned courses (marked with the pin icon) and the capstone course sequence are never moved automatically. Added semesters aren't used automatically — place courses into them yourself.</div>
   <div id="schedReport" class="schedule-report small"></div>
 </div>
 
@@ -534,8 +548,8 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.11';
-const BUILD_DATE = '2026-06-22';
+const PLANNER_VERSION = '2.9.14';
+const BUILD_DATE = '2026-06-23';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
 // 2.5.1 — Fixed: blank cards on load; correct start term; transfer 3yr default; companion prompts.
@@ -2342,6 +2356,92 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          closing properly, independent of where the CLS conversation
 //          landed.
 
+// 2.9.12 — "Not offered this season" softened from a hard stop to a yellow
+//          risk warning, but only for approved electives — core/required
+//          courses keep the exact hard-block behavior they've always had.
+//          Per Chris: core course offering seasons are known facts (e.g.
+//          BME3101 in summer definitively won't run), while elective
+//          offering seasons come from a periodic manual audit of patterns
+//          that can be sporadic to begin with — advisory data, not a live
+//          catalog guarantee, so it should warn rather than disallow. New
+//          gate: isApprovedElectiveId(id) — already-existing helper, not a
+//          new concept. New offeringRisk flag added to both evalCourse() and
+//          validatePlanned(), computed only when the season mismatch is the
+//          *sole* reason the course fails (an elective also missing a
+//          prereq, or already satisfied, etc. keeps its existing harder
+//          treatment — this never masks a real problem). Threaded through:
+//          (1) the per-term Add dropdown's eligible-options filter, so a
+//          season-uncertain elective is selectable rather than landing in
+//          the disabled "Not yet available here" group; (2) the dropdown
+//          option's note/suffix, same priority slot as the existing blocked-
+//          term and instructor-permission notes (blocked-term wins if both
+//          apply, to avoid stacking two confirms); (3) addCourse()'s
+//          confirm-on-add, parallel to the existing blocked-term confirm,
+//          worded to make clear this is audit-derived, not a catalog fact;
+//          (4) the term-card isBlocked/isSoftFail split and flagWord, so an
+//          already-placed season-risk elective renders the same amber
+//          "Risk" chip blockedTermRisk already uses, not the red "Missing"
+//          one. Deliberately left untouched: the Remaining requirements
+//          panel's "Not offered this season" bucket — Chris confirmed that
+//          panel now lives inside the closed-by-default Advising reference
+//          <details>, so the informational flag there is fine as-is and
+//          doesn't need the same softening. Also untouched: the orphaned
+//          generator code's own offered-season checks (canPlaceInMap,
+//          trySummerRelief) — those have no caller right now (see 2.7.2) and
+//          this doesn't change that; if/when auto-resolve comes back, that
+//          code will need its own decision about hard-vs-soft, separately.
+//          Awaiting Chris's two-year audit refresh of the elective offered[]
+//          data before this gets meaningfully exercised in practice.
+
+// 2.9.13 — Accessibility follow-up to 2.9.1/2.9.2's pin-btn contrast work.
+//          Those two patches raised the unpinned icon's opacity (.35 -> .6 ->
+//          .75) trying to clear AA's 4.5:1 contrast threshold while still
+//          reading as visually distinct from the pinned (opacity 1) state —
+//          both changelogs flagged the same fallback if opacity ever stopped
+//          being enough on its own: drop dimming for an outline-vs-filled
+//          icon distinction. Per Chris, doing that now — also a direct ask
+//          (clean distinction between the two states, "100% saturation
+//          outline for no pin, 100% saturation outline with filled color for
+//          pinned"). Replaced the 📌 emoji glyph with a small inline SVG
+//          (circle + needle) — the app's first inline SVG icon; every other
+//          icon (🔒/🔓, 🧹, ✕, ⚠/⧗) is still emoji, so this is a new pattern
+//          for this one button specifically, not a wholesale icon-system
+//          change. Necessary because emoji glyph color isn't controllable
+//          via CSS the way an SVG's fill/stroke are, which is exactly why
+//          opacity was the only lever available before. Both states now use
+//          identical stroke color/opacity (#0021A5, same blue already
+//          validated for contrast against the lock icon in 2.9.3) — only
+//          `fill` differs (none vs currentColor via .pinned), so contrast no
+//          longer depends on state at all, closing the ceiling 2.9.2 flagged.
+//          Also added aria-pressed (true/false) to the button — wasn't asked
+//          for specifically, but it's a natural fit for a toggle button and
+//          complements the existing title-text state change (Chris: revert
+//          if this isn't wanted, it's a small independent addition).
+
+// 2.9.14 — Two fixes from Chris testing 2.9.13's new pin icon:
+//          (1) The circle + diagonal line composition read as a magnifying
+//          glass (search icon), not a pin — that's literally the standard
+//          search-icon convention (circle + offset handle of similar length
+//          in the same direction), which is exactly what it accidentally
+//          reproduced. Replaced with a single closed teardrop path (the
+//          standard map-pin/location-marker silhouette — same geometry as
+//          Material's "place" icon, scaled to the 16x16 viewBox) — round top
+//          tapering to a point, no separate handle element to be confused
+//          with anything else. Same outline-vs-filled mechanism as before:
+//          fill:none + stroke for unpinned, fill:currentColor for pinned,
+//          stroke color/opacity unchanged in both states.
+//          (2) Found two user-visible strings still literally showing the
+//          old 📌 glyph in parentheses as a description of the icon — the
+//          Plan of study panel's helper text ("Pinned courses (📌)...") and
+//          the Apply-plan-of-study confirm() dialog ("...pinned courses
+//          (📌) are kept in place..."). Both now read as a description in
+//          words ("the pin icon" / dropped the parenthetical entirely)
+//          instead of standing in another emoji for it, so this doesn't go
+//          stale again the next time the icon changes. Left every *comment*
+//          reference to "the 📌 toggle" alone — those are internal
+//          documentation of the pin-action concept, not user-facing, so
+//          they don't need to track the literal current glyph.
+
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
 ═══════════════════════════════════════════════════════════════════
@@ -3140,7 +3240,8 @@ function evalCourse(id, termKey, ignoreBlock=false) {
   // through a confirm warning instructor/advisor permission is likely needed
   // (Chris: a student on co-op might still take one online gen-ed course).
   if(blocked.has(termKey)&&!ignoreBlock) reasons.push('Term is blocked');
-  if(!(c.offered||[]).includes(t.season)) reasons.push('Not offered this season');
+  const seasonMismatch=!(c.offered||[]).includes(t.season);
+  if(seasonMismatch) reasons.push('Not offered this season');
   (c.prereq||[]).forEach(p=>{if(!courseSatisfiedBefore(p,termKey,id))reasons.push('Missing prereq: '+reqLabel(p,id));});
   (c.coreq||[]).forEach(p=>{if(!courseSatisfiedBefore(p,termKey,id)&&!termHasEquiv(termKey,p,id))reasons.push('Missing coreq: '+reqLabel(p,id));});
   // Suppress CHM2210/2211 in standard path, suppress CHM3217 when the full
@@ -3167,13 +3268,24 @@ function evalCourse(id, termKey, ignoreBlock=false) {
   // since it'd sit permanently in the disabled "Not yet available" group.
   const onlyPrereqCoreq=ok?false:reasons.every(r=>r.startsWith('Missing prereq:')||r.startsWith('Missing coreq:'));
   const instructorOverridable = !ok && !!c.instructorPermissionMaySubstitute && onlyPrereqCoreq;
-  return {ok, reasons, instructorOverridable};
+  // offeringRisk (2.9.12): per Chris, the "Not offered this season" data has two
+  // very different confidence levels depending on the course. Core/required
+  // course seasons are known facts (Chris: "if a student tries to take BME3101
+  // in the summer, I know definitively that won't work") — those stay a hard
+  // stop, same as before. Approved-elective seasons come from a periodic manual
+  // audit of historically sporadic offerings, not a live catalog guarantee —
+  // treated as advisory, not fact, per the tool-not-truth approach. Only fires
+  // when the season mismatch is the *sole* problem (reasons.length===1) — if
+  // the course is also missing a prereq, already satisfied, etc., those keep
+  // their own (harder) treatment rather than being masked by this softening.
+  const offeringRisk = !ok && seasonMismatch && reasons.length===1 && isApprovedElectiveId(id);
+  return {ok, reasons, instructorOverridable, offeringRisk};
 }
 
 function validatePlanned(id, termKey) {
   const c=COURSES[id], t=termByKey(termKey);
   const reasons=[];
-  if(!c||!t) return {ok:false,reasons:['Unknown'],instructorOverridable:false,blockedTermRisk:false};
+  if(!c||!t) return {ok:false,reasons:['Unknown'],instructorOverridable:false,blockedTermRisk:false,offeringRisk:false};
   const hardReasons=[];
   // Generalized (2.7.x): blocked no longer hard-blocks EVERY course in that
   // term — only the design spine got this treatment before (spineRemoteRisk),
@@ -3189,7 +3301,8 @@ function validatePlanned(id, termKey) {
       ? 'Term is blocked — may be completed remotely with instructor permission'
       : 'Term is blocked — may require instructor/advisor permission to register');
   }
-  if(!(c.offered||[]).includes(t.season)){reasons.push('Not offered this season');hardReasons.push('Not offered this season');}
+  const seasonMismatch=!(c.offered||[]).includes(t.season);
+  if(seasonMismatch){reasons.push('Not offered this season');hardReasons.push('Not offered this season');}
   const prior=allPlannedBefore(termKey);
   (c.prereq||[]).forEach(p=>{if(!setHasEquiv(prior,p,id))reasons.push('Missing prereq: '+reqLabel(p,id));});
   (c.coreq||[]).forEach(p=>{if(!setHasEquiv(prior,p,id)&&!termHasEquiv(termKey,p,id))reasons.push('Missing coreq: '+reqLabel(p,id));});
@@ -3200,7 +3313,16 @@ function validatePlanned(id, termKey) {
   // instructor permission can waive, so those keep the hard (red) treatment.
   const instructorOverridable = !ok && !!c.instructorPermissionMaySubstitute && hardReasons.length===0;
   const blockedTermRisk = !ok && blocked.has(termKey) && hardReasons.length===0;
-  return {ok, reasons, instructorOverridable, blockedTermRisk};
+  // offeringRisk (2.9.12): same elective-only softening as evalCourse — see
+  // that function's comment for the full reasoning. Deliberately independent
+  // of hardReasons/instructorOverridable/blockedTermRisk above: those three
+  // are unaffected (a season mismatch still keeps them at false exactly as
+  // before, for both core and elective courses). This is purely an additional
+  // signal so a *placed* elective with only this problem renders as the
+  // softer yellow risk-msg instead of the red warn-msg, the same way an
+  // already-placed course in a blocked term does.
+  const offeringRisk = !ok && seasonMismatch && reasons.length===1 && isApprovedElectiveId(id);
+  return {ok, reasons, instructorOverridable, blockedTermRisk, offeringRisk};
 }
 
 function downstreamRiskMap(maxDepth=3) {
@@ -3258,6 +3380,17 @@ function addCourse(termKey) {
   // just warn that it likely needs instructor/advisor permission to register.
   if(blocked.has(termKey)){
     if(!confirm(`${t.label} is blocked. Adding ${COURSES[id]?.displayId||id} here likely requires instructor/advisor permission to register. Continue?`)) return;
+  }
+  // offeringRisk confirm (2.9.12): elective-only — core/required courses with
+  // a season mismatch never reach this function in the first place, since
+  // they're excluded from the dropdown's eligible list above (hard stop,
+  // unchanged). This is an else-if deliberately: if the term is also blocked,
+  // that confirm above already covers it and this one is skipped rather than
+  // stacking two confirms for one click. Per Chris: elective offering-season
+  // data comes from a periodic manual audit, not a live catalog check, so
+  // this is phrased as advisory rather than a fact.
+  else if(isApprovedElectiveId(id) && !(COURSES[id]?.offered||[]).includes(t.season)){
+    if(!confirm(`Historical/audit data suggests ${COURSES[id]?.displayId||id} may not be offered in ${t.label}. This is based on a periodic manual audit, not a live catalog check — confirm with your advisor or ONE.UF before registering. Continue?`)) return;
   }
   snapshotState();
   t.courses.push(id);
@@ -4477,7 +4610,7 @@ function layoutPlanOfStudy() {
 // it just doesn't yet do the shift itself.
 function applyPlanOfStudy() {
   const hasContent = terms.some(t=>t.courses.length>0);
-  if (hasContent && !confirm('Adjust the plan of study to current completed courses, chosen electives, pins, and blocks? Terms the template covers will be recomputed — pinned courses (📌) are kept in place. Continue?')) return;
+  if (hasContent && !confirm('Adjust the plan of study to current completed courses, chosen electives, pins, and blocks? Terms the template covers will be recomputed — pinned courses are kept in place. Continue?')) return;
   snapshotState();
   const result = layoutPlanOfStudy();
   renderSchedReport([`Plan of study adjusted. Already-completed courses (including ${[...completed].filter(isElectiveId).length} completed elective(s)) were subtracted; pinned courses (${result.pinnedCount}) were kept in place. ${result.placedCount} chosen elective(s) were newly placed${result.unplacedCount?`; ${result.unplacedCount} chosen elective(s) have no open generic slot — add them to a semester manually, or add another semester to free one up.`:'.'} Gaps are left as-is, not refilled.`]);
@@ -5589,7 +5722,7 @@ function renderTerms() {
       if(!plannerMode.isTransfer&&id==='CHM2210') return false;
       if(!plannerMode.isTransfer&&!completed.has('CHM2210')&&id==='CHM2211') return false;
       const ev=evalCourse(id,t.key,isBlk);
-      return ev.ok||ev.instructorOverridable;
+      return ev.ok||ev.instructorOverridable||ev.offeringRisk;
     });
     if(!eligible.includes(addSelections[t.key])) addSelections[t.key]=eligible[0]||'';
     const eligibleSet=new Set(eligible);
@@ -5610,9 +5743,17 @@ function renderTerms() {
 
     const opts=eligible.map(id=>{
       const ev=evalCourse(id,t.key,isBlk);
+      // offeringRisk note (2.9.12): elective-only, season-uncertain courses.
+      // Sits between the blocked-term note and the instructor-permission note
+      // in priority — if the term is also blocked, that note wins (it's the
+      // more consequential confirm); otherwise this is its own distinct note,
+      // never combined with instructorOverridable since the two are mutually
+      // exclusive by construction (offeringRisk requires the season mismatch
+      // be the *only* problem).
       const noteText=isBlk?'This term is blocked — adding a course here will ask for confirmation about instructor/advisor permission'
-        :(ev.instructorOverridable?'May require instructor permission — prereq not otherwise satisfied':'');
-      const suffix=isBlk?' (term blocked — permission?)':(ev.instructorOverridable?' (instructor permission?)':'');
+        :(ev.offeringRisk?'Historical/audit data suggests this elective may not run this semester — confirm with your advisor or ONE.UF before registering'
+        :(ev.instructorOverridable?'May require instructor permission — prereq not otherwise satisfied':''));
+      const suffix=isBlk?' (term blocked — permission?)':(ev.offeringRisk?' (verify — season risk)':(ev.instructorOverridable?' (instructor permission?)':''));
       const lbl=isElectiveId(id)?electiveDisplayLabel(id):compactLabel(id);
       return `<option value="${id}" ${addSelections[t.key]===id?'selected':''}${noteText?` title="${noteText.replace(/"/g,'&quot;')}"`:''}>${lbl}${suffix}</option>`;
     }).join('')
@@ -5628,8 +5769,8 @@ function renderTerms() {
       const isElect=isElectiveId(id);
       const isPinned=pinnedCourses[id]===t.key;
       const isGen=generatedCourses.has(id);
-      const isBlocked=!ev.ok&&!ev.instructorOverridable&&!ev.blockedTermRisk;
-      const isSoftFail=!ev.ok&&(ev.instructorOverridable||ev.blockedTermRisk);
+      const isBlocked=!ev.ok&&!ev.instructorOverridable&&!ev.blockedTermRisk&&!ev.offeringRisk;
+      const isSoftFail=!ev.ok&&(ev.instructorOverridable||ev.blockedTermRisk||ev.offeringRisk);
       const cls=isBlocked?'course-invalid':(isSoftFail||risk)?'course-risk':'';
       // Icon carries the full explanation as a hover title regardless of mode —
       // students rely on this instead of an inline block (Chris: listing every
@@ -5645,15 +5786,18 @@ function renderTerms() {
       // accidentally was. warnMsg's own `advisor?` wrapper already handles
       // the advisor-only gating correctly, so this doesn't need its own.
       const instrNote=ev.instructorOverridable?' — may be satisfied by instructor permission':'';
-      const iconReasonText=isBlocked?(ev.reasons.join('; ')+instrNote):(isSoftFail?(ev.reasons.join('; ')+instrNote):(risk?('Risk: '+risk.reasons.join('; ')):''));
+      const offeringNote=ev.offeringRisk?' — based on a periodic audit, not a live catalog check; confirm with your advisor or ONE.UF':'';
+      const iconReasonText=isBlocked?(ev.reasons.join('; ')+instrNote):(isSoftFail?(ev.reasons.join('; ')+instrNote+offeringNote):(risk?('Risk: '+risk.reasons.join('; ')):''));
       // Labeled chip rather than a bare symbol: the word ("Missing"/"Risk")
       // disambiguates the amber cases — instructor-overridable missing prereq
       // and genuine downstream risk already needed this; blockedTermRisk
       // (generalized from spine-only) is a third "Risk" variant, never
       // "Missing" (the course isn't missing anything, it's just sitting in a
-      // blocked term).
+      // blocked term). offeringRisk (2.9.12) is a fourth "Risk" variant for
+      // the same reason — an elective whose audited season data may be wrong
+      // isn't "missing" anything either.
       const flagColorClass=isBlocked?'flag-red':'flag-amber';
-      const flagWord=isBlocked?'Missing':(ev.blockedTermRisk?'Risk':(ev.instructorOverridable?'Missing':'Risk'));
+      const flagWord=isBlocked?'Missing':((ev.blockedTermRisk||ev.offeringRisk)?'Risk':(ev.instructorOverridable?'Missing':'Risk'));
       const icon=(isBlocked||isSoftFail||risk)
         ?` <button type="button" class="flag-icon-hover ${flagColorClass}" title="${iconReasonText.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();alert(this.title)">${isBlocked?'⚠':'⧗'} ${flagWord}</button>`
         :'';
@@ -5703,7 +5847,7 @@ function renderTerms() {
       const rowBtns=isElect
         ?`<button title="Remove from this term (stays chosen — re-add elsewhere, or it's placed automatically next time you apply the plan)" onclick="event.stopPropagation();removeElective('${t.key}','${id}')">×</button>`
         :`<button title="Remove" onclick="event.stopPropagation();removeCourse('${t.key}','${id}')">×</button>`;
-      const pinBtn=`<button class="pin-btn${isPinned?' pinned':''}" title="${isPinned?'Unpin':'Pin to this term'}" onclick="event.stopPropagation();togglePin('${t.key}','${id}')">📌</button>`;
+      const pinBtn=`<button class="pin-btn${isPinned?' pinned':''}" title="${isPinned?'Unpin':'Pin to this term'}" aria-pressed="${isPinned?'true':'false'}" onclick="event.stopPropagation();togglePin('${t.key}','${id}')"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 1.33C5.42 1.33 3.33 3.42 3.33 6c0 3.5 4.67 8.67 4.67 8.67s4.67-5.17 4.67-8.67c0-2.58-2.09-4.67-4.67-4.67z"/></svg></button>`;
       return `<div class="course-row"><span class="course-label ${cls}"${chmTitle}>${lbl}${icon}${unverifiedIcon}${placeholderIcon}${pinBadge}${genBadge}${provBadge}${freeOnlyBadge}</span><span class="course-btns">${rowBtns}${pinBtn}</span></div>${labWarn}${companionWarn}${unverifiedWarn}${warnMsg}${riskMsg}`;
     }).join('');
 
