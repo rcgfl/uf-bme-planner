@@ -232,7 +232,7 @@ input[type="checkbox"]{cursor:pointer}
   <label><input id="advisorToggle" type="checkbox" onchange="render()"> <span id="advisorLabel">Advisor mode</span></label>
   <button onclick="savePlan()">Save plan</button>
   <button onclick="document.getElementById('loadFile').click()">Load plan</button>
-  <input id="loadFile" type="file" accept=".json" style="display:none" onchange="loadPlan(event)">
+  <input id="loadFile" type="file" accept=".json" aria-label="Load a saved plan file" style="display:none" onchange="loadPlan(event)">
   <button onclick="exportReadable()">Export advising CSV</button>
   <button id="exportAnalyticsBtn" onclick="exportAnalytics()">Export analytics CSV</button>
 </div>
@@ -503,7 +503,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.4';
+const PLANNER_VERSION = '2.9.5';
 const BUILD_DATE = '2026-06-22';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2122,6 +2122,21 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          expect this single fix to clear more than one of the
 //          remaining 12 WAVE flags — re-running WAVE next will confirm
 //          how many.
+
+// 2.9.5 — Accessibility fix (cosmetic, no behavior change): the last
+//          remaining WAVE Error (contrast errors are now at 0 as of
+//          2.9.4) was #loadFile, the hidden file input behind the
+//          load-saved-plan flow, missing an accessible name — same
+//          category as #importFile and the selects fixed back in 2.8.17,
+//          just missed that pass since it's hidden via display:none and
+//          triggered indirectly rather than sitting in the visible form.
+//          Added aria-label, markup-only. Two non-issue WAVE counts
+//          worth noting for the record: 14 Features / 21 Structure /
+//          11 ARIA aren't problems, they're informational tallies of
+//          accessible things already present on the page (headings,
+//          landmarks, etc.) — nothing to act on there. 22 Alerts remain
+//          as a separate, lower-priority review pass (human judgment
+//          calls, not automatic failures) — not tackled in this entry.
 
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
