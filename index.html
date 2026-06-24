@@ -548,7 +548,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.9.14';
+const PLANNER_VERSION = '2.9.17';
 const BUILD_DATE = '2026-06-23';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2442,6 +2442,75 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          documentation of the pin-action concept, not user-facing, so
 //          they don't need to track the literal current glyph.
 
+// 2.9.15 — Bugfix found by Chris: deleting an ELECTIVE_SLOT placeholder chip
+//          (the generic "BME Elective (unassigned)" filler) from a term made
+//          it unrecoverable — never offered back in that term's, or any
+//          term's, Add dropdown, with no disabled/locked entry to even
+//          explain why. Cause: plannedAll() flattens every term into one
+//          global Set, which evalCourse()'s "Already planned" check then
+//          treats as "this id can only exist in one place" — true for every
+//          real course, but wrong for ELECTIVE_SLOT specifically, which by
+//          design can sit in several terms simultaneously (up to
+//          ELECTIVE_SLOT_TARGET instances across the whole plan). The
+//          moment any one instance existed anywhere, every term's evalCourse
+//          saw a false "Already planned" for it. The dropdown's "Not yet
+//          available here" fallback list separately and explicitly hides
+//          isBmeElectiveSlot() ids too, so the false-positive never even
+//          surfaced as a visible disabled option — it just silently vanished.
+//          Fix: evalCourse()'s "Already planned" check now excludes
+//          isBmeElectiveSlot(id). The real per-term duplicate guard already
+//          lives in addCourse() (t.courses.includes(id)), so this doesn't
+//          reopen the door to placing two slots in the same term. Untouched:
+//          requirement-counting (electiveStatus()) was never affected by
+//          this bug in the first place — it derives from chosenElectives/
+//          completed, never from slot placement, which is why Chris's credit
+//          totals stayed correct throughout. Also untouched, deliberately:
+//          the locked-list's isBmeElectiveSlot() exclusion and the
+//          remainingSlots<=0 dropdown-hiding — both predate this fix and
+//          handle a different, intentional case (hiding the slot once no
+//          slots remain), not this bug.
+
+// 2.9.16 — Immediate follow-on, found by Chris testing 2.9.15: with the false
+//          global "Already planned" gate removed, nothing was left to stop
+//          adding unlimited ELECTIVE_SLOT placeholders — one per term, but
+//          across as many terms as you liked — since the only remaining
+//          gate (electiveStatus().remainingSlots<=0) only counts real
+//          chosen/completed electives, never unconverted placeholder chips
+//          already sitting in the plan. Before 2.9.15 this was masked as a
+//          side effect of the bug just fixed (the old global check happened
+//          to cap total placeholders at 1 everywhere, for the wrong reason).
+//          Added electiveStatus().chosenCount (raw ids.size, exposed
+//          alongside the existing capped remainingSlots) and a new
+//          placedElectiveSlotCount() that walks every term counting
+//          ELECTIVE_SLOT instances. New electiveSlotRoomLeft() = TARGET -
+//          chosenCount - placedElectiveSlotCount(), and the dropdown's gate
+//          now checks that instead of remainingSlots alone — so chosen
+//          electives and outstanding placeholders both count against the
+//          same 4-slot ceiling. Left the two status-display reads of
+//          remainingSlots (the "X slot(s) remaining" progress line and the
+//          CSV/audit export's "Generic slots remaining" row) on the
+//          original metric — those are reporting actual degree-requirement
+//          progress (how many electives still need to be *chosen*), a
+//          different question from "how much dropdown-offering room is
+//          left," and conflating the two there would understate progress
+//          while placeholders are still unconverted.
+
+// 2.9.17 — Third fix in this same chain, found by Chris: addCourse()'s
+//          per-term duplicate guard (t.courses.includes(id)) correctly caps
+//          every real course at one-per-term, but it also wrongly capped
+//          ELECTIVE_SLOT at one-per-term — the generator already legitimately
+//          places 2 placeholders in some semesters (Chris's example: the
+//          last senior-year term). Deleting one and trying to restore it left
+//          you stuck: the dropdown offered the slot again (correctly, post-
+//          2.9.15/16), but clicking Add on it silently no-op'd here with zero
+//          feedback, since the term still had the other instance. Exempted
+//          isBmeElectiveSlot(id) from this guard — the overall ceiling that
+//          actually matters for the slot already lives in
+//          electiveSlotRoomLeft() (2.9.16), checked across the whole plan
+//          regardless of how concentrated the placeholders are in any one
+//          term, so this doesn't reopen the door to duplicating a real course
+//          in the same semester.
+
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
 ═══════════════════════════════════════════════════════════════════
@@ -3048,10 +3117,33 @@ function electiveStatus() {
   const totalCr=approvedCr+freeCr;
   const remainingSlots=Math.max(0, ELECTIVE_SLOT_TARGET-ids.size);
   return {
-    approvedCr, freeCr, totalCr, remainingSlots,
+    approvedCr, freeCr, totalCr, remainingSlots, chosenCount: ids.size,
     freeSlotsUsed: freeIds.length,
     ok: approvedCr>=9 && freeIds.length<=1 && totalCr>=12
   };
+}
+
+// 2.9.16 bugfix, found by Chris: remainingSlots above counts only *chosen/
+// completed* real electives — correct for credit/slot totals, since
+// chosenElectives is the durable choice record regardless of placement (see
+// the 2.7.x rewrite comment above). But it means the dropdown's old single
+// gate (remainingSlots<=0) never separately capped how many *unconverted
+// placeholder* chips could pile up across the plan. That was accidentally
+// masked before 2.9.15 by the (buggy) global "Already planned" check, which
+// happened to cap total placeholder instances at 1 everywhere as a side
+// effect — wrong reason, right-looking symptom. After 2.9.15 removed that
+// false gate, nothing was left to stop adding a 5th, 6th, etc. placeholder
+// once real chosen electives were still below target. The actual ceiling
+// that matters is total commitment — chosen/completed electives plus
+// outstanding placeholders — against the same ELECTIVE_SLOT_TARGET.
+function placedElectiveSlotCount() {
+  let n=0;
+  terms.forEach(t=>t.courses.forEach(id=>{if(id===ELECTIVE_SLOT_ID) n++;}));
+  return n;
+}
+function electiveSlotRoomLeft() {
+  const es=electiveStatus();
+  return Math.max(0, ELECTIVE_SLOT_TARGET-es.chosenCount-placedElectiveSlotCount());
 }
 
 // 2.8: how many of the 4 chosen/completed electives are currently the
@@ -3232,7 +3324,19 @@ function evalCourse(id, termKey, ignoreBlock=false) {
   if(!c) return {ok:false,reasons:['Unknown course']};
   if(!t) return {ok:false,reasons:['Unknown term']};
   if(courseIsSatisfied(id)) reasons.push('Already satisfied');
-  if(plannedAll().has(id)) reasons.push('Already planned');
+  // 2.9.15 bugfix, found by Chris: ELECTIVE_SLOT is a single shared id used
+  // as a generic not-yet-chosen-elective placeholder, and by design the same
+  // id can legitimately sit in several different terms at once (up to
+  // ELECTIVE_SLOT_TARGET instances across the plan). plannedAll() flattens
+  // every term into one global set, which is correct for any real course
+  // (a course can only sit in one term, period) but wrong for this one
+  // shared placeholder — the moment any instance existed anywhere, every
+  // term's evalCourse saw "Already planned" here, so a deleted slot chip
+  // could never be re-added anywhere, not even back to the term it was just
+  // removed from. The actual per-term duplicate guard already lives in
+  // addCourse() (t.courses.includes(id)), so excluding the slot here doesn't
+  // reopen that door.
+  if(plannedAll().has(id) && !isBmeElectiveSlot(id)) reasons.push('Already planned');
   // ignoreBlock (2.7.x): lets the dropdown compute "what could go here if the
   // block weren't a hard stop" for a blocked term — used to populate the Add
   // list there at all, since otherwise every course would fail this check and
@@ -3374,7 +3478,17 @@ function addCourse(termKey) {
   const id=(sel?.value)||addSelections[termKey];
   if(!id) return;
   const t=termByKey(termKey);
-  if(!t||t.courses.includes(id)) return;
+  // 2.9.17 bugfix, found by Chris: this guard correctly caps every real
+  // course at one-per-term (you can't take BME3101 twice in the same
+  // semester), but it also wrongly capped ELECTIVE_SLOT at one-per-term —
+  // the generator already legitimately places 2 in some semesters (Chris's
+  // example: last senior-year term), so deleting one and trying to restore
+  // it left you stuck: the second add silently no-op'd here with no
+  // feedback. The overall ceiling that matters for the slot already lives
+  // in electiveSlotRoomLeft() (2.9.16), checked across the whole plan
+  // regardless of how concentrated they are — so exempting it from this
+  // per-term guard doesn't reopen any door for real courses.
+  if(!t||(t.courses.includes(id)&&!isBmeElectiveSlot(id))) return;
   // Per Chris: blocking a semester shouldn't make it impossible to add a
   // single course there (e.g. an online gen-ed during a co-op semester) —
   // just warn that it likely needs instructor/advisor permission to register.
@@ -5718,7 +5832,11 @@ function renderTerms() {
       // enough electives are already chosen, rather than always offering it
       // (which read as "there's still a slot to fill" even after the
       // requirement was already satisfied — found by Chris testing it).
-      if(isBmeElectiveSlot(id)&&electiveStatus().remainingSlots<=0) return false;
+      // 2.9.16: remainingSlots alone doesn't see unconverted placeholder
+      // chips already sitting in the plan — electiveSlotRoomLeft() also
+      // subtracts those, so a 5th/6th/etc. placeholder isn't offered once
+      // chosen electives + existing placeholders already reach the target.
+      if(isBmeElectiveSlot(id)&&electiveSlotRoomLeft()<=0) return false;
       if(!plannerMode.isTransfer&&id==='CHM2210') return false;
       if(!plannerMode.isTransfer&&!completed.has('CHM2210')&&id==='CHM2211') return false;
       const ev=evalCourse(id,t.key,isBlk);
