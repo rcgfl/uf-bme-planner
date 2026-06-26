@@ -642,7 +642,7 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.10.0';
+const PLANNER_VERSION = '2.10.3';
 const BUILD_DATE = '2026-06-23';
 // Changelog:
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
@@ -2660,6 +2660,82 @@ const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways 
 //          and the staging table all live in memory only until Accept or
 //          Cancel.
 
+// 2.10.1 — Four fixes from Chris's first real-browser pass on 2.10.0:
+//          1) Panel placement: the audit-import trigger + staging panel
+//             moved inside #completedCard, below the existing CSV-import
+//             section, matching its lightweight .import-panel styling
+//             instead of sitting as a separate top-level .panel.
+//          2) Real bug: IP (in-progress) courses were being folded into
+//             `completed` exactly like finished ones. classifyBucket()
+//             never checked status at all, and an IP row's grade is null,
+//             which isGradeClean(null) treats as "no concern yet" — so a
+//             directly-matched IP course landed in Matched and got dumped
+//             into completedIds with everything else. Fixed: Accept now
+//             splits targets by status — completed → completed Set as
+//             before; in_progress → a separate ipPlacements list, never
+//             added to completed.
+//          3) IP courses now placed on their real term in the rebuilt
+//             grid, on top of whatever layoutPlanOfStudy() generated
+//             there, instead of being abstracted away into `completed`.
+//             Creates the term (and re-sorts) if the default template
+//             doesn't already have a slot for it (e.g. a Summer IP term).
+//          4) Two distinct visual markers, since "matched" no longer
+//             means "done": in the staging UI, IP rows in the Matched
+//             column get a blue chip-inprogress style + "IP — will be
+//             placed on <term>" tag, instead of looking identical to a
+//             completed match. On the live grid, any course placed via IP
+//             import gets an "imported" badge (visible in both student and
+//             advisor mode, since it's the student's own real history,
+//             not internal planning provenance like genBadge).
+
+// 2.10.2 — Real bug found by Chris testing 2.10.1 against an actual audit:
+//          a student taking BME3323L/BME4311 in Fall (the template assumes
+//          Spring) ended up with the course in BOTH places — the template
+//          placement and the IP placement, simultaneously, both chips
+//          tagged imported. layoutPlanOfStudy() has no way to know a
+//          course is about to be IP-placed elsewhere, so it dutifully
+//          generates it into its usual template slot regardless. Per
+//          Chris: the audit is ground truth for an IP term, full stop —
+//          (1) the IP term becomes EXCLUSIVELY the audit-shown course(s),
+//          any other template course generated into that same slot is
+//          pulled out and freed to be added elsewhere later, not left
+//          alongside; (3) a course the audit places at a specific real
+//          term supersedes the template everywhere else — stripped from
+//          every other term, so it can only appear once in the whole
+//          buildout. (Chris's point 2 — same-semester companion pairs like
+//          BME4503C/BME3508 shifting to the following semester — wasn't
+//          given separate logic; it may already fall out of 1+3 if the
+//          template's own absolute semester numbering stays aligned with
+//          the student's real pace, but that's unverified against genuine
+//          misalignment and needs real-audit testing, not assumed.)
+
+// 2.10.3 — Two fixes from Chris testing 2.10.2 against the same real audit:
+//          1) Point 2 from 2.10.2 did NOT fall out for free, as flagged
+//             unverified there — confirmed by Chris's real test: BME4503C/
+//             BME3508 stopped duplicating, but also stopped appearing
+//             anywhere at all, since their rigid template slot landed
+//             before the real IP term and got swept by the pre-IP-cleanup
+//             with nothing to replace it. layoutPlanOfStudy() only ever
+//             suggests companion moves via dismissable confirm() prompts
+//             (COMPANION_COURSES) — it doesn't auto-place anything, so
+//             there was no mechanism that would have caught this. Added
+//             explicit handling: if either half of BME3323L/BME4311 was
+//             just IP-placed, auto-place BME4503C/BME3508 in the very next
+//             term (creating it if needed), unless the audit already shows
+//             either one completed. Marked via a new auditSuggestedCourses
+//             set, distinct from auditImportedCourses, since this is an
+//             inference from companion sequencing, not something the audit
+//             actually showed — gets its own "suggested next" badge on the
+//             grid rather than being conflated with "imported." The
+//             reverse case (BME4503C/BME3508 IP implying BME3323L/BME4311
+//             should already be done) is still deferred, not built.
+//          2) CHM2045L/CHM2046L were missing the lab-section corollary to
+//             the CHM2045/2095 and CHM2046/2096 slot-equivalence added back
+//             in 2.10.0 — CHM2095L/CHM2096L aren't even real catalog
+//             entries (no COURSES record at all), but that doesn't matter
+//             since AUDIT_SLOT_EQUIVALENCE is checked before any
+//             COURSES-existence test. Added both.
+
 /* ═══════════════════════════════════════════════════════════════════
    2.6 IMPLEMENTATION NOTES — PRE-FORK FREEZE
 ═══════════════════════════════════════════════════════════════════
@@ -3931,6 +4007,10 @@ function auditTermStringToKey(termStr) {
 // planned course, just tagged so it's visible at a glance that they came
 // from the import rather than manual placement or generation.
 let auditImportedCourses = new Set();
+// Courses placed via companion-sequencing inference (e.g. BME4503C/BME3508
+// following BME3323L/BME4311), NOT directly shown by the audit -- kept
+// separate from auditImportedCourses so the grid can tell the two apart.
+let auditSuggestedCourses = new Set();
 
 function applyAuditImport(ids, creditOverrides, derivedSeason, derivedYear, ipPlacements) {
   const seasonLabel = {F:'Fall', S:'Spring', Su:'Summer'}[derivedSeason] || 'Fall';
@@ -3944,6 +4024,7 @@ function applyAuditImport(ids, creditOverrides, derivedSeason, derivedYear, ipPl
   snapshotState();
   resetPlanState();
   auditImportedCourses = new Set();
+  auditSuggestedCourses = new Set();
   const seasonEl=document.getElementById('studentStartSeason');
   const yearEl=document.getElementById('startYear');
   if(seasonEl) seasonEl.value=derivedSeason;
@@ -3956,20 +4037,80 @@ function applyAuditImport(ids, creditOverrides, derivedSeason, derivedYear, ipPl
   // top of whatever the template already generated there -- not folded
   // into `completed` (they're not done), and not assumed to already be
   // wherever the generator happened to put that slot.
-  let addedNewTerm = false;
+  // Per Chris: the audit is ground truth for what's actually being taken in
+  // an IP term -- not "this, in addition to whatever the template also
+  // guessed for that slot." Two things follow:
+  //   1) The IP term becomes EXCLUSIVELY the audit-shown course(s) -- any
+  //      other template-generated course sitting in that same slot gets
+  //      pulled out (freed to be added wherever it actually belongs later),
+  //      not left alongside.
+  //   2) A course the audit places at a specific real term supersedes the
+  //      template everywhere else -- it can only appear once in the whole
+  //      buildout, so the same id gets stripped from every OTHER term too,
+  //      not just placed at its real one on top of a stale duplicate.
+  const ipByTermKey = new Map(); // key -> Set of course ids actually IP that term
   (ipPlacements||[]).forEach(({ term, courseId }) => {
     if (!COURSES[courseId]) return;
     const key = auditTermStringToKey(term);
+    if (!ipByTermKey.has(key)) ipByTermKey.set(key, new Set());
+    ipByTermKey.get(key).add(courseId);
+  });
+  const allIPCourseIds = new Set([...ipByTermKey.values()].flatMap(s => [...s]));
+
+  let addedNewTerm = false;
+  ipByTermKey.forEach((courseIds, key) => {
     let t = termByKey(key);
     if (!t) {
       t = { key, label: termLabelFromKey(key), season: seasonFromKey(key), courses: [] };
       terms.push(t);
       addedNewTerm = true;
     }
-    if (!t.courses.includes(courseId)) t.courses.push(courseId);
-    auditImportedCourses.add(courseId);
+    t.courses = [...courseIds]; // exclusive -- replaces whatever the template put here
+    courseIds.forEach(id => auditImportedCourses.add(id));
+  });
+  // De-duplicate everywhere else: an IP course's real term already has it
+  // (just set above); strip it from every other term it might have also
+  // been template-placed into.
+  terms.forEach(t => {
+    if (ipByTermKey.has(t.key)) return; // exclusivity already handled above
+    t.courses = t.courses.filter(id => !allIPCourseIds.has(id));
   });
   if (addedNewTerm) sortTerms();
+
+  // Per Chris: BME3323L/BME4311 and BME4503C/BME3508 are sequenced
+  // back-to-back semesters by the model plan, but the rigid template
+  // (anchored to the overall start term, not to when a student actually
+  // takes a specific pair) can leave the second pair's slot stranded
+  // chronologically BEFORE the real IP term once the first pair shows up
+  // out of sequence -- exactly what the pre-IP-term cleanup below would
+  // otherwise sweep away with no replacement. If either half of the first
+  // pair was just IP-placed, auto-place the second pair in the very next
+  // term, unless the audit already shows it completed (taken ahead of
+  // schedule) or it was itself already IP-placed. Marked as a *suggestion*
+  // (auditSuggestedCourses), distinct from auditImportedCourses -- the
+  // audit didn't actually show this placement, the companion sequencing
+  // did. NOTE: the reverse case (BME4503C/BME3508 IP, implying
+  // BME3323L/BME4311 should already be done) isn't handled here yet --
+  // flagging that as deferred, not silently skipped.
+  const firstPairIPEntry = [...ipByTermKey.entries()].find(([, ids]) =>
+    ['BME3323L', 'BME4311'].some(id => ids.has(id)));
+  if (firstPairIPEntry) {
+    const nextKey = nextAcademicKey(firstPairIPEntry[0]);
+    const toSuggest = ['BME4503C', 'BME3508'].filter(id =>
+      COURSES[id] && !completed.has(id) && !allIPCourseIds.has(id));
+    if (toSuggest.length) {
+      let nt = termByKey(nextKey);
+      if (!nt) {
+        nt = { key: nextKey, label: termLabelFromKey(nextKey), season: seasonFromKey(nextKey), courses: [] };
+        terms.push(nt);
+        sortTerms();
+      }
+      toSuggest.forEach(id => {
+        if (!nt.courses.includes(id)) nt.courses.push(id);
+        auditSuggestedCourses.add(id);
+      });
+    }
+  }
 
   // Per Chris: once an IP term exists, any template-generated course still
   // sitting in a term strictly BEFORE it represents a requirement the
@@ -3983,9 +4124,8 @@ function applyAuditImport(ids, creditOverrides, derivedSeason, derivedYear, ipPl
   // prereqs allow, exactly the "free to add starting with the IP semester"
   // behavior asked for, without guessing which specific future term is
   // right.
-  if ((ipPlacements||[]).length) {
-    const ipKeys = ipPlacements.map(p => auditTermStringToKey(p.term));
-    const earliestIPKey = ipKeys.reduce((a, b) => termSortValue(b) < termSortValue(a) ? b : a);
+  if (ipByTermKey.size) {
+    const earliestIPKey = [...ipByTermKey.keys()].reduce((a, b) => termSortValue(b) < termSortValue(a) ? b : a);
     terms = terms.filter(t => termSortValue(t.key) >= termSortValue(earliestIPKey));
   }
 
@@ -6220,6 +6360,7 @@ function renderTerms() {
       // advisor-only), this is the student's own real transcript history --
       // visible in both modes, same as provBadge/freeOnlyBadge below.
       const importBadge=auditImportedCourses.has(id)?` <span class="gen-badge" title="Placed here from your imported degree audit">imported</span>`:'';
+      const suggestedBadge=auditSuggestedCourses.has(id)?` <span class="gen-badge" title="Suggested next semester based on companion-course sequencing -- not directly shown by your audit. Verify or move as needed.">suggested next</span>`:'';
       // Per Chris: "Provisional" spelled out, not "Pending" — "pending
       // validation" already means something different elsewhere (theme-
       // level minor/certificate status), reusing it here would overload the
@@ -6264,7 +6405,7 @@ function renderTerms() {
         ?`<button title="Remove from this term (stays chosen — re-add elsewhere, or it's placed automatically next time you apply the plan)" onclick="event.stopPropagation();removeElective('${t.key}','${id}')">×</button>`
         :`<button title="Remove" onclick="event.stopPropagation();removeCourse('${t.key}','${id}')">×</button>`;
       const pinBtn=`<button class="pin-btn${isPinned?' pinned':''}" title="${isPinned?'Unpin':'Pin to this term'}" aria-pressed="${isPinned?'true':'false'}" onclick="event.stopPropagation();togglePin('${t.key}','${id}')"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 1.33C5.42 1.33 3.33 3.42 3.33 6c0 3.5 4.67 8.67 4.67 8.67s4.67-5.17 4.67-8.67c0-2.58-2.09-4.67-4.67-4.67z"/></svg></button>`;
-      return `<div class="course-row"><span class="course-label ${cls}"${chmTitle}>${lbl}${icon}${unverifiedIcon}${placeholderIcon}${pinBadge}${genBadge}${importBadge}${provBadge}${freeOnlyBadge}</span><span class="course-btns">${rowBtns}${pinBtn}</span></div>${labWarn}${companionWarn}${unverifiedWarn}${warnMsg}${riskMsg}`;
+      return `<div class="course-row"><span class="course-label ${cls}"${chmTitle}>${lbl}${icon}${unverifiedIcon}${placeholderIcon}${pinBadge}${genBadge}${importBadge}${suggestedBadge}${provBadge}${freeOnlyBadge}</span><span class="course-btns">${rowBtns}${pinBtn}</span></div>${labWarn}${companionWarn}${unverifiedWarn}${warnMsg}${riskMsg}`;
     }).join('');
 
     return `<section id="termcard_${t.key}" class="term ${isSelected?'selected':''} ${isBlk?'blocked':''}" onclick="setSelectedTerm('${t.key}')">
@@ -6807,6 +6948,8 @@ const AUDIT_PLACEHOLDER_IDS = new Set(['QUEST1', 'QUEST2', 'GENED_COMP', 'GENED_
 const AUDIT_SLOT_EQUIVALENCE = {
   CHM2095: ['CHM2045', 'either/or'],
   CHM2096: ['CHM2046', 'either/or'],
+  CHM2095L: ['CHM2045L', 'either/or'],
+  CHM2096L: ['CHM2046L', 'either/or'],
   CHM2211: ['CHM3217', 'either/or'],
   BME4503: ['BME4503C', 'renamed'],
 };
