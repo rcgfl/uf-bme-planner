@@ -533,7 +533,7 @@
     },
     "BME4931": {
       "id": "BME4931",
-      "title": "Designing and Developing Biologic Therapeutics",
+      "title": "Special Topics — choose a section",
       "credits": 3,
       "offered": [
         "F",
@@ -545,13 +545,23 @@
       "provisional": false,
       "offeringAdvisory": true,
       "graduateLevel": false,
-      "variableCredit": false,
-      "maxCredits": null,
+      "variableCredit": true,
+      "maxCredits": 3,
       "equivalencies": {},
       "instructorPermissionMaySubstitute": false,
       "displayId": "BME4931",
       "rawPrereq": "",
-      "notes": ""
+      "notes": "",
+      "repeatableTopics": true,
+      "priorTitles": [
+        "Designing and Developing Biologic Therapeutics",
+        "Bench to Market Commercialization",
+        "Patient Dosimetry in Medical Imaging",
+        {
+          "title": "Education Methods for BME LAs",
+          "defaultCredits": 1
+        }
+      ]
     },
     "BME5703": {
       "id": "BME5703",
@@ -2577,9 +2587,9 @@
       "equivalentCreditOnly": false,
       "placeholder": false
     },
-    "EMA6938_1": {
-      "id": "EMA6938_1",
-      "title": "Nanomaterials: Theory to Practice",
+    "EMA6938": {
+      "id": "EMA6938",
+      "title": "Special Topics — choose a section",
       "credits": 3,
       "offered": [
         "F",
@@ -2600,32 +2610,12 @@
       "rawPrereq": "",
       "notes": "",
       "equivalentCreditOnly": false,
-      "placeholder": false
-    },
-    "EMA6938_2": {
-      "id": "EMA6938_2",
-      "title": "Polymers in Drug Delivery",
-      "credits": 3,
-      "offered": [
-        "F",
-        "S",
-        "Su"
-      ],
-      "prereq": [],
-      "coreq": [],
-      "approvedBmeElective": true,
-      "provisional": false,
-      "offeringAdvisory": true,
-      "graduateLevel": true,
-      "variableCredit": false,
-      "maxCredits": null,
-      "equivalencies": {},
-      "instructorPermissionMaySubstitute": false,
-      "displayId": "EMA6938",
-      "rawPrereq": "",
-      "notes": "",
-      "equivalentCreditOnly": false,
-      "placeholder": false
+      "placeholder": false,
+      "repeatableTopics": true,
+      "priorTitles": [
+        "Nanomaterials: Theory to Practice",
+        "Polymers in Drug Delivery"
+      ]
     },
     "EML2023": {
       "id": "EML2023",
