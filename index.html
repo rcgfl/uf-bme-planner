@@ -342,7 +342,7 @@ select.select-unselected{border-color:#b00020;background:#fdecee}
     <div class="flex" style="margin-top:4px">
       <button onclick="openAuditImportPanel()">Import degree audit</button>
       <input id="auditFile" type="file" accept="application/pdf" aria-label="Import a degree audit PDF" style="display:none" onchange="handleAuditFile(event)">
-      <span class="small">Parses a redacted Academic Advisement Report PDF entirely in your browser.</span>
+      <span class="small">Add Academic Advisement Report to aid in schedule generation.</span>
     </div>
   </div>
   <div class="import-panel" id="transcriptImportTrigger">
@@ -350,7 +350,7 @@ select.select-unselected{border-color:#b00020;background:#fdecee}
     <div class="flex" style="margin-top:4px">
       <button onclick="openTranscriptImportPanel()">Import unofficial transcript</button>
       <input id="transcriptFile" type="file" accept="application/pdf" aria-label="Import an unofficial transcript PDF" style="display:none" onchange="handleTranscriptFile(event)">
-      <span class="small">Supports FLVC/FloridaShines computer-saved transcripts with selectable text. Mobile/raster OCR is not supported.</span>
+      <span class="small">Add computer-saved unofficial transcript from https://www.floridashines.org/check-your-progress with selectable text. Mobile/raster OCR is not supported.</span>
     </div>
   </div>
   <div class="import-panel" id="auditImportPanel" style="display:none">
@@ -730,6 +730,17 @@ const BUILD_DATE = '2026-06-26';
 //             (Matched chip's ✕ returns to Unmatched; Unmatched chip's ✕
 //             fully excludes from import — same function, different effect
 //             depending on the row's current bucket).
+//          6) Text-copy changes, per Chris: degree-audit import description
+//             now reads "Add Academic Advisement Report to aid in schedule
+//             generation" (was "Parses a redacted Academic Advisement Report
+//             PDF entirely in your browser"). Transcript import description
+//             now names the source explicitly — "Add computer-saved
+//             unofficial transcript from
+//             https://www.floridashines.org/check-your-progress with
+//             selectable text" (was "Supports FLVC/FloridaShines computer-
+//             saved transcripts..."). URL verified live and current as of
+//             this build; Chris flagged he hadn't personally confirmed it
+//             since he's not a student going through that flow himself.
 // 2.11.7 — Import review workflow and audit-prereq verification pass. Needs Review
 //          rows now have an explicit Accept button that moves a resolved row
 //          into Matched before the final import; the row X now returns review
