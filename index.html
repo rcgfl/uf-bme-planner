@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UF BME Curriculum Planner v2.5.7</title>
+<title>UF BME Curriculum Planner v2.11.8</title>
 <style>
 /* ── Base ── */
 *,*::before,*::after{box-sizing:border-box}
@@ -49,6 +49,7 @@ input[type="checkbox"]{cursor:pointer}
 .tag-orange{border-color:#f5c68a;color:#7a4000;background:#fff3e0}
 .tag-green{border-color:#a5d6a7;color:#1b5e20;background:#e8f5e9}
 .tag-warn{border-color:#ffe082;color:#7a5200;background:#fff8e1}
+.credit-badge{display:inline-block;border:1px solid #b8c0cc;border-radius:10px;padding:0 6px;font-size:11px;color:#334;background:#f6f7f9;margin-left:5px;white-space:nowrap}
 
 /* ── Semester Grid ── */
 .semester-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
@@ -208,6 +209,16 @@ input[type="checkbox"]{cursor:pointer}
 /* ── Provisional warning ── */
 .provisional-note{color:#b00020;font-size:11px}
 
+
+/* ── Advisor decision log (2.11.0) ── */
+.decision-log-panel{margin-top:16px;border-top:1px solid #e3e6eb;padding-top:10px;display:none}
+.decision-log-panel.advisor-visible{display:block}
+.decision-log-table{width:100%;border-collapse:collapse;margin-top:6px}
+.decision-log-table th{text-align:left;font-size:12px;color:#556;text-transform:uppercase;letter-spacing:.03em;padding:5px 6px;border-bottom:2px solid #d7dbe2}
+.decision-log-table td{font-size:12px;padding:6px;border-bottom:1px solid #edf0f4;vertical-align:top}
+.decision-log-table .followup{font-weight:700;color:#7a5200}
+.decision-log-empty{font-size:12px;color:#889;font-style:italic;padding:6px 0}
+
 /* ── Responsive ── */
 @media(max-width:700px){
   .import-table{grid-template-columns:1fr}
@@ -232,6 +243,8 @@ select.select-unselected{border-color:#b00020;background:#fdecee}
 .dualrole-hint{font-size:11px;color:#7a4000;background:#fff3e0;border:1px solid #f5c68a;border-radius:4px;padding:2px 6px}
 .import-xbtn{border:0;background:transparent;color:#b00020;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:4px 8px;border-radius:4px}
 .import-xbtn:hover{background:#fdecee}
+.import-okbtn{border:1px solid #a5d6a7;background:#e8f5e9;color:#1b5e20;font-size:12px;font-weight:700;cursor:pointer;line-height:1;padding:4px 8px;border-radius:4px;margin-right:4px}
+.import-okbtn:hover{background:#d8efd9;border-color:#81c784}
 .import-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid #e2e6ee}
 .col-import{width:190px}
 .col-x{width:36px;text-align:center}
@@ -268,7 +281,7 @@ select.select-unselected{border-color:#b00020;background:#fdecee}
 <header>
   <div class="uf-logo">UF</div>
   <div class="header-text">
-    <h1 id="pageTitle">UF BME Curriculum Planner v2.5</h1>
+    <h1 id="pageTitle">UF BME Curriculum Planner v2.11.8</h1>
     <div class="sub" id="pageSub">Loading catalog data…</div>
   </div>
 </header>
@@ -332,15 +345,23 @@ select.select-unselected{border-color:#b00020;background:#fdecee}
       <span class="small">Parses a redacted Academic Advisement Report PDF entirely in your browser.</span>
     </div>
   </div>
+  <div class="import-panel" id="transcriptImportTrigger">
+    <strong class="small">Import an unofficial transcript PDF</strong>
+    <div class="flex" style="margin-top:4px">
+      <button onclick="openTranscriptImportPanel()">Import unofficial transcript</button>
+      <input id="transcriptFile" type="file" accept="application/pdf" aria-label="Import an unofficial transcript PDF" style="display:none" onchange="handleTranscriptFile(event)">
+      <span class="small">Supports FLVC/FloridaShines computer-saved transcripts with selectable text. Mobile/raster OCR is not supported.</span>
+    </div>
+  </div>
   <div class="import-panel" id="auditImportPanel" style="display:none">
-    <h2 style="margin-top:0">Import Degree Audit</h2>
+    <h2 id="auditPanelTitle" style="margin-top:0">Import Degree Audit</h2>
     <div class="privacy-note">🔒 Nothing here is uploaded or persisted. The PDF is read by your browser only; parsing happens entirely client-side.</div>
     <div id="auditStatus" class="small" style="margin-bottom:8px;color:#556"></div>
 
   <div id="auditStaging" style="display:none">
-    <div class="legend">
+    <div class="legend" id="auditLegend">
       <strong>Matched</strong> — reliable match, grade C or better (or P/S): no action needed. <strong>X</strong> sends it back to Unmatched.<br>
-      <strong>Needs Review</strong> — every row here needs an explicit decision: pick a target, or click <strong>X</strong> to remove it. A dropdown still showing "Select course" is highlighted red and blocks Accept.<br>
+      <strong>Needs Review</strong> — every row here needs an explicit decision: pick a target, then click <strong>Accept</strong> to move it to Matched; click <strong>X</strong> to return it to Unmatched. A dropdown still showing "Select course" is highlighted red and blocks final Accept.<br>
       <strong>Unmatched</strong> — nothing found. Check the box to move it into Review with the full course list available; <strong>X</strong> excludes it from consideration entirely.<br>
       Hover any chip for term · course · grade · type.
     </div>
@@ -481,6 +502,13 @@ select.select-unselected{border-color:#b00020;background:#fdecee}
       <h2 style="margin:0">Remaining requirements <span id="reqTermLabel" class="small"></span></h2>
       <div id="requirements" class="req-grid" style="margin-top:6px"></div>
     </div>
+    <div id="decisionLogPanel" class="decision-log-panel">
+      <details id="decisionLogDetails">
+        <summary style="cursor:pointer;font-size:15px;font-weight:700">Import decisions <span id="decisionLogCount" class="small"></span></summary>
+        <div class="small" style="margin-top:6px">Tracks user import decisions first, followed by program substitutions and direct matches. Hidden in regular mode; visible for advisor review.</div>
+        <div id="decisionLogContent"></div>
+      </details>
+    </div>
   </details>
 </div>
 
@@ -565,6 +593,27 @@ let COURSES = {};
 // Maps prefix -> short subject title, used only for the risk-flag message.
 const FALLBACK_COURSE_PREFIXES = {"ABE":"Agricultural Engineering","ABT":"Arabic in Translation","ACG":"Accounting: General","ADV":"Advertising","AEB":"Agr. Economics & Business","AEC":"Agricultural Education and Communication","AEE":"Agr. & Extension Education","AFA":"African-American Studies","AFH":"African History","AFR":"Aerospace Studies","AFS":"African Studies","AGG":"Agriculture - General","AGR":"Agronomy","AHM":"Languages, Literatures and Cultures - Amharic","AKA":"Akan Language","ALS":"Agriculture - General","AMH":"American History","AML":"American Literature","ANG":"Anthropology - Graduate","ANS":"Animal Science","ANT":"Anthropology","AOM":"Agricultural Operations Management","APK":"Applied Physiology and Kinesiology","ARA":"Arabic Language","ARC":"Architecture","ARE":"Art Education","ARH":"Art History","ART":"Art","ASH":"Asian History","ASL":"Speech, Language and Hearing Sciences","ASN":"Asian Studies","AST":"Astronomy","ATE":"Animal Sciences","ATR":"Applied Physiology and Kinesiology","BCC":"Medicine","BCH":"Biochemistry","BCN":"Building Construction","BME":"Biomedical Engineering","BMS":"Basic Medical Sciences","BOT":"Botany","BSC":"Biological Sciences","BUL":"Business Law","CAP":"Computer Applications","CAS":"Clinical Audiology/Speech","CAT":"Catalan","CBH":"Comp. Psy. & Animal Behavior","CCE":"Civil Construction Engineering","CCJ":"Criminology & Criminal Justice","CDA":"Computer Design/Architecture","CEG":"Civil Engineering Geotechnical","CEN":"Computer Engineering","CES":"Civil Engineering Structures","CGN":"Civil Engineering","CGS":"Computer General Studies","CHI":"Chinese","CHM":"Chemistry","CHT":"Chinese Literature in Translation","CHW":"Languages, Literatures and Cultures - Chinese","CIS":"Computer & Info. Systems","CJC":"Sociology, Criminology and Law - Criminology","CJE":"Sociology, Criminology and Law - Criminology","CJJ":"Sociology, Criminology and Law - Criminology","CJL":"Sociology, Criminology and Law - Criminology","CLA":"Classical & Ancient Studies","CLP":"Clinical Psychology","CLT":"Classical Literature in Translation","CNT":"Computer and Information Science and Engineering","COM":"Communication","COP":"Computer Programming","COT":"Computing Theory","CPO":"Comparative Politics","CRW":"Creative Writing","CTS":"Computer and Information Science and Engineering","CWR":"Civil/Water Resources","CZE":"Czech","CZT":"Languages, Literatures and Cultures - Czech","DAA":"Dance Activities","DAE":"Dance Education","DAN":"Dance","DCP":"Sustainability and the Built Environment","DEN":"Dentistry","DEP":"Developmental Psychology","DIE":"Dietetics","DIG":"Art and Art History","DUT":"Languages, Literatures and Cultures - Dutch","EAB":"Experimental Analysis of Behavior","EAP":"Linguistics","EAS":"Aerospace Engineering","EBD":"Education - Special Education, School Psychology and Early Childhood Studies","ECH":"Engineering: Chemical","ECO":"Economics","ECP":"Economics: Problems & Policy","ECS":"Economic Systems & Development","EDA":"Education: Administration","EDE":"Education: Elementary","EDF":"Education: Foundations & Policy Studies","EDG":"Education: General","EDH":"Education: Higher","EDM":"Education: Middle School","EDP":"Education - Human Development and Organizational Studies","EDS":"Education: Supervision","EEC":"Education: Early Childhood","EEE":"Engineering: Electrical","EEL":"Engineering: Electrical","EES":"Environmental Engineering Science","EEX":"Education: Exceptional Child","EGI":"Education: Gifted","EGM":"Engineering: Mechanics","EGN":"Engineering: General","EGS":"Engineering Studies/Leadership","EIN":"Engineering: Industrial","EMA":"Materials Engineering","EME":"Education: Technology","EML":"Engineering: Mechanical","ENC":"English Composition","ENG":"English - General","ENL":"English Literature","ENT":"Finance, Insurance and Real Estate","ENU":"Engineering: Nuclear","ENV":"Engineering: Environmental","ENY":"Entomology","EOC":"Engineering & Oceanography","EPH":"Physical & Multiple Handicaps","ESC":"Geological Sciences","ESE":"Education: Secondary","ESI":"Industrial Engineering Systems","EUH":"European History","EUS":"Center for European Studies","EVR":"Natural Resources","EVS":"Natural Resources","EXP":"Experimental Psychology","FAS":"Fisheries & Aquaculture","FES":"Fire & Emergency Services","FIL":"Film","FIN":"Finance","FLE":"Education - Teaching and Learning","FNR":"Forestry & Natural Resources","FOL":"Spanish and Portuguese - Spanish","FOR":"Forestry","FOS":"Food Science","FOT":"Latin American Studies","FOW":"Spanish and Portuguese - Portuguese","FRC":"Fruit Crops","FRE":"French Language","FRT":"Languages, Literatures and Cultures - French","FRW":"Languages, Literatures and Cultures - French","FYC":"Family, Youth & Community","GEA":"Geography - Regional","GEB":"General Business","GEO":"Geography - Systematic","GER":"German","GET":"Languages, Literatures and Cultures - German","GEW":"Languages, Literatures and Cultures - German","GEY":"Gerontology","GIS":"Geography","GLY":"Geology","GMS":"Graduate Medical Sciences","GMT":"Classics","GRA":"Graphic Design","GRE":"Classical Greek Language","GRK":"Modern Greek Language","GRW":"Classics - Greek","HAI":"Haitian Creole","HAT":"Languages, Literatures and Cultures - Haitian Creole","HBR":"Modern Hebrew Language","HBT":"Languages, Literatures and Cultures - Hebrew","HFT":"Tourism, Recreation and Sport Management","HIN":"Languages, Literatures and Cultures - Hindi","HIS":"History - General","HLP":"Health, Leisure & Physical Education","HMW":"Languages, Literatures and Cultures - Hebrew","HNG":"Center for European Studies","HOS":"Horticultural Sciences","HPS":"History","HSA":"Health Services Administration","HSC":"Health Science","HUM":"Humanities","HUN":"Human Nutrition","ICM":"International Construction Management","IDC":"Art and Art History","IDH":"Interdisciplinary Honors","IDS":"Interdisciplinary Studies","IND":"Interior Design","INP":"Correspondence Study","INR":"International Relations","IPM":"Agronomy","ISC":"Integrated Science","ISM":"Information Systems Management","ISS":"Liberal Arts and Sciences - Interdisciplinary Studies","ITA":"Italian Language","ITT":"Languages, Literatures and Cultures - Italian","ITW":"Languages, Literatures and Cultures - Italian","JOU":"Journalism","JPN":"Japanese Language","JPT":"Languages, Literatures and Cultures - Japanese","JPW":"Languages, Literatures and Cultures - Japanese","JST":"Judaic Studies","KOR":"Languages, Literatures and Cultures - Korean","LAA":"Landscape Architecture","LAE":"Language Arts & English Education","LAH":"Latin American History","LAS":"Latin American Studies","LAT":"Latin","LAW":"Environmental Engineering Science","LDE":"Environmental Horticulture","LEI":"Leisure","LGL":"African Studies","LIN":"Linguistics","LIT":"Literature","LNW":"Classics - Latin","MAA":"Mathematics: Analysis","MAC":"Math: Calculus & Pre-calculus","MAD":"Mathematics: Discrete","MAE":"Mathematics Education","MAN":"Management","MAP":"Mathematics: Applied","MAR":"Marketing","MAS":"Mathematics: Algebraic Structures","MAT":"Mathematics","MCB":"Microbiology","MDU":"Medicine","MED":"Medicine","MEL":"Epidemiology Health Policy Research","MEM":"History","MET":"Meteorology","MGF":"Math: General & Finite","MHF":"Math: History & Foundations","MHS":"Education - Human Development and Organizational Studies","MMC":"Mass Media Communication","MSL":"Military Science - Army","MTG":"Math: Topology & Geometry","MUC":"Music: Composition","MUE":"Music Education","MUG":"Music","MUH":"Music: History/Musicology","MUL":"Music: Music Language","MUN":"Music: Music Ensembles","MUO":"Music","MUR":"Music","MUS":"Music","MUT":"Music: Theory","MVB":"Music","MVK":"Music","MVO":"Music","MVP":"Music","MVS":"Music","MVV":"Music","MVW":"Music","NEM":"Nematology","NGR":"Nursing - All Departments","NSC":"Military Science - Navy","NUR":"Nursing","OCE":"Oceanography","OCP":"Civil and Coastal Engineering","ORH":"Ornamental Horticulture","ORI":"Theatre and Dance","OTH":"Occupational Therapy","PAD":"Public Administration","PAS":"Physician Assistant","PCB":"Process/Cell Biology","PCO":"Psychology for Counseling","PCY":"Art and Art History","PEL":"Phys. Ed. Activities","PEM":"Phys. Ed. Activities","PEN":"Tourism, Recreation and Sport Management","PEO":"Tourism, Recreation and Sport Management","PEQ":"Applied Physiology and Kinesiology","PET":"Phys. Ed. Theory","PGY":"Photography","PHA":"Pharmacy","PHC":"Public Health Care","PHH":"Philosophy","PHI":"Philosophy","PHM":"Philosophy","PHP":"Philosophy","PHT":"Physical Therapy","PHY":"Physics","PHZ":"Physics","PKG":"Packaging Science","PLP":"Plant Pathology","PLS":"Plant Science","PLT":"Languages, Literatures and Cultures - Polish","PLW":"Languages, Literatures and Cultures - Polish","PMA":"Entomology and Nematology","POL":"Languages, Literatures and Cultures - Polish","POR":"Portuguese Language","POS":"Political Science","POT":"Political Science","POW":"Spanish and Portuguese - Portuguese","PPE":"Psychology in Personality","PRT":"Spanish and Portuguese - Portuguese","PSB":"Psychology","PSY":"Psychology","PUP":"Public Policy","PUR":"Public Relations","QMB":"Quantitative Methods in Business","RCS":"Health Professions","RED":"Education - Special Education, School Psychology and Early Childhood Studies","REE":"Real Estate","REL":"Religion","RMI":"Risk Management & Insurance","RSD":"Health Professions","RTV":"Radio-Television","RUS":"Russian Language","RUT":"Languages, Literatures and Cultures - Russian","RUW":"Languages, Literatures and Cultures - Russian","SCA":"Languages, Literatures and Cultures - Swedish","SCE":"Education - Teaching and Learning","SCT":"Languages, Literatures and Cultures - Swedish","SDS":"Education - Human Development and Organizational Studies","SLS":"Career Development Program","SOP":"Social Psychology","SPA":"Speech Pathology & Audiology","SPC":"Speech Communication","SPM":"Applied Physiology and Kinesiology","SPN":"Spanish Language","SPS":"School Psychology","SPT":"Spanish and Portuguese - Spanish","SPW":"Spanish and Portuguese - Spanish","SRK":"Religion","SSA":"African Studies","SSE":"Education - Teaching and Learning","SST":"Languages, Literatures and Cultures","SSW":"Languages, Literatures and Cultures","STA":"Statistics","SUR":"Surveying","SWA":"African Studies","SWS":"Soil and Water Sciences","SWW":"Languages, Literatures and Cultures - Swahili","SYA":"Sociological Analysis","SYD":"Sociology of Demography","SYG":"General Sociology","SYO":"Social Organization","SYP":"Social Processes","TAX":"Taxation","THE":"Theatre","TPA":"Theatre and Dance","TPP":"Theatre and Dance","TSL":"Teaching English as a Second Language","TTE":"Civil and Coastal Engineering","TUR":"Center for European Studies","URP":"Urban & Regional Planning","VEC":"Horticultural Sciences","VEM":"Veterinary Medicine","VME":"Veterinary Medicine","VTN":"African and Asian Languages and Literatures - Vietnamese","WIS":"Wildlife Ecology & Conservation","WOH":"World History","WOL":"African Studies","WST":"Women's Studies","XHO":"African Studies","YOR":"Languages, Literatures and Cultures - Yoruba","YOT":"Languages, Literatures and Cultures - Yoruba","YRW":"Languages, Literatures and Cultures - Yoruba","ZOO":"Zoology"};
 
+// Local runtime patches that must apply even when live GitHub JSON loads successfully.
+// Keep these small and heavily documented: they are compatibility shims for true
+// equivalent-credit records that may not yet exist in the remote data files.
+const LOCAL_EQUIV_COURSE_PATCHES = {
+  MAC3474: {
+    id: 'MAC3474',
+    title: 'Honors Calculus 3',
+    credits: 4,
+    offered: ['F','S'],
+    prereq: ['MAC2312'],
+    coreq: [],
+    placeholder: false,
+    approvedBmeElective: false,
+    provisional: false,
+    offeringAdvisory: false,
+    equivalentCreditOnly: true,
+    notes: 'Honors equivalent of MAC2313. UF awards credit for at most one of MAC2313 or MAC3474.'
+  }
+};
+
+
 let CATALOG_ELECTIVES = {}; // approved electives only, for panel display
 let CATALOG_PATHWAYS = {};
 let CATALOG_THEMES = {}; // 2.8.x: primary pathway browsing entry point
@@ -616,7 +665,11 @@ async function loadCatalog() {
     CATALOG_ELECTIVES[id] = { ...c, id };
     if (!merged[id]) merged[id] = { ...c, id };
   });
+  Object.entries(LOCAL_EQUIV_COURSE_PATCHES).forEach(([id, c]) => {
+    if (!merged[id]) merged[id] = { ...c, id };
+  });
   COURSES = merged;
+  ensureRepeatableVariableElectiveBaseRecords();
   CATALOG_PATHWAYS = pwData.pathways || {};
   CATALOG_THEMES = pwData.themes || {};
   COURSE_PREFIXES = pfData.prefixes || pfData || {};
@@ -642,9 +695,95 @@ async function loadCatalog() {
    SECTION 2 — CONSTANTS AND STATE
 ═══════════════════════════════════════════════════════════════════ */
 
-const PLANNER_VERSION = '2.10.3';
-const BUILD_DATE = '2026-06-23';
+const PLANNER_VERSION = '2.11.8';
+const BUILD_DATE = '2026-06-26';
 // Changelog:
+// 2.11.8 — Cosmetic/accessibility cleanup pass, no behavior change:
+//          1) Static <title>/<h1> markup was still hardcoded to v2.11.5 from
+//             before the 2.11.6/2.11.7 bumps; updatePageTitle() overwrites
+//             both at runtime so this never showed to a user, but the source
+//             is now in sync rather than relying on that overwrite.
+//          2) The 2.11.7 Needs Review row buttons (✓ Accept / ✕ return-to-
+//             Unmatched) only had a `title` attribute, which icon-only
+//             buttons can't reliably expose to screen readers. Added explicit
+//             aria-label to both.
+//          3) Neither auditAcceptReviewRow() nor auditExcludeRow() called
+//             announce() into #srAnnouncer, unlike every other state-changing
+//             action in the app (pin/unpin, add/remove, block/unblock term,
+//             bulk audit-import accept, etc.) — a screen-reader user got no
+//             confirmation a row had moved. Added announce() calls to both.
+//          4) SCHEMA_VERSION was still pinned at 2.11.1 despite 2.11.2
+//             (variable-credit instance model), 2.11.4 (review-dropdown
+//             target semantics), 2.11.6 (variable-credit materialization
+//             timing), and 2.11.7 (synthetic prereq review rows) all being
+//             behavioral changes by the project's own versioning rule.
+//             schemaVersion is only ever checked against the old 2.6.0/2.6.1
+//             case today, so nothing was functionally broken — but bumped to
+//             2.11.7 to reflect the last behavioral release accurately. Left
+//             unbumped relative to this 2.11.8 pass itself, since this pass
+//             is cosmetic/a11y only, not behavioral.
+//          5) Same root cause as (2), found while fixing it: the ✕ buttons on
+//             the Matched-chip and Unmatched-chip rows (auditExcludeRow, same
+//             function as the Needs Review row) had neither title nor
+//             aria-label at all — a pre-existing gap, not introduced by
+//             2.11.7. Added both, with distinct wording per actual behavior
+//             (Matched chip's ✕ returns to Unmatched; Unmatched chip's ✕
+//             fully excludes from import — same function, different effect
+//             depending on the row's current bucket).
+// 2.11.7 — Import review workflow and audit-prereq verification pass. Needs Review
+//          rows now have an explicit Accept button that moves a resolved row
+//          into Matched before the final import; the row X now returns review
+//          rows to Unmatched rather than silently excluding them. Advisor
+//          decision log renamed Import decisions and grouped as user decisions,
+//          substitutions, then matches, so human choices appear before
+//          program-derived matches. Advisor degree-audit import now adds
+//          synthetic Needs Review rows for prerequisite courses implied by an
+//          enrolled/IP course but not verified elsewhere in the imported audit
+//          (e.g., MAC2313 without MAC2312/MAC2311 in the audit), so advisors
+//          can explicitly accept verified prior credit or leave it unresolved.
+// 2.11.6 — Import variable-credit fix: repeatable variable-credit rows are no
+//          longer materialized into synthetic EGN4912__VC/BME3941__VC ids
+//          before applyAuditImport() resets the plan. They now travel through
+//          import acceptance as pending variable-credit records and are
+//          materialized only after resetPlanState(), so completed 0cr rows
+//          become completed/elective chips and IP rows appear on their real
+//          semester card. Also hardens catalog load by guaranteeing BME3941
+//          and EGN4912 base records exist even if remote JSON omits them, so
+//          they are always available in the restricted Needs Review dropdown.
+// 2.11.5 — Zero-credit visibility hardening: course-row rendering already
+//          included 0-credit courses when present in term.courses (there is no
+//          intentional credit>0 display filter), but repeatable variable-credit
+//          instances now show their credit badge directly on term cards too.
+//          This makes imported BME3941/EGN4912 0-credit/IP rows visibly distinct
+//          on the schedule and easier to verify after transcript/audit import.
+// 2.11.4 — Audit/transcript import resolution fix: selecting ELECTIVE_SLOT in
+//          the review dropdown now means "use the imported source course as the
+//          elective occupying this slot" rather than accepting the generic
+//          ELECTIVE_SLOT placeholder itself. This preserves imported course
+//          code/title/credits in completed chips and plan logic. Restricted
+//          review dropdowns now explicitly include BME3941 and EGN4912, even
+//          though other electives stay hidden to avoid a huge list. Choosing
+//          BME3941/EGN4912 in review prompts/allows per-row credit entry and
+//          Accept creates a separate variable-credit instance for each row.
+// 2.11.2 — Variable-credit elective instance model for BME3941 and EGN4912.
+// 2.11.1 — Added MAC3474 as the Honors Calculus 3 equivalent-credit option for
+//          MAC2313. FLVC/advisor-audit imports now map MAC3474 to the canonical
+//          MAC2313 slot. The completed-course dropdown now lists MAC3474 under
+//          MAC2313 with mutual exclusion, critical tracking counts MAC2313/3474
+//          together, and global equivalent-credit satisfaction now lets true
+//          equivalent prior-credit records satisfy their canonical requirement
+//          slots in remaining-requirement and prereq/coreq checks. MAC3473
+//          remains retained as a historical/catalog equivalent for MAC2312 even
+//          if recent offerings are not visible.
+// 2.11.0 — Added FLVC unofficial-transcript PDF import as a second format-specific
+//          parser feeding the existing audit-import staging/review/apply pipeline.
+//          Added persistent advisor decision log for automatic substitutions,
+//          flagged import acceptances, and manually resolved import mappings; log
+//          is saved/loaded with the plan and exposed only in advisor mode under
+//          Advising reference. Mobile/raster OCR is intentionally unsupported;
+//          unreadable PDF pages are detected and reported rather than silently
+//          parsed.
+
 // 2.5.0 — Initial clean rebuild from v2.2.5-dev.
 // 2.5.1 — Fixed: blank cards on load; correct start term; transfer 3yr default; companion prompts.
 // 2.5.2 — Fixed: panel order matches dev build.
@@ -1732,7 +1871,7 @@ const BUILD_DATE = '2026-06-23';
 //          applyState() — applyState() filters restored ids against
 //          CATALOG_PATHWAYS so a saved plan referencing a pathway later
 //          removed from pathways.json doesn't resurrect a dead reference.
-const SCHEMA_VERSION = '2.8.4'; // bumped: activeThemes replaces activePathways as persisted state
+const SCHEMA_VERSION = '2.11.7'; // v2.11.8 cleanup: corrected from stale 2.11.1 — 2.11.2/2.11.4/2.11.6/2.11.7 were all behavioral changes that should have bumped this
 
 // 2.8.4 — Two pieces, found/requested together: a real bug from heavy
 //          pathway/elective testing, and the themes restructuring it
@@ -2909,6 +3048,29 @@ const TRANSFER_MISSING_OPTIONS = TRANSFER_ASSUMPTION_OPTIONS;
 // All assumed transfer-prep courses default checked; CHM2211/COP2271/L are not assumed and
 // therefore do not appear in this assumption checklist.
 const TRANSFER_DEFAULT_MISSING = new Set();
+
+// True prior-credit/equivalent-credit alternatives that satisfy a canonical
+// BME model-plan slot. This is intentionally narrower than arbitrary petition
+// substitutions: these are at-most-one/equivalent-credit relationships used
+// for completed-credit, import matching, remaining-requirement suppression,
+// and prereq/coreq satisfaction.
+const GLOBAL_CREDIT_EQUIVALENTS = {
+  MAC2311: ['MAC2233','MAC3472'],
+  MAC2312: ['MAC2512','MAC3473'],
+  MAC2313: ['MAC3474'],
+  CHM2045: ['CHM2095'],
+  CHM2046: ['CHM2096'],
+  CHM2045L: ['CHM2095L'],
+  CHM2046L: ['CHM2096L'],
+  PHY2048: ['PHY2060'],
+  PHY2049: ['PHY2061'],
+  CHM3217: ['CHM2211'],
+  BME3508: ['EEL3135']
+};
+function globalCreditEquivalentsFor(requiredId) {
+  return GLOBAL_CREDIT_EQUIVALENTS[requiredId] || [];
+}
+
 const SUMMER_REQUIRED = 9;
 const SUMMER_EXEMPT_THRESHOLD = 60;
 
@@ -2920,7 +3082,7 @@ const CRITICAL_TRACKING_GROUPS = [
   {key:'CHM2046',label:'CHM2046/2096',ids:['CHM2046','CHM2096']},
   {key:'MAC2311',label:'MAC2311',ids:['MAC2311']},
   {key:'MAC2312',label:'MAC2312',ids:['MAC2312']},
-  {key:'MAC2313',label:'MAC2313',ids:['MAC2313']},
+  {key:'MAC2313',label:'MAC2313/3474',ids:['MAC2313','MAC3474']},
   {key:'MAP2302',label:'MAP2302',ids:['MAP2302']},
   {key:'PHY2048',label:'PHY2048',ids:['PHY2048']},
   {key:'PHY2049',label:'PHY2049',ids:['PHY2049']},
@@ -2951,6 +3113,9 @@ let addSelections = {};
 // that course, since accepting re-establishes "I want these paired."
 // Intentionally session-only, not saved/restored — see SCHEMA_VERSION note.
 let splitCompanionPairs = new Set();
+
+// 2.11.0: persistent advisor-only log of program/student/advisor decisions.
+let decisionLog = [];
 
 // Elective state
 let chosenElectives = new Set();
@@ -2990,6 +3155,11 @@ function togglePendingGroupExpanded(themeId, isOpen) {
 // durable record for save/load — registerManualElectiveCourse() is what
 // actually turns an entry here into a usable COURSES record at runtime.
 let manualElectiveCourses = {};
+// 2.11.2: repeatable variable-credit elective instances (BME3941, EGN4912).
+// The base catalog records stay at their catalog default; each actual 0–3 cr
+// occurrence gets a synthetic id (e.g. EGN4912__VC1) with its own credits.
+let variableCreditInstances = {};
+let variableCreditInstanceSeq = 0;
 // 2.8.x: consumedSlots/slotAssignments retired — see ELECTIVE_SLOT_ID
 // changelog entry. Numbered-token identity tracking was the bug; a single
 // interchangeable placeholder needs none of this bookkeeping.
@@ -3033,6 +3203,8 @@ function snapshotState() {
     incomingCreditOverride,
     summerExemptOverride,
     manualElectiveCourses: JSON.parse(JSON.stringify(manualElectiveCourses)),
+    variableCreditInstances: JSON.parse(JSON.stringify(variableCreditInstances)),
+    variableCreditInstanceSeq,
     activeThemes: [...activeThemes],
     startSeason: document.getElementById('studentStartSeason')?.value,
     startYear: document.getElementById('startYear')?.value
@@ -3057,12 +3229,15 @@ function undoLastChange() {
   incomingCreditOverride=s.incomingCreditOverride;
   summerExemptOverride=s.summerExemptOverride;
   manualElectiveCourses=s.manualElectiveCourses?JSON.parse(JSON.stringify(s.manualElectiveCourses)):{};
+  variableCreditInstances=s.variableCreditInstances?JSON.parse(JSON.stringify(s.variableCreditInstances)):{};
+  variableCreditInstanceSeq=Number(s.variableCreditInstanceSeq)||0;
   // Re-sync COURSES with the restored manual-elective set: drop any manual
   // record that no longer belongs (the action being undone added it), and
   // re-create any that should exist again (the action being undone removed
   // one that was already there before).
-  Object.keys(COURSES).forEach(id=>{ if(COURSES[id]?.unverifiedFreeElective && !manualElectiveCourses[id]) delete COURSES[id]; });
+  Object.keys(COURSES).forEach(id=>{ if(COURSES[id]?.unverifiedFreeElective && !manualElectiveCourses[id]) delete COURSES[id]; if(COURSES[id]?.variableCreditInstance && !variableCreditInstances[id]) delete COURSES[id]; });
   Object.entries(manualElectiveCourses).forEach(([id,m])=>{ if(!COURSES[id]) registerManualElectiveCourse(id,m); });
+  Object.entries(variableCreditInstances).forEach(([id,m])=>registerVariableCreditInstance(id,m));
   activeThemes=new Set((s.activeThemes||[]).filter(id=>CATALOG_THEMES[id]));
   if(s.startSeason){const el=document.getElementById('studentStartSeason');if(el)el.value=s.startSeason;}
   if(s.startYear){const el=document.getElementById('startYear');if(el)el.value=s.startYear;}
@@ -3236,6 +3411,130 @@ function credits(ids) { return ids.reduce((a,id)=>a+(COURSES[id]?.credits||0),0)
 // (the 9-cr-minimum / 1-free-max rule), use isApprovedElectiveId() instead.
 function isElectiveId(id) { return !!COURSES[id]?.approvedBmeElective || !!COURSES[id]?.freeElectivePick; }
 function isApprovedElectiveId(id) { return !!COURSES[id]?.approvedBmeElective; }
+const REPEATABLE_VARIABLE_ELECTIVE_BASE_IDS = new Set(['BME3941','EGN4912']);
+function ensureRepeatableVariableElectiveBaseRecords() {
+  // Defensive runtime backfill. Remote JSON is the preferred source, but these
+  // two base records are structurally required by the import/review UI and by
+  // per-occurrence variable-credit materialization. If a data file lags behind
+  // the single-file app, the dropdown must still expose BME3941/EGN4912 rather
+  // than forcing users through ELECTIVE_SLOT and losing name/credit metadata.
+  REPEATABLE_VARIABLE_ELECTIVE_BASE_IDS.forEach(id => {
+    const fallback = FALLBACK_ELECTIVES?.[id];
+    if (!COURSES[id] && fallback) COURSES[id] = { ...fallback, id };
+    if (!CATALOG_ELECTIVES[id] && COURSES[id]) CATALOG_ELECTIVES[id] = { ...COURSES[id], id };
+    if (COURSES[id]) {
+      COURSES[id].approvedBmeElective = true;
+      COURSES[id].variableCredit = true;
+      COURSES[id].maxCredits = COURSES[id].maxCredits || 3;
+      COURSES[id].credits = Number(COURSES[id].credits || 0);
+    }
+  });
+}
+function baseCourseId(id) {
+  const c = COURSES[id];
+  return c?.baseId || String(id || '').replace(/__VC\d+$/, '');
+}
+function isRepeatableVariableCreditBase(id) {
+  return REPEATABLE_VARIABLE_ELECTIVE_BASE_IDS.has(id) && !!COURSES[id]?.variableCredit;
+}
+function isRepeatableVariableCreditId(id) {
+  const base = baseCourseId(id);
+  return REPEATABLE_VARIABLE_ELECTIVE_BASE_IDS.has(base) && !!COURSES[base]?.variableCredit;
+}
+function variableCreditCap(id) {
+  const base = baseCourseId(id);
+  return COURSES[base]?.maxCredits || 3;
+}
+function normalizeVariableCredits(value, baseId, allowZero=true) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const cap = variableCreditCap(baseId);
+  if (n < 0 || n > cap) return null;
+  if (!allowZero && n <= 0) return null;
+  return Math.min(n, cap);
+}
+function promptVariableCredits(baseId, defaultValue=0, context='this occurrence') {
+  const cap = variableCreditCap(baseId);
+  const entered = prompt(`${baseId} is variable credit. Enter credits for ${context} (0-${cap}).`, String(defaultValue ?? 0));
+  if (entered === null) return null;
+  const credits = normalizeVariableCredits(entered, baseId, true);
+  if (credits === null) {
+    alert(`Enter a number from 0 to ${cap} for ${baseId}.`);
+    return null;
+  }
+  return credits;
+}
+function nextVariableCreditInstanceId(baseId) {
+  let id;
+  do { variableCreditInstanceSeq += 1; id = `${baseId}__VC${variableCreditInstanceSeq}`; } while (COURSES[id] || variableCreditInstances[id]);
+  return id;
+}
+function registerVariableCreditInstance(id, meta) {
+  const baseId = meta?.baseId || baseCourseId(id);
+  const base = COURSES[baseId];
+  if (!base) return null;
+  const credits = normalizeVariableCredits(meta?.credits, baseId, true);
+  if (credits === null) return null;
+  COURSES[id] = {
+    ...base,
+    id,
+    baseId,
+    displayId: base.displayId || baseId,
+    credits,
+    variableCredit: true,
+    variableCreditInstance: true,
+    notes: [base.notes || '', `Variable-credit instance of ${baseId}; ${credits} credit(s) assigned.`].filter(Boolean).join(' ')
+  };
+  variableCreditInstances[id] = { baseId, credits, source: meta?.source || '', term: meta?.term || '' };
+  return id;
+}
+function createVariableCreditInstance(baseId, credits, meta={}) {
+  if (!isRepeatableVariableCreditBase(baseId)) return baseId;
+  const normalized = normalizeVariableCredits(credits, baseId, true);
+  if (normalized === null) return null;
+  const id = nextVariableCreditInstanceId(baseId);
+  return registerVariableCreditInstance(id, { ...meta, baseId, credits: normalized });
+}
+function forgetVariableCreditInstance(id) {
+  if (!COURSES[id]?.variableCreditInstance) return;
+  delete variableCreditInstances[id];
+  delete COURSES[id];
+}
+function variableCreditBadge(id) {
+  if (!isRepeatableVariableCreditId(id)) return '';
+  const cr = COURSES[id]?.credits ?? 0;
+  return ` <span class="credit-badge" title="Variable-credit occurrence">${cr} cr</span>`;
+}
+function variableCreditCountedCredits(ids, approvedWanted) {
+  const cappedByBase = {};
+  let total = 0;
+  ids.forEach(id => {
+    const c = COURSES[id];
+    if (!c) return;
+    const approved = isApprovedElectiveId(id);
+    if (approved !== approvedWanted) return;
+    const cr = Number(c.credits) || 0;
+    if (isRepeatableVariableCreditId(id)) {
+      const base = baseCourseId(id);
+      const cap = variableCreditCap(id);
+      cappedByBase[base] = Math.min(cap, (cappedByBase[base] || 0) + cr);
+    } else {
+      total += cr;
+    }
+  });
+  return total + Object.values(cappedByBase).reduce((a,b)=>a+b,0);
+}
+function variableCreditExcessWarnings(ids) {
+  const byBase = {};
+  ids.forEach(id => {
+    if (!isRepeatableVariableCreditId(id)) return;
+    const base = baseCourseId(id);
+    byBase[base] = (byBase[base] || 0) + (Number(COURSES[id]?.credits) || 0);
+  });
+  return Object.entries(byBase)
+    .filter(([base,total]) => total > variableCreditCap(base))
+    .map(([base,total]) => `${base}: ${total} scheduled credit(s); only ${variableCreditCap(base)} may count toward the BME elective requirement.`);
+}
 // 2.8.x, per Chris: some real, valid courses (BME2402, EMA3010) exist
 // specifically to satisfy a minor/certificate's requirements and will
 // never be departmentally-approved technical electives — that's permanent
@@ -3276,11 +3575,9 @@ function registerManualElectiveCourse(id, m) {
     // entered, use it, clamped to the course's own maxCredits cap. Every
     // other already-cataloged course is completely unaffected -- this only
     // ever fires for the small variableCredit subset.
-    if (COURSES[id].variableCredit) {
-      const cap = COURSES[id].maxCredits || COURSES[id].credits || 3;
-      const entered = Number(m.credits);
-      if (entered > 0) COURSES[id].credits = Math.min(entered, cap);
-    }
+    // Repeatable variable-credit catalog courses are represented by
+    // synthetic per-occurrence records, so the base catalog record is not
+    // mutated here.
     return;
   }
   COURSES[id] = {
@@ -3318,8 +3615,9 @@ function electiveDisplayLabel(id) {
 }
 function courseLabel(id) {
   const c=COURSES[id]; if(!c) return id;
+  const code=c.displayId||id;
   if(isBmeElectiveSlot(id)) return `${c.title} (${c.credits} cr)`; // friendly text, not the raw internal id
-  return `${id} — ${c.title} (${c.credits} cr)`;
+  return `${code} — ${c.title} (${c.credits} cr)`;
 }
 function compactLabel(id) {
   const c=COURSES[id];
@@ -3349,17 +3647,20 @@ function syncChosenElectives() {
 // student can fill all 4 from the approved list and never use the free
 // allowance at all).
 function electiveStatus() {
-  const ids=new Set([...chosenElectives,...completed].filter(isElectiveId));
-  const approvedIds=[...ids].filter(isApprovedElectiveId);
-  const freeIds=[...ids].filter(id=>!isApprovedElectiveId(id));
-  const approvedCr=approvedIds.reduce((a,id)=>a+(COURSES[id]?.credits||0),0);
-  const freeCr=freeIds.reduce((a,id)=>a+(COURSES[id]?.credits||0),0);
+  const ids=[...new Set([...chosenElectives,...completed].filter(isElectiveId))];
+  const approvedCr=variableCreditCountedCredits(ids, true);
+  const freeCr=variableCreditCountedCredits(ids, false);
   const totalCr=approvedCr+freeCr;
-  const remainingSlots=Math.max(0, ELECTIVE_SLOT_TARGET-ids.size);
+  const nonzeroCommitments = ids.filter(id => !isRepeatableVariableCreditId(id) || (Number(COURSES[id]?.credits)||0) > 0).length;
+  const remainingSlots=Math.max(0, ELECTIVE_SLOT_TARGET-nonzeroCommitments);
+  const freeIds=ids.filter(id=>!isApprovedElectiveId(id));
+  const excessWarnings=variableCreditExcessWarnings(ids);
   return {
-    approvedCr, freeCr, totalCr, remainingSlots, chosenCount: ids.size,
+    approvedCr, freeCr, totalCr, remainingSlots, chosenCount: nonzeroCommitments,
+    rawChosenCount: ids.length,
     freeSlotsUsed: freeIds.length,
-    ok: approvedCr>=9 && freeIds.length<=1 && totalCr>=12
+    variableCreditExcessWarnings: excessWarnings,
+    ok: approvedCr>=9 && freeIds.length<=1 && totalCr>=12 && !excessWarnings.length
   };
 }
 
@@ -3520,8 +3821,9 @@ function pruneMissingCoursesForMode() {
 // validated (sourceId), not as a global id->id table.
 function equivalentsFor(sourceId, requiredId) {
   const src=COURSES[sourceId];
-  if(!src||!src.equivalencies) return [requiredId];
-  return [requiredId,...(src.equivalencies[requiredId]||[])];
+  const globalAlts = globalCreditEquivalentsFor(requiredId);
+  const localAlts = (src && src.equivalencies) ? (src.equivalencies[requiredId] || []) : [];
+  return [requiredId, ...new Set([...globalAlts, ...localAlts])];
 }
 function setHasEquiv(set,requiredId,sourceId) {
   return equivalentsFor(sourceId,requiredId).some(x=>set.has(x));
@@ -3715,9 +4017,18 @@ function downstreamScoreDirect(id) {
 
 function addCourse(termKey) {
   const sel=document.getElementById('add_'+termKey);
-  const id=(sel?.value)||addSelections[termKey];
+  let id=(sel?.value)||addSelections[termKey];
   if(!id) return;
   const t=termByKey(termKey);
+  if(!t) return;
+
+  const isVariableBase = isRepeatableVariableCreditBase(id);
+  let variableCredits = null;
+  if(isVariableBase) {
+    variableCredits = promptVariableCredits(id, 0, `${COURSES[id]?.displayId||id} in ${t.label}`);
+    if (variableCredits === null) return;
+  }
+
   // 2.9.17 bugfix, found by Chris: this guard correctly caps every real
   // course at one-per-term (you can't take BME3101 twice in the same
   // semester), but it also wrongly capped ELECTIVE_SLOT at one-per-term —
@@ -3727,8 +4038,10 @@ function addCourse(termKey) {
   // feedback. The overall ceiling that matters for the slot already lives
   // in electiveSlotRoomLeft() (2.9.16), checked across the whole plan
   // regardless of how concentrated they are — so exempting it from this
-  // per-term guard doesn't reopen any door for real courses.
-  if(!t||(t.courses.includes(id)&&!isBmeElectiveSlot(id))) return;
+  // per-term guard doesn't reopen any door for real courses. Repeatable
+  // variable-credit bases are also exempt here; each add becomes a separate
+  // synthetic occurrence id after confirmations pass.
+  if(t.courses.includes(id)&&!isBmeElectiveSlot(id)&&!isVariableBase) return;
   // Per Chris: blocking a semester shouldn't make it impossible to add a
   // single course there (e.g. an online gen-ed during a co-op semester) —
   // just warn that it likely needs instructor/advisor permission to register.
@@ -3747,6 +4060,11 @@ function addCourse(termKey) {
     if(!confirm(`Historical/audit data suggests ${COURSES[id]?.displayId||id} may not be offered in ${t.label}. This is based on a periodic manual audit, not a live catalog check — confirm with your advisor or ONE.UF before registering. Continue?`)) return;
   }
   snapshotState();
+  if(isVariableBase) {
+    const instId = createVariableCreditInstance(id, variableCredits, {source:'term-card-add', term:t.label});
+    if(!instId) return;
+    id = instId;
+  }
   t.courses.push(id);
   generatedCourses.delete(id);
   delete addSelections[termKey];
@@ -3845,6 +4163,7 @@ function unchooseElective(id) {
   snapshotState();
   chosenElectives.delete(id);
   forgetManualElective(id);
+  forgetVariableCreditInstance(id);
   render();
 }
 
@@ -3872,6 +4191,7 @@ function restoreSlot(termKey, id) {
   delete pinnedCourses[id]; generatedCourses.delete(id);
   chosenElectives.delete(id);
   forgetManualElective(id);
+  forgetVariableCreditInstance(id);
   const backfill=[...chosenElectives].find(cid=>!completed.has(cid)&&!terms.some(tm=>tm.courses.includes(cid)));
   if(backfill){
     if(i>=0) t.courses[i]=backfill;
@@ -4012,10 +4332,27 @@ let auditImportedCourses = new Set();
 // separate from auditImportedCourses so the grid can tell the two apart.
 let auditSuggestedCourses = new Set();
 
+function auditPendingVariableCreditImport(baseId, credits, term) {
+  return { __pendingVariableCredit: true, baseId, credits, meta: { source: auditImportFormat || 'pdf-import', term: term || '' } };
+}
+function auditIsPendingVariableCreditImport(item) {
+  return !!(item && typeof item === 'object' && item.__pendingVariableCredit);
+}
+function auditImportItemExists(item) {
+  if (auditIsPendingVariableCreditImport(item)) return isRepeatableVariableCreditBase(item.baseId);
+  return !!(item && COURSES[item]);
+}
+function auditMaterializeImportCourseId(item) {
+  if (auditIsPendingVariableCreditImport(item)) {
+    return createVariableCreditInstance(item.baseId, item.credits ?? 0, item.meta || {});
+  }
+  return item;
+}
+
 function applyAuditImport(ids, creditOverrides, derivedSeason, derivedYear, ipPlacements) {
   const seasonLabel = {F:'Fall', S:'Spring', Su:'Summer'}[derivedSeason] || 'Fall';
-  const count = (ids||[]).filter(id => id && COURSES[id]).length;
-  const ipCount = (ipPlacements||[]).length;
+  const count = (ids||[]).filter(auditImportItemExists).length;
+  const ipCount = (ipPlacements||[]).filter(p => auditImportItemExists(p?.courseId)).length;
   const msg = `Import ${count} completed course${count===1?'':'s'}`
     + (ipCount ? ` and place ${ipCount} in-progress course${ipCount===1?'':'s'} on the grid` : '')
     + ` -- build the plan starting ${seasonLabel} ${derivedYear}? This resets the current plan.`;
@@ -4030,7 +4367,15 @@ function applyAuditImport(ids, creditOverrides, derivedSeason, derivedYear, ipPl
   if(seasonEl) seasonEl.value=derivedSeason;
   if(yearEl) yearEl.value=derivedYear;
 
-  addCompletedBulk(ids, creditOverrides, {skipSnapshot:true});
+  // Materialize pending BME3941/EGN4912 variable-credit occurrences only after
+  // resetPlanState(); reset intentionally clears prior synthetic instances.
+  const materializedCompletedIds = (ids||[]).map(auditMaterializeImportCourseId).filter(id => id && COURSES[id]);
+  const materializedIpPlacements = (ipPlacements||[]).map(p => ({
+    term: p.term,
+    courseId: auditMaterializeImportCourseId(p.courseId)
+  })).filter(p => p.term && p.courseId && COURSES[p.courseId]);
+
+  addCompletedBulk(materializedCompletedIds, creditOverrides, {skipSnapshot:true});
   layoutPlanOfStudy();
 
   // IP courses go ON the real term they're actually in progress for, on
@@ -4049,7 +4394,7 @@ function applyAuditImport(ids, creditOverrides, derivedSeason, derivedYear, ipPl
   //      buildout, so the same id gets stripped from every OTHER term too,
   //      not just placed at its real one on top of a stale duplicate.
   const ipByTermKey = new Map(); // key -> Set of course ids actually IP that term
-  (ipPlacements||[]).forEach(({ term, courseId }) => {
+  (materializedIpPlacements||[]).forEach(({ term, courseId }) => {
     if (!COURSES[courseId]) return;
     const key = auditTermStringToKey(term);
     if (!ipByTermKey.has(key)) ipByTermKey.set(key, new Set());
@@ -4171,8 +4516,10 @@ function promptPrereqCompanionsCompleted(id) {
 function removeCompleted(id) {
   snapshotState();
   completed.delete(id);
+  chosenElectives.delete(id);
   aaasAutoCompleted.delete(id);
   transferAutoCompleted.delete(id);
+  forgetVariableCreditInstance(id);
   syncIncomingCredits();
   updateTransferStatusBox();
   render();
@@ -4220,9 +4567,17 @@ function offerBch4024Substitution() {
 
 function autoSubElective(newId, opts) {
   if(!newId||!COURSES[newId]) return;
+  if(isRepeatableVariableCreditBase(newId)) {
+    const supplied = opts && Object.prototype.hasOwnProperty.call(opts, 'credits') ? opts.credits : null;
+    const credits = supplied !== null ? normalizeVariableCredits(supplied, newId, true) : promptVariableCredits(newId, 0, 'this elective occurrence');
+    if (credits === null) return;
+    const instId = createVariableCreditInstance(newId, credits, {source: opts?.source || 'manual'});
+    if(!instId) return;
+    newId = instId;
+  }
   if(completed.has(newId)){alert('That elective is already completed.');return;}
   if(chosenElectives.has(newId)){alert('That elective is already chosen.');return;}
-  if(newId==='BCH4024' && offerBch4024Substitution()) return;
+  if(baseCourseId(newId)==='BCH4024' && offerBch4024Substitution()) return;
   // 2.8.x, per Chris: a course can be real and selectable without being a
   // departmentally-approved BME elective — e.g. BME2402/EMA3010 exist
   // specifically to satisfy a minor/certificate's requirements, not because
@@ -4705,12 +5060,8 @@ function requirementCourseIds() {
 }
 
 function courseIsSatisfied(id) {
-  if(completed.has(id)) return true;
+  if(setHasEquiv(completed,id,id)) return true;
   if(courseAssumedSatisfied(id,id)) return true;
-  // Hardwired organic-chem transfer-path equivalency: CHM2211 completion satisfies
-  // the BME CHM3217 slot for requirement suppression and generator placement.
-  // CHM2210 remains CHM2211's prerequisite but is not itself enough to satisfy CHM3217.
-  if(id==='CHM3217' && completed.has('CHM2211')) return true;
   return false;
 }
 
@@ -5502,7 +5853,7 @@ function renderCriticalTracking() {
   });
   const allSatPlanned=ctGroupsSatisfied(new Set([...completed,...plannedAll()])).length;
   const finalOk=statuses[3]?.ok;
-  summary.innerHTML=`Tracked courses satisfied/planned: <span class="ct-status ${finalOk?'ct-ok':'ct-warn'}">${allSatPlanned}/11</span> <span class="small">BSC2010; CHM2045/2095; CHM2046/2096; MAC2311; MAC2312; MAC2313; MAP2302; PHY2048; PHY2049; BME3060; PCB3713C.</span>`;
+  summary.innerHTML=`Tracked courses satisfied/planned: <span class="ct-status ${finalOk?'ct-ok':'ct-warn'}">${allSatPlanned}/11</span> <span class="small">BSC2010; CHM2045/2095; CHM2046/2096; MAC2311; MAC2312; MAC2313/3474; MAP2302; PHY2048; PHY2049; BME3060; PCB3713C.</span>`;
   grid.innerHTML=statuses.map(s=>{
     const term=s.key?termLabelFromKey(s.key):`Semester ${s.semester}`;
     const cls=s.ok?'ct-ok':(s.key?'ct-bad':'ct-warn');
@@ -5854,8 +6205,8 @@ function addFreeElective() {
   if(!parsed){ alert('Enter a course code in the form ABC1234 (3-letter prefix, 4-digit number; C or L suffix allowed, e.g. EGN4912L).'); return; }
   const {id,prefix,number}=parsed;
 
-  if(completed.has(id)){ alert(`${id} is already marked completed.`); return; }
-  if(chosenElectives.has(id)){ alert(`${id} is already one of your chosen electives.`); return; }
+  if(completed.has(id) && !isRepeatableVariableCreditBase(id)){ alert(`${id} is already marked completed.`); return; }
+  if(chosenElectives.has(id) && !isRepeatableVariableCreditBase(id)){ alert(`${id} is already one of your chosen electives.`); return; }
 
   // Already a real catalog course (core, approved, or provisional)? Use it
   // as-is — autoSubElective() now handles the free-pick flagging and the
@@ -5865,16 +6216,14 @@ function addFreeElective() {
   // so the entered credits field still needs to apply here, clamped to
   // maxCredits, same as the brand-new-course path below already does.
   if(COURSES[id]) {
-    if (COURSES[id].variableCredit) {
+    let opts = {};
+    if (isRepeatableVariableCreditBase(id)) {
       const creditsRaw=(creditsEl?.value||'').trim();
-      if (creditsRaw) {
-        const parsedCr=parseFloat(creditsRaw);
-        if(!parsedCr||parsedCr<=0){ alert('Enter a valid positive number of credit hours, or leave blank to use the default.'); return; }
-        const cap=COURSES[id].maxCredits||COURSES[id].credits||3;
-        COURSES[id].credits=Math.min(parsedCr,cap);
-      }
+      const credits = creditsRaw ? normalizeVariableCredits(creditsRaw, id, true) : promptVariableCredits(id, 0, 'this elective occurrence');
+      if (credits === null) return;
+      opts = {credits, source:'free-elective-entry'};
     }
-    autoSubElective(id);
+    autoSubElective(id, opts);
     if(codeEl) codeEl.value='';
     if(creditsEl) creditsEl.value='';
     announce(`${COURSES[id]?.displayId||id} added as an elective.`);
@@ -5928,7 +6277,7 @@ function renderElectiveList() {
   const status=document.getElementById('electiveStatus');
   if(!list) return;
   const es=electiveStatus();
-  if(status) status.textContent=`${es.approvedCr}/9 approved cr selected (min) + ${es.freeCr}/3 free cr (max 1 course off-list) = ${es.totalCr}/12 cr; ${es.remainingSlots} slot(s) remaining`;
+  if(status) status.textContent=`${es.approvedCr}/9 approved cr selected (min) + ${es.freeCr}/3 free cr (max 1 course off-list) = ${es.totalCr}/12 cr; ${es.remainingSlots} slot(s) remaining${es.variableCreditExcessWarnings.length?' — variable-credit cap warning':''}`;
   const ids=electiveAutocompleteIds();
   const visible=ids.slice(0,80);
   list.innerHTML=`<div class="elective-table"><div class="e-head">Course</div><div class="e-head">Cr</div><div class="e-head">Prereq note</div>`
@@ -6054,7 +6403,7 @@ function renderElectiveChosenChips() {
     const label=advisor?`${c.displayId||id} — ${status}`:`${c.displayId||id}`;
     const riskTag=c.unverifiedFreeElective?` <span class="tag tag-orange" title="${(c.notes||'').replace(/"/g,'&quot;')}">unverified</span>`:(!c.approvedBmeElective&&!c.unverifiedFreeElective?` <span class="tag tag-blue">free</span>`:'');
     const removeBtn=isDone?'':`<button title="Remove this elective (slot becomes generic again if placed)" onclick="unchooseElective('${id}')">×</button>`;
-    return `<div class="chip"><span>${label}${riskTag}</span>${removeBtn}</div>`;
+    return `<div class="chip"><span>${label}${variableCreditBadge(id)}${riskTag}</span>${removeBtn}</div>`;
   }).join('');
 }
 
@@ -6063,6 +6412,57 @@ function renderElectiveChosenChips() {
 /* ═══════════════════════════════════════════════════════════════════
    SECTION 17 — MAIN RENDER
 ═══════════════════════════════════════════════════════════════════ */
+
+
+function escapeHtml(s) { return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function decisionActor() { return isAdvisorMode() ? 'advisor' : 'student'; }
+function logDecision(entry) {
+  if(!entry||typeof entry!=='object') return;
+  decisionLog.push({
+    at: new Date().toISOString(),
+    actor: entry.actor || decisionActor(),
+    source: entry.source || 'program',
+    category: entry.category || 'decision',
+    course: entry.course || '',
+    target: entry.target || '',
+    action: entry.action || '',
+    note: entry.note || '',
+    needsFollowUp: !!entry.needsFollowUp,
+  });
+}
+function renderDecisionLog() {
+  const panel=document.getElementById('decisionLogPanel');
+  const count=document.getElementById('decisionLogCount');
+  const content=document.getElementById('decisionLogContent');
+  if(!panel||!count||!content) return;
+  const advisor=isAdvisorMode();
+  panel.classList.toggle('advisor-visible',advisor);
+  count.textContent=decisionLog.length?`(${decisionLog.length})`:'';
+  if(!advisor) { content.innerHTML=''; return; }
+  if(!decisionLog.length){ content.innerHTML='<div class="decision-log-empty">No logged import decisions yet.</div>'; return; }
+
+  const ordered=[...decisionLog].slice().reverse();
+  const groups=[
+    {title:'User decisions', note:'Rows explicitly accepted, mapped, or otherwise requiring advisor/user judgment.', test:e=>e.category==='manual_mapping'||e.category==='flagged_acceptance'||e.needsFollowUp||(['student','advisor'].includes(e.actor)&&e.category!=='automatic_substitution')},
+    {title:'Substitutions', note:'Program-applied equivalencies and slot substitutions.', test:e=>e.category==='automatic_substitution'},
+    {title:'Matches', note:'Direct import matches accepted without additional user mapping.', test:e=>e.category==='import_acceptance'}
+  ];
+  const used=new Set();
+  const sectionHtml=groups.map(g=>{
+    const entries=ordered.filter((e,idx)=>!used.has(idx)&&g.test(e)).map(e=>({e,idx:ordered.indexOf(e)}));
+    entries.forEach(({idx})=>used.add(idx));
+    const body=entries.map(({e})=>decisionLogRowHtml(e)).join('') || '<tr><td colspan="7" class="decision-log-empty">None.</td></tr>';
+    return `<h3 style="margin:12px 0 2px;font-size:13px">${escapeHtml(g.title)}</h3><div class="small" style="margin-bottom:4px">${escapeHtml(g.note)}</div><table class="decision-log-table"><thead><tr><th>Time</th><th>Actor</th><th>Category</th><th>Course</th><th>Target</th><th>Action</th><th>Note</th></tr></thead><tbody>${body}</tbody></table>`;
+  }).join('');
+  const leftovers=ordered.filter((e,idx)=>!used.has(idx));
+  const extra=leftovers.length?`<h3 style="margin:12px 0 2px;font-size:13px">Other import notes</h3><table class="decision-log-table"><thead><tr><th>Time</th><th>Actor</th><th>Category</th><th>Course</th><th>Target</th><th>Action</th><th>Note</th></tr></thead><tbody>${leftovers.map(decisionLogRowHtml).join('')}</tbody></table>`:'';
+  content.innerHTML=sectionHtml+extra;
+}
+function decisionLogRowHtml(e){
+  const date=e.at?new Date(e.at).toLocaleString():'';
+  const follow=e.needsFollowUp?'<span class="followup">Advisor follow-up</span>':'';
+  return `<tr><td>${escapeHtml(date)}</td><td>${escapeHtml(e.actor||'')}</td><td>${escapeHtml(e.category||'')}</td><td>${escapeHtml(e.course||'')}</td><td>${escapeHtml(e.target||'')}</td><td>${escapeHtml(e.action||'')}</td><td>${escapeHtml(e.note||'')} ${follow}</td></tr>`;
+}
 
 function isAdvisorMode() { return !!document.getElementById('advisorToggle')?.checked; }
 function isCompact() { return !document.getElementById('compactToggle')?.checked; }
@@ -6099,7 +6499,7 @@ function renderCompletedCard() {
     {label:'Math', courses:[
       'MAC2311','MAC2233','MAC3472',
       'MAC2312','MAC2512','MAC3473',
-      'MAC2313','MAP2302','STA3032'
+      'MAC2313','MAC3474','MAP2302','STA3032'
     ]},
     {label:'Science', courses:[
       'BSC2010','BSC2010L',
@@ -6123,7 +6523,7 @@ function renderCompletedCard() {
   // Equivalents: visually indented under their canonical course.
   // Equivalent-credit records remain available in this completed-credit workflow only.
   // ENC1102 is intentionally not shown; use GENED_COMP for second-composition/AA-AS credit.
-  const EQUIV_COURSES = new Set(['MAC2233','MAC3472','MAC2512','MAC3473','CHM2095','PHY2060','PHY2061','EEL3135']);
+  const EQUIV_COURSES = new Set(['MAC2233','MAC3472','MAC2512','MAC3473','MAC3474','CHM2095','PHY2060','PHY2061','EEL3135']);
 
   // Mutual exclusion: completing any course in a group hides the others from the dropdown.
   // UF awards credit for at most one course per group; double-marking would misrepresent a
@@ -6132,6 +6532,7 @@ function renderCompletedCard() {
   const MUTUAL_EXCL_GROUPS = [
     ['MAC2311','MAC2233','MAC3472'],
     ['MAC2312','MAC2512','MAC3473'],
+    ['MAC2313','MAC3474'],
     ['CHM2045','CHM2095'],
     ['CHM2211','CHM3217'],
     ['PHY2048','PHY2060'],
@@ -6185,7 +6586,7 @@ function renderCompletedCard() {
   // Chips
   const ids=[...completed].sort();
   chips.innerHTML=ids.length
-    ?ids.map(id=>{const c=COURSES[id];const lbl=c?`${id} (${c.credits} cr)`:id;const full=c?`${id} — ${c.title} (${c.credits} cr)`:id;return `<div class="chip" title="${full.replace(/"/g,'&quot;')}"><span>${lbl}</span><button onclick="removeCompleted('${id}')" title="Remove">×</button></div>`;}).join('')
+    ?ids.map(id=>{const c=COURSES[id];const code=c?.displayId||id;const lbl=c?`${code}${variableCreditBadge(id)}`:id;const full=c?`${code} — ${c.title} (${c.credits} cr)`:id;return `<div class="chip" title="${full.replace(/"/g,'&quot;')}"><span>${lbl}</span><button onclick="removeCompleted('${id}')" title="Remove">×</button></div>`;}).join('')
     :`<div class="small">None added.</div>`;
 
   const aaasToggle=document.getElementById('aaasToggle');
@@ -6353,7 +6754,7 @@ function renderTerms() {
       const icon=(isBlocked||isSoftFail||risk)
         ?` <button type="button" class="flag-icon-hover ${flagColorClass}" title="${iconReasonText.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();alert(this.title)">${isBlocked?'⚠':'⧗'} ${flagWord}</button>`
         :'';
-      const lbl=(isElect?electiveDisplayLabel(id):courseLabel(id));
+      const lbl=(isElect?electiveDisplayLabel(id):courseLabel(id)) + variableCreditBadge(id);
       const pinBadge=(advisor&&isPinned)?` <span class="pin-badge">pinned</span>`:'';
       const genBadge=(advisor&&isGen)?` <span class="gen-badge">gen.</span>`:'';
       // 2.10.0: unlike genBadge (internal planning-algorithm provenance,
@@ -6496,6 +6897,7 @@ function render() {
   // Main content
   renderRequirements();
   renderTerms();
+  renderDecisionLog();
   renderSchedReport();
   if(!plannerMode.isTransfer) renderCriticalTracking();
   renderElectiveList();
@@ -6549,6 +6951,9 @@ function resetPlanState() {
   blocked=new Set();
   addSelections={};
   chosenElectives=new Set();
+  variableCreditInstances={};
+  variableCreditInstanceSeq=0;
+  Object.keys(COURSES).forEach(id=>{ if(COURSES[id]?.variableCreditInstance) delete COURSES[id]; });
   plannerMode={isTransfer:false,transferEntry:'F',hasAAAS:false,assumeLowerDiv:true,missingCourses:[]};
   incomingCreditOverride=false;
   summerExemptOverride=false;
@@ -6603,7 +7008,10 @@ function planSnapshot() {
     summerExemptOverride, // 2.7.x: was missing — see changelog. Without this, a manual
                          // override silently reverts to auto-sync on reload.
     manualElectiveCourses: JSON.parse(JSON.stringify(manualElectiveCourses)), // 2.8: free-elective entries
-    activeThemes: [...activeThemes] // 2.8.x: theme tracking cards shown
+    variableCreditInstances: JSON.parse(JSON.stringify(variableCreditInstances)),
+    variableCreditInstanceSeq,
+    activeThemes: [...activeThemes], // 2.8.x: theme tracking cards shown
+    decisionLog: JSON.parse(JSON.stringify(decisionLog)) // 2.11.0: advisor decision log
   };
 }
 
@@ -6645,8 +7053,12 @@ function applyState(state) {
   // free-elective course would be silently dropped on reload because its
   // COURSES record doesn't exist yet.
   manualElectiveCourses=(state.manualElectiveCourses&&typeof state.manualElectiveCourses==='object')?{...state.manualElectiveCourses}:{};
+  variableCreditInstances=(state.variableCreditInstances&&typeof state.variableCreditInstances==='object')?{...state.variableCreditInstances}:{};
+  variableCreditInstanceSeq=Number(state.variableCreditInstanceSeq)||Object.keys(variableCreditInstances).length;
   Object.entries(manualElectiveCourses).forEach(([id,m])=>{ if(!COURSES[id]) registerManualElectiveCourse(id,m); });
+  Object.entries(variableCreditInstances).forEach(([id,m])=>registerVariableCreditInstance(id,m));
   activeThemes=new Set((state.activeThemes||[]).filter(id=>CATALOG_THEMES[id]));
+  decisionLog=Array.isArray(state.decisionLog)?state.decisionLog.filter(e=>e&&typeof e==='object'):[];
   terms=(state.terms||[]).map(t=>{
     const key=String(t.key||'');
     return {key,label:t.label||termLabelFromKey(key),season:t.season||seasonFromKey(key),courses:(t.courses||[]).filter(id=>COURSES[id])};
@@ -6879,19 +7291,22 @@ function auditCollapseToLatestAttempt(rows) {
   for (const r of rows) {
     if (!seen.has(r.course_id)) { seen.add(r.course_id); order.push(r.course_id); }
   }
-  return order.map(cid => {
+  const out = [];
+  order.forEach(cid => {
     const candidates = byCourse.get(cid);
     if (cid in AUDIT_REPEATABLE_CUMULATIVE_COURSES) {
-      const cap = AUDIT_REPEATABLE_CUMULATIVE_COURSES[cid];
-      const latest = candidates.reduce((a, b) => (auditTermSortKey(b.term) > auditTermSortKey(a.term) ? b : a));
-      const summed = candidates.reduce((sum, r) => sum + (r.units || 0), 0);
-      return { ...latest, units: Math.min(summed, cap), _cumulativeFrom: candidates.map(r => `${r.term}: ${r.units}cr`) };
+      // 2.11.2: keep BME3941/EGN4912 attempts as separate rows. The old
+      // sum-and-collapse rule erased 0-credit/IP occurrences and prevented
+      // students from selecting another occurrence under the 3-credit cap.
+      candidates.forEach(r => out.push(r));
+      return;
     }
     const latestKey = Math.max(...candidates.map(r => auditTermSortKey(r.term)));
     const latestRows = candidates.filter(r => auditTermSortKey(r.term) === latestKey);
     const unflagged = latestRows.find(r => !r.repeat_code);
-    return unflagged || latestRows[latestRows.length - 1];
+    out.push(unflagged || latestRows[latestRows.length - 1]);
   });
+  return out;
 }
 
 function auditParseCourseHistory(pagesWords) {
@@ -6927,7 +7342,7 @@ function auditClassifyGradeConcern(grade) {
 function auditAnnotateRepeatStatus(rows) {
   for (const r of rows) {
     const rc = r.repeat_code || '';
-    r.excluded_from_credit = rc.includes('xCR');
+    r.excluded_from_credit = rc.includes('xCR') || (rc === 'R' && (r.units_earned === 0 || r.earned_hours === 0));
     r.excluded_from_gpa = rc.includes('xGP');
     r.is_generic_placeholder = !AUDIT_REAL_CATALOG_RE.test(r.catalog_nbr);
     r.grade_concern = auditClassifyGradeConcern(r.grade);
@@ -6951,6 +7366,7 @@ const AUDIT_SLOT_EQUIVALENCE = {
   CHM2095L: ['CHM2045L', 'either/or'],
   CHM2096L: ['CHM2046L', 'either/or'],
   CHM2211: ['CHM3217', 'either/or'],
+  MAC3474: ['MAC2313', 'either/or'],
   BME4503: ['BME4503C', 'renamed'],
 };
 const AUDIT_NO_DROPDOWN_PAIRED = { CHM2210: 'CHM2211', BME4503L: 'BME4503' };
@@ -6973,6 +7389,10 @@ const AUDIT_COMMUNICATION_COURSES = new Set([
   'ENC3254', 'ENG1131', 'GEB3213', 'GEB3219', 'ORI2000',
 ]);
 const AUDIT_SINGLE_SLOT_PLACEHOLDERS = new Set(['GENED_COMP', 'GENED_S', 'GENED_H', 'QUEST1', 'QUEST2']);
+// 2.11.4: keep the import review dropdown constrained, but do not hide
+// repeatable variable-credit electives. They require explicit per-row credit
+// handling and cannot be represented correctly by the generic ELECTIVE_SLOT.
+const AUDIT_RESTRICTED_ELECTIVE_OPTIONS = new Set(['BME3941', 'EGN4912']);
 
 // matchRow uses the live planner's own global isElectiveId(id) and COURSES
 // directly -- no separate courses param, unlike the standalone prototype.
@@ -7024,6 +7444,10 @@ function auditMatchRow(row) {
     staged.notes.push(isElectiveId(cid)
       ? 'Direct match -- approved elective, counts toward elective pool.'
       : 'Direct match.');
+    if (isRepeatableVariableCreditBase(cid) && (row.status === 'in_progress' || Number(row.units || 0) === 0)) {
+      row.flagged_for_review = true;
+      staged.notes.push('Variable-credit row has no final earned credits yet; verify intended credits before accepting.');
+    }
     return staged;
   }
   if (AUDIT_STATE_SOCIAL_BEHAVIORAL.has(cid)) {
@@ -7054,8 +7478,21 @@ function auditValidateStagedRows(stagedRows, mode = 'standard') {
       if (!t) continue;
       if (AUDIT_PLACEHOLDER_IDS.has(t)) (placeholderClaims[t] = placeholderClaims[t] || []).push(i);
       else {
-        (specificClaims[t] = specificClaims[t] || []).push(i);
-        if (isElectiveId(t)) (placeholderClaims.ELECTIVE_SLOT = placeholderClaims.ELECTIVE_SLOT || []).push(i);
+        // Repeatable variable-credit elective bases (BME3941/EGN4912) are not
+        // single-claim curriculum slots at import time. Multiple imported rows
+        // must be allowed through staging; Accept will convert each row into its
+        // own synthetic occurrence id with its own credit value.
+        if (!isRepeatableVariableCreditBase(t)) {
+          (specificClaims[t] = specificClaims[t] || []).push(i);
+        }
+        if (isElectiveId(t)) {
+          const units = Number(stagedRows[i]?.variableCreditsOverride ?? stagedRows[i]?.source?.units ?? 0) || 0;
+          // A 0-credit internship/research occurrence is real schedule history,
+          // but it should not consume one of the elective-count warning slots.
+          if (!isRepeatableVariableCreditBase(t) || units > 0) {
+            (placeholderClaims.ELECTIVE_SLOT = placeholderClaims.ELECTIVE_SLOT || []).push(i);
+          }
+        }
       }
     }
   });
@@ -7078,6 +7515,7 @@ function auditClassifyBucket(stagedRow) {
   if (stagedRow.petition_warning) return 'review';
   if (stagedRow.candidate_options) return 'review';
   if (stagedRow.targets.length === 0) return 'unmatched';
+  if ((stagedRow.targets || []).some(isRepeatableVariableCreditBase) && stagedRow.source?.flagged_for_review) return 'review';
   return auditIsGradeClean(stagedRow.source.grade) ? 'matched' : 'review';
 }
 
@@ -7098,6 +7536,85 @@ function auditApplySingleSlotLimits(stagedRows) {
   return stagedRows;
 }
 
+function auditImportSatisfiedSet(stagedRows) {
+  const s = new Set();
+  stagedRows.forEach(r => {
+    if (!r || r.excluded || r.no_dropdown) return;
+    const src = r.source || {};
+    if (src.status !== 'completed') return;
+    if (!auditIsGradeClean(src.grade)) return;
+    (r.targets || []).filter(Boolean).forEach(t => {
+      if (t !== ELECTIVE_SLOT_ID && !AUDIT_PLACEHOLDER_IDS.has(t)) s.add(t);
+    });
+    if (src.course_id && COURSES[src.course_id] && !COURSES[src.course_id].equivalentCreditOnly) s.add(src.course_id);
+  });
+  return s;
+}
+function auditCollectMissingPrereqs(courseId, satisfied, out, seen=new Set()) {
+  if (!COURSES[courseId] || seen.has(courseId)) return;
+  seen.add(courseId);
+  (COURSES[courseId].prereq || []).forEach(req => {
+    if (!setHasEquiv(satisfied, req, courseId)) {
+      if (!out.some(x => x.requiredId === req)) out.push({ requiredId: req, neededFor: courseId });
+      satisfied.add(req); // avoids duplicate review rows while still recursing into the prerequisite chain
+      auditCollectMissingPrereqs(req, satisfied, out, seen);
+    }
+  });
+}
+function auditAddMissingPrereqVerificationRows(stagedRows) {
+  // Advisor degree audits may show current registration before the full prior
+  // transcript/test-credit chain has posted. When an audit shows a student in a
+  // course but does not verify its prereq chain, add explicit advisor-review
+  // rows for those missing prereqs instead of letting them silently remain as
+  // future scheduler demand.
+  const satisfied = auditImportSatisfiedSet(stagedRows);
+  const existingTargets = new Set();
+  stagedRows.forEach(r => (r.targets || []).filter(Boolean).forEach(t => existingTargets.add(t)));
+  const missing = [];
+  stagedRows.forEach(r => {
+    if (!r || r.excluded || r.no_dropdown) return;
+    const src = r.source || {};
+    if (!['EN','IP'].includes(src.type) && !['completed','in_progress'].includes(src.status)) return;
+    (r.targets || []).filter(Boolean).forEach(t => {
+      if (t === ELECTIVE_SLOT_ID || AUDIT_PLACEHOLDER_IDS.has(t) || !COURSES[t]) return;
+      auditCollectMissingPrereqs(t, new Set(satisfied), missing);
+    });
+  });
+  const additions = [];
+  missing.forEach(({requiredId, neededFor}) => {
+    if (existingTargets.has(requiredId)) return;
+    if (!COURSES[requiredId]) return;
+    existingTargets.add(requiredId);
+    additions.push({
+      source: {
+        term: `Verify before ${neededFor}`,
+        course_id: requiredId,
+        subject: requiredId.replace(/\d.*$/,''),
+        catalog_nbr: requiredId.replace(/^\D+/,''),
+        title_ocr: COURSES[requiredId]?.title || `${requiredId} prerequisite`,
+        grade: 'VERIFY',
+        units: COURSES[requiredId]?.credits || 0,
+        type: 'VERIFY',
+        status: 'completed',
+        flagged_for_review: true,
+        missing_prereq_verification: true,
+        prerequisite_for: neededFor
+      },
+      targets: [requiredId],
+      auto_selected: false,
+      no_dropdown: false,
+      paired_with: null,
+      candidate_options: null,
+      petition_warning: true,
+      notes: [`${neededFor} appears in the audit, but ${requiredId} was not verified in the imported course history. Confirm transcript/AP/transfer credit before accepting.`],
+      bucket: 'review',
+      excluded: false,
+      promoted: false
+    });
+  });
+  return stagedRows.concat(additions);
+}
+
 function auditBadgesFor(row) {
   const badges = [];
   if (AUDIT_STATE_SOCIAL_BEHAVIORAL.has(row.course_id)) badges.push('State SS');
@@ -7108,12 +7625,124 @@ function auditBadgesFor(row) {
   return badges;
 }
 
+
+// ---------- FLVC / FloridaShines unofficial transcript parser (2.11.0) ----------
+
+let auditImportFormat = 'audit';
+let auditUnreadablePages = [];
+
+const FLVC_TERM_RE = /^(Fall|Spr|Spring|Sum|Summer)\s+(\d{4})\b/;
+const FLVC_GRADE_RE = /^(A|A-|B\+|B|B-|C\+|C|C-|D\+|D|D-|E|F|S|U|P|W|WF|WP|I|NG)$/;
+const FLVC_NUM_RE = /^\d+(?:\.\d+)?$/;
+const FLVC_SECTION_LABELS = new Set(['Advanced Placement', 'AICE AS Level', 'AICE A Level', 'Credit by Exam']);
+
+function flvcRowText(words) {
+  return [...words].sort((a,b)=>a.x0-b.x0).map(w=>w.text).join(' ').replace(/\s+/g,' ').trim();
+}
+function flvcNormalizeSeason(season) {
+  if (season === 'Spring') return 'Spr';
+  if (season === 'Summer') return 'Sum';
+  return season;
+}
+function flvcParseCourseLine(line, context) {
+  const parts = line.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 3) return null;
+  const subject = parts[0];
+  const catalog = parts[1];
+  if (!/^[A-Z]{3}$/.test(subject)) return null;
+  if (!/^(?:\d{4}[A-Z]?|L000)$/.test(catalog)) return null;
+
+  let nums = [];
+  while (parts.length > 2 && FLVC_NUM_RE.test(parts[parts.length - 1])) nums.unshift(parts.pop());
+  if (!nums.length) return null;
+
+  let grade = null;
+  if (parts.length > 2 && FLVC_GRADE_RE.test(parts[parts.length - 1])) grade = parts.pop().toUpperCase();
+
+  let notation = null;
+  if (parts.length > 2 && /^[A-Z]$/.test(parts[parts.length - 1]) && parts[parts.length - 1] === 'R') notation = parts.pop();
+
+  const title = parts.slice(2).join(' ');
+  if (!title) return null;
+
+  const attempted = nums[0] !== undefined ? parseFloat(nums[0]) : null;
+  const earned = nums.length >= 2 ? parseFloat(nums[1]) : (grade ? attempted : null);
+  const carried = nums.length >= 3 ? parseFloat(nums[2]) : null;
+  const status = grade ? 'completed' : 'in_progress';
+  const type = status === 'in_progress' ? 'IP' : (context.type || 'EN');
+
+  return {
+    term: context.term,
+    course_id: `${subject}${catalog}`,
+    subject,
+    catalog_nbr: catalog,
+    title_ocr: title,
+    grade,
+    units: status === 'completed' ? (earned !== null ? earned : attempted) : attempted,
+    units_attempted: attempted,
+    units_earned: earned,
+    hours_carried: carried,
+    type,
+    status,
+    requirement_designation: null,
+    repeat_code: notation,
+    flvc_section: context.section || '',
+  };
+}
+function flvcParseTranscriptRows(pageWordArrays) {
+  const rowsOut = [];
+  const context = { term: null, type: null, section: null };
+  for (const words of pageWordArrays) {
+    const clustered = auditClusterRows(words, 4);
+    for (const cluster of clustered) {
+      const line = flvcRowText(cluster);
+      if (!line) continue;
+      const tm = line.match(FLVC_TERM_RE);
+      if (tm) {
+        context.term = `${flvcNormalizeSeason(tm[1])} ${tm[2]}`;
+        context.section = null;
+        context.type = line.includes('Credit by Exam') ? 'TE' : (line.includes('University of Florida') ? 'EN' : context.type);
+        if (line.includes('Enrolled Coursework')) context.type = 'EN';
+        continue;
+      }
+      if (line.includes('Credit by Exam')) { context.type = 'TE'; context.section = 'Credit by Exam'; continue; }
+      if (line.includes('University of Florida')) { context.type = 'EN'; continue; }
+      if (line === 'Enrolled Coursework') { context.type = 'EN'; context.section = 'Enrolled Coursework'; continue; }
+      if (FLVC_SECTION_LABELS.has(line)) { context.type = 'TE'; context.section = line; continue; }
+      if (/^(Grade Points:|UF CUM|Total Hours:|End of|Undergraduate:|Named to|Civic Literacy|Communication|Programs Pursued|College:|Degree Sought:|Major:|For your privacy|Time before closing|Begin Undergraduate|Prefix &|Course Number|Course Title|Course Notation|Credit Attempted|Earned Hours|Hours Carried|https?\b|Page \d+|\d{1,2}\/\d{1,2}\/\d{2,4})/.test(line)) continue;
+      if (!context.term || !context.type) continue;
+      const row = flvcParseCourseLine(line, context);
+      if (row) rowsOut.push(row);
+    }
+  }
+  return auditCollapseToLatestAttempt(rowsOut);
+}
+
+function setAuditPanelMode(mode) {
+  auditImportFormat = mode;
+  const isTranscript = mode === 'transcript';
+  const title = document.getElementById('auditPanelTitle');
+  if (title) title.textContent = isTranscript ? 'Import Unofficial Transcript' : 'Import Degree Audit';
+  const legend = document.getElementById('auditLegend');
+  if (legend) legend.innerHTML = `<strong>Matched</strong> — reliable match, grade C or better (or P/S): no action needed. <strong>X</strong> sends it back to Unmatched.<br>
+      <strong>Needs Review</strong> — every row here needs an explicit decision: pick a target, then click <strong>Accept</strong> to move it to Matched; click <strong>X</strong> to return it to Unmatched. A dropdown still showing "Select course" is highlighted red and blocks final Accept.<br>
+      <strong>Unmatched</strong> — nothing found. Check the box to move it into Review with the full course list available; <strong>X</strong> excludes it from consideration entirely.<br>
+      ${isTranscript ? '<strong>Transcript note</strong> — no-grade rows are treated as in-progress. Unreadable/rasterized pages are reported rather than OCR processed.<br>' : ''}
+      Hover any chip for term · course · grade · type.`;
+}
+
+function auditUnreadableWarningHtml() {
+  if (!auditUnreadablePages.length) return '';
+  return ` <span class="tag tag-warn">Unreadable page${auditUnreadablePages.length>1?'s':''}: ${auditUnreadablePages.join(', ')}</span>`;
+}
+
 // ---------- Staging UI ----------
 
 let auditStagedRows = [];
 let auditDerivedStartTerm = null;
 
 function openAuditImportPanel() {
+  setAuditPanelMode('audit');
   document.getElementById('auditImportPanel').style.display = '';
   document.getElementById('auditStaging').style.display = 'none';
   document.getElementById('auditStatus').textContent = '';
@@ -7121,16 +7750,26 @@ function openAuditImportPanel() {
   document.getElementById('auditFile').click();
 }
 
+function openTranscriptImportPanel() {
+  setAuditPanelMode('transcript');
+  document.getElementById('auditImportPanel').style.display = '';
+  document.getElementById('auditStaging').style.display = 'none';
+  document.getElementById('auditStatus').textContent = '';
+  document.getElementById('transcriptFile').value = '';
+  document.getElementById('transcriptFile').click();
+}
+
 function closeAuditImportPanel() {
   auditStagedRows = [];
   auditDerivedStartTerm = null;
+  auditUnreadablePages = [];
   document.getElementById('auditImportPanel').style.display = 'none';
 }
 
 async function auditExtractPdfWords(file) {
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-  const pageTexts = [], pageWordArrays = [];
+  const pageTexts = [], pageWordArrays = [], unreadablePages = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const viewport = page.getViewport({ scale: 1 });
@@ -7148,8 +7787,9 @@ async function auditExtractPdfWords(file) {
     }
     pageTexts.push(text);
     pageWordArrays.push(words);
+    if (words.length === 0) unreadablePages.push(i);
   }
-  return { pageTexts, pageWordArrays };
+  return { pageTexts, pageWordArrays, unreadablePages };
 }
 
 async function handleAuditFile(event) {
@@ -7159,11 +7799,46 @@ async function handleAuditFile(event) {
   document.getElementById('auditStaging').style.display = 'none';
   statusEl.innerHTML = '<span class="import-spinner"></span>Reading PDF in your browser…';
   try {
-    const { pageTexts, pageWordArrays } = await auditExtractPdfWords(file);
+    const { pageTexts, pageWordArrays, unreadablePages } = await auditExtractPdfWords(file);
+    auditUnreadablePages = unreadablePages;
     const chIdx = auditFindCourseHistoryPageIndex(pageTexts);
     if (chIdx === null) { statusEl.textContent = 'Could not find a "Course History" section in this PDF.'; return; }
 
     let rows = auditParseCourseHistory(pageWordArrays.slice(chIdx));
+    rows = auditAnnotateRepeatStatus(rows);
+    auditDerivedStartTerm = auditDeriveStartTerm(rows);
+
+    let staged = rows.map(r => auditMatchRow(r));
+    staged = auditApplySingleSlotLimits(staged);
+    staged = auditAddMissingPrereqVerificationRows(staged);
+    staged = auditApplySingleSlotLimits(staged);
+    auditStagedRows = staged.map(s => {
+      s.bucket = auditClassifyBucket(s);
+      s.excluded = false;
+      s.promoted = false;
+      return s;
+    });
+
+    statusEl.innerHTML = `Done — ${rows.length} rows found, starting term derived as <strong>${auditDerivedStartTerm || 'unknown'}</strong>.${auditUnreadableWarningHtml()}`;
+    renderAuditStaging();
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    console.error(err);
+  }
+}
+
+
+async function handleTranscriptFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  setAuditPanelMode('transcript');
+  const statusEl = document.getElementById('auditStatus');
+  document.getElementById('auditStaging').style.display = 'none';
+  statusEl.innerHTML = '<span class="import-spinner"></span>Reading unofficial transcript PDF in your browser…';
+  try {
+    const { pageWordArrays, unreadablePages } = await auditExtractPdfWords(file);
+    auditUnreadablePages = unreadablePages;
+    let rows = flvcParseTranscriptRows(pageWordArrays);
     rows = auditAnnotateRepeatStatus(rows);
     auditDerivedStartTerm = auditDeriveStartTerm(rows);
 
@@ -7176,7 +7851,7 @@ async function handleAuditFile(event) {
       return s;
     });
 
-    statusEl.innerHTML = `Done — ${rows.length} rows found, starting term derived as <strong>${auditDerivedStartTerm || 'unknown'}</strong>.`;
+    statusEl.innerHTML = `Done — ${rows.length} transcript rows found, starting term derived as <strong>${auditDerivedStartTerm || 'unknown'}</strong>.${auditUnreadableWarningHtml()}`;
     renderAuditStaging();
   } catch (err) {
     statusEl.textContent = 'Error: ' + err.message;
@@ -7194,10 +7869,17 @@ function auditOptionsHtml(selected, restricted, claimedElsewhere) {
   html += `</optgroup><optgroup label="Specific courses">`;
   Object.keys(COURSES)
     .filter(id => !AUDIT_PLACEHOLDER_IDS.has(id))
-    .filter(id => !restricted || !isElectiveId(id))
-    .filter(id => !claimed.has(id) || id === selected)
+    .filter(id => !COURSES[id]?.variableCreditInstance)
+    .filter(id => !restricted || !isElectiveId(id) || AUDIT_RESTRICTED_ELECTIVE_OPTIONS.has(id))
+    .filter(id => !claimed.has(id) || id === selected || isRepeatableVariableCreditBase(id))
     .sort()
-    .forEach(id => { html += `<option value="${id}" ${id===selected?'selected':''}>${id}</option>`; });
+    .forEach(id => {
+      const vc = isRepeatableVariableCreditBase(id) ? ' — variable credit' : '';
+      html += `<option value="${id}" ${id===selected?'selected':''}>${id}${vc}</option>`;
+    });
+  if (selected && !AUDIT_PLACEHOLDER_IDS.has(selected) && !COURSES[selected]) {
+    html += `<option value="${selected}" selected>${selected} — unavailable in catalog</option>`;
+  }
   html += `</optgroup>`;
   return html;
 }
@@ -7208,6 +7890,7 @@ function auditComputeClaimsExcluding(excludeIdx) {
     if (i === excludeIdx || r.excluded) return;
     r.targets.forEach(t => {
       if (!t) return;
+      if (isRepeatableVariableCreditBase(t)) return;
       if (AUDIT_SINGLE_SLOT_PLACEHOLDERS.has(t) || !AUDIT_PLACEHOLDER_IDS.has(t)) claims.add(t);
     });
   });
@@ -7222,17 +7905,70 @@ function auditRenderChipBadges(src) {
   return auditBadgesFor(src).map(b => `<span class="tag tag-blue">${b}</span>`).join('');
 }
 
-function auditVariableCreditBadge(r) {
-  if (r.no_dropdown || !r.targets.length || !r.targets[0]) return '';
-  const target = COURSES[r.targets[0]];
-  if (!target || !target.variableCredit) return '';
-  return `<span class="tag tag-orange" title="Variable-credit course -- curriculum default is ${target.credits}cr, this transcript shows ${r.source.units}cr earned">${r.source.units}cr (variable)</span>`;
+function auditEffectiveVariableCredits(r) {
+  return Number(r?.variableCreditsOverride ?? r?.source?.units ?? 0) || 0;
+}
+
+function auditVariableCreditBaseForRow(r) {
+  if (!r || r.no_dropdown) return '';
+  const explicit = (r.targets || []).find(isRepeatableVariableCreditBase);
+  if (explicit) return explicit;
+  if ((r.targets || []).includes(ELECTIVE_SLOT_ID) && isRepeatableVariableCreditBase(r.source?.course_id)) return r.source.course_id;
+  return isRepeatableVariableCreditBase(r.source?.course_id) ? r.source.course_id : '';
+}
+
+function auditSetVariableCredits(i) {
+  const r = auditStagedRows[i];
+  if (!r) return;
+  const base = auditVariableCreditBaseForRow(r);
+  if (!isRepeatableVariableCreditBase(base)) return;
+  const credits = promptVariableCredits(base, auditEffectiveVariableCredits(r), 'this imported row');
+  if (credits === null) return;
+  r.variableCreditsOverride = credits;
+  r.notes = [...(r.notes || []), `Variable credits set to ${credits} during import review.`];
+  renderAuditStaging();
+}
+
+function auditVariableCreditBadge(r, i) {
+  const base = auditVariableCreditBaseForRow(r);
+  if (!base) return '';
+  const cr = auditEffectiveVariableCredits(r);
+  const needsCheck = r.source?.status === 'in_progress' || Number(r.source?.units || 0) === 0;
+  const label = `${cr}cr variable${needsCheck ? ' — verify' : ''}`;
+  const btn = (typeof i === 'number') ? ` <button class="link-btn" onclick="auditSetVariableCredits(${i})">Set credits</button>` : '';
+  return `<span class="tag tag-orange" title="Variable-credit imported row. Transcript/audit shows ${r.source.units}cr; accepted occurrence will use ${cr}cr.">${label}</span>${btn}`;
+}
+
+function auditEnsureImportedElectiveCourse(r) {
+  const src = r?.source || {};
+  const cid = src.course_id;
+  if (!cid) return ELECTIVE_SLOT_ID;
+  if (cid === ELECTIVE_SLOT_ID) return ELECTIVE_SLOT_ID;
+  const credits = Number(r?.variableCreditsOverride ?? src.units ?? 3);
+  if (!COURSES[cid]) {
+    const m = {
+      title: src.title || `${cid} (from import)`,
+      credits: Number.isFinite(credits) ? credits : 3,
+      prefix: src.subject || String(cid).replace(/\d.*$/, ''),
+      number: src.catalog_nbr || String(cid).replace(/^\D+/, '')
+    };
+    manualElectiveCourses[cid] = m;
+    registerManualElectiveCourse(cid, m);
+  } else if (!COURSES[cid].approvedBmeElective) {
+    COURSES[cid].freeElectivePick = true;
+  }
+  return COURSES[cid] ? cid : ELECTIVE_SLOT_ID;
+}
+
+function auditResolveAcceptedTarget(r, target) {
+  if (target === ELECTIVE_SLOT_ID) return auditEnsureImportedElectiveCourse(r);
+  return target;
 }
 
 function renderAuditStaging() {
   document.getElementById('auditStaging').style.display = '';
   document.getElementById('auditStartTermBanner').innerHTML =
-    `Derived start term: <strong>${auditDerivedStartTerm || 'unknown'}</strong> (earliest term with at least one EN/IP row — test/transfer-only terms are skipped).`;
+    `Derived start term: <strong>${auditDerivedStartTerm || 'unknown'}</strong> (earliest term with at least one EN/IP row — test/transfer-only terms are skipped).${auditUnreadableWarningHtml()}`;
 
   const active = auditStagedRows.map((r, i) => ({ r, i })).filter(x => !x.r.excluded);
   const { hardConflicts, softWarnings } = auditValidateStagedRows(auditStagedRows);
@@ -7270,8 +8006,8 @@ function renderAuditStaging() {
     const electiveTag = (!r.no_dropdown && isElectiveId(r.targets[0])) ? `<span class="tag tag-green">Elective</span>` : '';
     const ipTag = isIP ? `<span class="tag tag-blue">IP — will be placed on ${src.term}</span>` : '';
     return `<div class="chip ${isIP?'chip-inprogress':'chip-matched'}" title="${auditChipTitle(src)}">
-      <span><span class="chip-id">${label}</span>${ipTag}${electiveTag}${auditVariableCreditBadge(r)}${auditRenderChipBadges(src)}</span>
-      <button onclick="auditExcludeRow(${i})">✕</button>
+      <span><span class="chip-id">${label}</span>${ipTag}${electiveTag}${auditVariableCreditBadge(r, i)}${auditRenderChipBadges(src)}</span>
+      <button title="Return to Unmatched" aria-label="Return ${src.course_id} to Unmatched" onclick="auditExcludeRow(${i})">✕</button>
     </div>`;
   }).join('') || '<div class="empty-note">Nothing matched yet.</div>';
 
@@ -7282,7 +8018,7 @@ function renderAuditStaging() {
     const rowClass = conflictRows.has(i) ? 'row-conflict' : (warnRows.has(i) ? 'row-warn' : '');
     const gradeTag = src.grade_concern ? `<span class="tag tag-bad">⚠ ${src.grade}</span>` : `<span class="tag">${src.grade ?? 'IP'}</span>`;
     const petitionTag = r.petition_warning ? `<span class="tag tag-warn">⚠ verify before accepting</span>` : '';
-    const vcTag = auditVariableCreditBadge(r);
+    const vcTag = auditVariableCreditBadge(r, i);
 
     let mapsCell;
     if (r.no_dropdown) {
@@ -7308,7 +8044,7 @@ function renderAuditStaging() {
         <div class="imp-meta">${auditRenderChipBadges(src)} ${petitionTag} ${vcTag}</div>
       </td>
       <td>${mapsCell}</td>
-      <td class="col-x">${r.no_dropdown?'':`<button class="import-xbtn" title="Confirm: contributes nothing" onclick="auditExcludeRow(${i})">✕</button>`}</td>
+      <td class="col-x">${r.no_dropdown?'':`<button class="import-okbtn" title="Accept this review decision and move to Matched" aria-label="Accept this review decision and move to Matched" onclick="auditAcceptReviewRow(${i})">✓</button><button class="import-xbtn" title="Return to Unmatched" aria-label="Return to Unmatched" onclick="auditExcludeRow(${i})">✕</button>`}</td>
     </tr>`;
   }).join('');
 
@@ -7319,26 +8055,114 @@ function renderAuditStaging() {
     const src = r.source;
     return `<div class="chip" title="${auditChipTitle(src)}">
       <span><input type="checkbox" title="Move to Needs Review" onchange="auditPromoteRow(${i})"> <span class="chip-id">${src.course_id}</span>${auditRenderChipBadges(src)}</span>
-      <button onclick="auditExcludeRow(${i})">✕</button>
+      <button title="Exclude from import" aria-label="Exclude ${src.course_id} from import" onclick="auditExcludeRow(${i})">✕</button>
     </div>`;
   }).join('') || '<div class="empty-note">Nothing unmatched.</div>';
 }
 
-function auditSetTarget(i, slot, val) { auditStagedRows[i].targets[slot] = val || ''; renderAuditStaging(); }
+function auditSetTarget(i, slot, val) {
+  const r = auditStagedRows[i];
+  if (!r) return;
+  const chosen = val || '';
+  r.targets[slot] = chosen;
+  const sourceBase = r.source?.course_id;
+  const needsVariableCredit = isRepeatableVariableCreditBase(chosen) || (chosen === ELECTIVE_SLOT_ID && isRepeatableVariableCreditBase(sourceBase));
+  if (needsVariableCredit) {
+    const base = isRepeatableVariableCreditBase(chosen) ? chosen : sourceBase;
+    const credits = promptVariableCredits(base, auditEffectiveVariableCredits(r), 'this imported row');
+    if (credits === null) {
+      r.targets[slot] = '';
+    } else {
+      r.variableCreditsOverride = credits;
+      r.notes = [...(r.notes || []), `Variable credits set to ${credits} during import review.`];
+    }
+  } else if (!((r.targets || []).some(isRepeatableVariableCreditBase))) {
+    delete r.variableCreditsOverride;
+  }
+  renderAuditStaging();
+}
 function auditAddSlot(i) { if (auditStagedRows[i].targets.length < 3) { auditStagedRows[i].targets.push(''); renderAuditStaging(); } }
 function auditRemoveSlot(i, slot) { auditStagedRows[i].targets.splice(slot, 1); renderAuditStaging(); }
 function auditPromoteRow(i) { auditStagedRows[i].promoted = true; renderAuditStaging(); }
+function auditAcceptReviewRow(i) {
+  const r = auditStagedRows[i];
+  if (!r || r.no_dropdown) return;
+  if (!(r.targets || []).some(Boolean)) { alert('Select a target course before accepting this review row.'); return; }
+  const { hardConflicts } = auditValidateStagedRows(auditStagedRows);
+  const rowConflict = hardConflicts.find(c => (c.idx || []).includes(i));
+  if (rowConflict) { alert(`Resolve duplicate mapping for ${rowConflict.course_id} before accepting this row.`); return; }
+  r.bucket = 'matched';
+  r.promoted = false;
+  r.reviewAccepted = true;
+  r.notes = [...(r.notes || []), 'Review decision accepted in staging.'];
+  announce(`${(r.source||{}).course_id||'Row'} review decision accepted, moved to Matched.`);
+  renderAuditStaging();
+}
 function auditExcludeRow(i) {
   const r = auditStagedRows[i];
-  if (r.bucket === 'matched' && !r.no_dropdown) {
+  if (!r) return;
+  if ((r.bucket === 'matched' || r.bucket === 'review' || r.promoted) && !r.no_dropdown) {
     r.targets = [];
     r.auto_selected = false;
+    r.promoted = false;
+    r.reviewAccepted = false;
     r.bucket = 'unmatched';
-    r.notes.push('Auto-match removed by advisor -- returned to Unmatched.');
+    r.notes = [...(r.notes || []), 'Returned to Unmatched during import review.'];
+    announce(`${(r.source||{}).course_id||'Row'} returned to Unmatched.`);
   } else {
     r.excluded = true;
+    announce(`${(r.source||{}).course_id||'Row'} excluded from import.`);
   }
   renderAuditStaging();
+}
+
+
+function auditDecisionLogEntries() {
+  const actor = decisionActor();
+  const entries = [];
+  auditStagedRows.forEach(r => {
+    if (r.excluded || r.no_dropdown) return;
+    const src = r.source || {};
+    const selectedTargets = (r.targets || []).filter(Boolean);
+    selectedTargets.forEach(t => {
+      const notes = (r.notes || []).join(' ');
+      const isManual = r.promoted || r.reviewAccepted || !r.auto_selected || (r.bucket === 'unmatched');
+      const isFlagged = r.petition_warning || r.candidate_options || src.flagged_for_review || src.grade_concern || isManual;
+      let category = 'import_acceptance';
+      let entryActor = actor;
+      let needsFollowUp = actor === 'student';
+      if (r.auto_selected && t !== src.course_id && !r.petition_warning && !r.candidate_options && !r.promoted) {
+        category = 'automatic_substitution';
+        entryActor = 'program';
+        needsFollowUp = true;
+      } else if (isManual) {
+        category = 'manual_mapping';
+        needsFollowUp = actor === 'student';
+      } else if (isFlagged) {
+        category = 'flagged_acceptance';
+        needsFollowUp = true;
+      }
+      entries.push({
+        actor: entryActor,
+        source: auditImportFormat,
+        category,
+        course: src.course_id || '',
+        target: t === ELECTIVE_SLOT_ID ? (src.course_id || t) : t,
+        action: src.status === 'in_progress' ? 'placed as in-progress' : 'accepted as completed',
+        note: notes || `${src.course_id || 'Imported row'} mapped to ${t === ELECTIVE_SLOT_ID ? 'elective slot as imported course' : t}`,
+        needsFollowUp,
+      });
+    });
+  });
+  if (auditUnreadablePages.length) {
+    entries.push({
+      actor: 'program', source: auditImportFormat, category: 'import_warning', course: '', target: '',
+      action: 'unreadable pages detected',
+      note: `PDF page(s) ${auditUnreadablePages.join(', ')} had no extractable text; mobile/raster OCR is unsupported.`,
+      needsFollowUp: true,
+    });
+  }
+  return entries;
 }
 
 function acceptAuditStaging() {
@@ -7349,12 +8173,17 @@ function acceptAuditStaging() {
     if (r.excluded) return;
     r.targets.forEach(t => {
       if (!t) return;
-      if (r.source.status === 'in_progress') {
-        ipPlacements.push({ term: r.source.term, courseId: t });
-      } else {
-        completedIds.push(t);
+      let targetId = auditResolveAcceptedTarget(r, t);
+      if (isRepeatableVariableCreditBase(targetId)) {
+        const cr = normalizeVariableCredits(auditEffectiveVariableCredits(r), targetId, true);
+        targetId = auditPendingVariableCreditImport(targetId, cr ?? 0, r.source.term || '');
       }
-      if (COURSES[t]?.variableCredit) creditOverrides[t] = r.source.units;
+      if (r.source.status === 'in_progress') {
+        ipPlacements.push({ term: r.source.term, courseId: targetId });
+      } else {
+        completedIds.push(targetId);
+      }
+      if (!auditIsPendingVariableCreditImport(targetId) && COURSES[targetId]?.variableCredit) creditOverrides[targetId] = COURSES[targetId].credits;
     });
   });
 
@@ -7363,8 +8192,13 @@ function acceptAuditStaging() {
   const seasonMap = { Fall: 'F', Spr: 'S', Spring: 'S', Sum: 'Su', Summer: 'Su' };
   const season = seasonMap[seasonWord] || 'F';
 
+  const logEntries = auditDecisionLogEntries();
   const ok = applyAuditImport(completedIds, creditOverrides, season, year, ipPlacements);
-  if (ok) closeAuditImportPanel();
+  if (ok) {
+    logEntries.forEach(logDecision);
+    closeAuditImportPanel();
+    render();
+  }
 }
 
 // Initialize on load
