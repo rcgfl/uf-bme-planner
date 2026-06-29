@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UF BME MS Curriculum Planner (Non-Thesis)</title>
+<title>UF BME MS Curriculum Planner (Non-Thesis) v0.5</title>
 <style>
 *,*::before,*::after{box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;margin:0;background:#f0f2f5;color:#102033;font-size:14px}
@@ -64,7 +64,7 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <body>
 
 <header>
-  <span class="uf-logo">UF</span><h1>BME MS Curriculum Planner — Non-Thesis</h1>
+  <span class="uf-logo">UF</span><h1 id="pageTitle">BME MS Curriculum Planner — Non-Thesis v0.5</h1>
   <div id="dataStatus" class="small" style="color:#fff;opacity:.85;margin-top:2px">Loading course data…</div>
   <div class="controls-bar">
     <label>Student name <input id="studentName" type="text" placeholder="optional" style="width:160px"></label>
@@ -122,6 +122,36 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 
 <script>
 'use strict';
+
+const MS_PLANNER_VERSION = '0.5';
+const MS_BUILD_DATE = '2026-06-29';
+// Changelog:
+// 0.5 — Certificate data model was wrong, per Chris: a certificate isn't
+//       always one flat "choose N of this pool" — Engineering Innovation
+//       (EGN6642) was actually required, with "choose 2" applying only to
+//       the remaining 4, not all 5 together. Concentrations.json's
+//       `certificate` (singular object, one flat group) is now
+//       `certificates` (array — a concentration can have more than one),
+//       each with `groups` (array — a required 'all' group and a 'choose'
+//       group can coexist, same two shapes the BS Pathways Editor already
+//       authors). msGroupStatus() now handles both types; a new
+//       msCertificateStatus() ANDs across all of a certificate's groups —
+//       satisfying the choose-2 pool without the required course doesn't
+//       count as having the certificate.
+// 0.4 — Real placement logic, not just a manual dropdown. Fall-only core
+//       courses (BME5401) only ever match Fall terms (eligibleTermsFor()
+//       enforces this everywhere, including the per-row term-pick dropdown
+//       — a Fall-only course can no longer be moved to a Spring it isn't
+//       offered in). Clinical Correlations (BME6018) defaults to Fall
+//       specifically even though it's offered both terms, per Chris, but
+//       stays user-movable to Spring. Everything else balances by current
+//       term load among its eligible terms, so selections don't all stack
+//       into one term. placeCoreAndMath() runs Core/Math most-constrained-
+//       first (Fall-only before flexible) so a flexible course can't
+//       accidentally claim the one Fall slot a constrained course needed.
+//       Versioning started — this line, and a status indicator in the
+//       header, so it's clear at a glance which build is on screen.
+// (No prior versioned history — this is the first version-tagged build.)
 
 /* ═══════════════════════════════════════════════════════════════════
    TERM-KEY PRIMITIVES — ported verbatim from the BS planner
@@ -231,6 +261,7 @@ function applyStartTerm() {
   if (!confirm('Reset the plan of study to the new start term? Manual term placements will be cleared.')) return;
   terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
   termAssignment = {};
+  placeCoreAndMath();
   render();
 }
 
@@ -238,12 +269,14 @@ function toggleFourPlusOne() {
   fourPlusOne = document.getElementById('fourPlusOne').checked;
   terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
   reconcileTermAssignments();
+  placeCoreAndMath();
   render();
 }
 function toggleSummer() {
   includeSummer = document.getElementById('includeSummer').checked;
   terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
   reconcileTermAssignments();
+  placeCoreAndMath();
   render();
 }
 function reconcileTermAssignments() {
@@ -251,20 +284,57 @@ function reconcileTermAssignments() {
   Object.keys(termAssignment).forEach(id => { if (!validKeys.has(termAssignment[id])) delete termAssignment[id]; });
 }
 
-// Season-aware default placement — first term in the current sequence
-// whose season matches one of the course's confirmed offered seasons;
-// undetermined (no `offered` data yet) defaults to the first term rather
-// than guessing, and is never overridden once a manual choice exists.
-function defaultTermFor(id) {
+// Per Chris: honor each course's actual F/S/both offering, and don't stack
+// everything into one term — balance load across whichever terms are
+// actually eligible for a given course. eligibleTermsFor() is the hard
+// season filter (also reused by the term-grid's per-row dropdown, so a
+// Fall-only course can never be moved to a Spring it isn't offered in);
+// termLoad() reads only already-stored assignments (never recurses into
+// computeDefaultTerm), so placeCoreAndMath()'s ordered pass below is safe.
+function eligibleTermsFor(id) {
   const c = MS_COURSES[id];
-  if (!terms.length) return null;
-  if (!c.offered) return terms[0].key;
-  const match = terms.find(t => c.offered.includes(t.season));
-  return (match || terms[0]).key;
+  if (!terms.length) return [];
+  if (!c.offered) return terms.slice(); // unconfirmed offering data — don't restrict, but don't pretend to know either
+  return terms.filter(t => c.offered.includes(t.season));
+}
+function termLoad(termKey, excludeId=null) {
+  const allIds = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections];
+  return allIds.filter(id => id!==excludeId && termAssignment[id]===termKey)
+               .reduce((a,id)=>a+courseCredits(id),0);
+}
+function computeDefaultTerm(id) {
+  const eligible = eligibleTermsFor(id);
+  if (!eligible.length) return terms.length ? terms[0].key : null;
+  // Clinical Correlations: per Chris, defaults to Fall specifically even
+  // though it's offered both terms — but stays user-movable to Spring via
+  // the term-grid dropdown, since eligibleTermsFor() still includes it.
+  if (id === 'BME6018') {
+    const fall = eligible.find(t => t.season === 'F');
+    if (fall) return fall.key;
+  }
+  if (eligible.length === 1) return eligible[0].key; // e.g. a Fall-only course with one Fall term — nothing to balance
+  let best = eligible[0];
+  eligible.forEach(t => { if (termLoad(t.key, id) < termLoad(best.key, id)) best = t; });
+  return best.key;
+}
+// Explicit, ordered placement pass for Core + required Math — most season-
+// constrained first (a Fall-only course has only one valid slot; placing
+// it before anything flexible avoids that flexible course accidentally
+// "winning" the only Fall slot on a load-balance tiebreak). Re-run whenever
+// the term sequence or the required Math choice changes; leaves an
+// existing assignment alone if it's still a valid, eligible term.
+function placeCoreAndMath() {
+  const ids = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[])]
+    .sort((a,b) => eligibleTermsFor(a).length - eligibleTermsFor(b).length);
+  ids.forEach(id => {
+    const elig = eligibleTermsFor(id);
+    const stillValid = termAssignment[id] && elig.some(t=>t.key===termAssignment[id]);
+    if (!stillValid) termAssignment[id] = computeDefaultTerm(id);
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   MATH RECONCILIATION (unchanged from prior pass — already verified)
+   MATH RECONCILIATION
 ═══════════════════════════════════════════════════════════════════ */
 
 function reconcileMath() {
@@ -276,9 +346,10 @@ function reconcileMath() {
   MS_MATH_IDS.forEach(id => {
     const shouldBeInPool = mathCheckedSet.has(id) && id !== requiredMathId;
     const isInPool = selections.includes(id);
-    if (shouldBeInPool && !isInPool) { selections.push(id); termAssignment[id] = defaultTermFor(id); }
+    if (shouldBeInPool && !isInPool) { selections.push(id); termAssignment[id] = computeDefaultTerm(id); }
     if (!shouldBeInPool && isInPool) { selections = selections.filter(x => x !== id); delete termAssignment[id]; }
   });
+  placeCoreAndMath();
 }
 function toggleMath(id) {
   if (mathCheckedSet.has(id)) mathCheckedSet.delete(id); else mathCheckedSet.add(id);
@@ -318,13 +389,27 @@ function computeBuckets() {
   return {electiveCredits, bmeElectiveCredits, specializationCredits, coreCredits, allPlacedIds};
 }
 
-// "choose N" group status — same shape/semantics as the BS planner's
-// default pathwayGroupStatus() branch (count-based, not credit-based),
-// applied here to the certificate.
+// Group status for one group within a certificate. 'all' = every listed
+// course is required; 'choose' = pick at least `count` of them. Same two
+// shapes the BS Pathways Editor already authors (addRequiredGroup/
+// addChooseGroup) — a certificate can need both kinds at once (e.g.
+// Engineering Innovation required, THEN choose 2 of a separate pool —
+// the flat "choose 2 of all 5" version of this was simply wrong, per
+// Chris, conflating a required course with the pool it sits outside of).
 function msGroupStatus(group, selectedIds) {
   const selectedCount = (group.courses||[]).filter(id=>selectedIds.includes(id)).length;
+  if (group.type === 'all') {
+    const total = (group.courses||[]).length;
+    return {satisfied: selectedCount>=total, detail: `${selectedCount}/${total} required`};
+  }
   const count = group.count||1;
   return {satisfied: selectedCount>=count, detail: `${selectedCount}/${count} chosen`};
+}
+// A certificate is satisfied only when every one of its groups is —
+// required course(s) AND the choose-N pool, not either alone.
+function msCertificateStatus(cert, selectedIds) {
+  const groupStatuses = (cert.groups||[]).map(g => msGroupStatus(g, selectedIds));
+  return {satisfied: groupStatuses.length>0 && groupStatuses.every(s=>s.satisfied), groupStatuses};
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -452,28 +537,33 @@ function renderConcentrationCard(b) {
       </label>`;
     }).join('');
 
-    let certHtml = '';
-    if (spec.certificate) {
-      const status = msGroupStatus(spec.certificate.group, selections);
-      const certRows = spec.certificate.group.courses.map(id => {
-        const c = MS_COURSES[id];
-        return `<label class="path-course-row">
-          <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
-          <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
-          ${crossListedBadge(c)}
-        </label>`;
+    let certsHtml = '';
+    (spec.certificates||[]).forEach(cert => {
+      const certStatus = msCertificateStatus(cert, selections);
+      const groupsHtml = (cert.groups||[]).map((g, gi) => {
+        const gStatus = msGroupStatus(g, selections);
+        const rows = (g.courses||[]).map(id => {
+          const c = MS_COURSES[id];
+          return `<label class="path-course-row">
+            <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
+            <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
+            ${crossListedBadge(c)}
+          </label>`;
+        }).join('');
+        const groupLabel = g.type === 'all' ? 'Required' : `Choose ${g.count||1}`;
+        return `<div style="margin-top:6px"><div class="small" style="font-weight:600">${groupLabel} — ${gStatus.detail}${gStatus.satisfied?' ✓':''}</div>${rows}</div>`;
       }).join('');
-      certHtml = `<div class="path-group">
-        <div class="small" style="font-weight:700;margin-top:0">${spec.certificate.title} — ${status.detail}${status.satisfied?' ✓':''}</div>
-        ${certRows}
+      certsHtml += `<div class="path-group">
+        <div class="small" style="font-weight:700;margin-top:0">${cert.title}${certStatus.satisfied?' ✓':''}</div>
+        ${groupsHtml}
       </div>`;
-    }
+    });
 
     return `<details class="spec-card" open>
       <summary>${spec.title} — ${concentrationCoverage(concId)}cr selected</summary>
       <div class="small" style="margin:8px 0">${spec.description}</div>
       ${rows}
-      ${certHtml}
+      ${certsHtml}
     </details>`;
   }).join('');
 }
@@ -483,13 +573,13 @@ function renderTermGrid(b) {
   grid.style.gridTemplateColumns = `repeat(${terms.length || 1}, 1fr)`;
   if (!terms.length) { grid.innerHTML = '<div class="small">Click "Apply start / reset plan" above to generate terms.</div>'; return; }
   grid.innerHTML = terms.map(t => {
-    const items = b.allPlacedIds.filter(id => (termAssignment[id] || defaultTermFor(id)) === t.key);
+    const items = b.allPlacedIds.filter(id => (termAssignment[id] || computeDefaultTerm(id)) === t.key);
     return `<div class="term-card">
       <h3>${t.label}</h3>
       ${items.length ? items.map(id => `
         <div class="term-item">${MS_COURSES[id].displayId||id} (${courseCredits(id)}cr)
           <select class="term-pick" onchange="setTermAssignment('${id}', this.value)">
-            ${terms.map(tt=>`<option value="${tt.key}" ${tt.key===t.key?'selected':''}>${tt.label}</option>`).join('')}
+            ${eligibleTermsFor(id).map(tt=>`<option value="${tt.key}" ${tt.key===t.key?'selected':''}>${tt.label}</option>`).join('')}
           </select>
         </div>`).join('') : '<div class="empty">Nothing placed yet</div>'}
     </div>`;
@@ -505,7 +595,7 @@ function addFromDropdown() {
   const id = dd.value;
   if (!id || selections.includes(id)) return;
   selections.push(id);
-  termAssignment[id] = defaultTermFor(id);
+  termAssignment[id] = computeDefaultTerm(id);
   dd.value = '';
   render();
 }
@@ -522,7 +612,7 @@ function addFreeEntry() {
   if (selections.includes(raw) || MS_CORE_FIXED_IDS.includes(raw)) { alert(`${raw} is already in this plan.`); return; }
   if (!MS_COURSES[raw]) MS_COURSES[raw] = {title:'(free entry — not yet validated against an approved list)', credits:3, bmePrefix: prefix==='BME'};
   selections.push(raw);
-  termAssignment[raw] = defaultTermFor(raw);
+  termAssignment[raw] = computeDefaultTerm(raw);
   input.value = '';
   render();
 }
@@ -542,11 +632,12 @@ function toggleTrackConcentration(id) {
 function toggleConcentrationCourse(id) {
   if (MS_COURSES[id].core) return;
   if (selections.includes(id)) { selections = selections.filter(x => x !== id); delete termAssignment[id]; delete creditOverrides[id]; }
-  else { selections.push(id); termAssignment[id] = defaultTermFor(id); }
+  else { selections.push(id); termAssignment[id] = computeDefaultTerm(id); }
   render();
 }
 
 function setTermAssignment(id, key) {
+  if (!eligibleTermsFor(id).some(t=>t.key===key)) return; // shouldn't be reachable via the UI (dropdown is pre-filtered), defensive only
   termAssignment[id] = key;
   render();
 }
@@ -555,7 +646,18 @@ function setTermAssignment(id, key) {
    INIT
 ═══════════════════════════════════════════════════════════════════ */
 
+// Keeps <title>/<h1> in sync with MS_PLANNER_VERSION automatically — the BS
+// planner once shipped with a static title left over from an old version
+// bump; this avoids needing to remember to hand-edit two more spots every
+// time the version changes.
+function updatePageTitle() {
+  document.title = `UF BME MS Curriculum Planner (Non-Thesis) v${MS_PLANNER_VERSION}`;
+  const h1 = document.getElementById('pageTitle');
+  if (h1) h1.textContent = `BME MS Curriculum Planner — Non-Thesis v${MS_PLANNER_VERSION}`;
+}
+
 async function loadMsData() {
+  updatePageTitle();
   const statusEl = document.getElementById('dataStatus');
   try {
     const [coursesRes, concRes] = await Promise.all([
@@ -569,14 +671,15 @@ async function loadMsData() {
     MS_CONCENTRATIONS = concJson.concentrations;
     MS_CORE_FIXED_IDS = Object.keys(MS_COURSES).filter(id => MS_COURSES[id].core);
     MS_MATH_IDS = Object.keys(MS_COURSES).filter(id => MS_COURSES[id].mathOption);
-    statusEl.textContent = `Course data loaded (${Object.keys(MS_COURSES).length} courses, ${Object.keys(MS_CONCENTRATIONS).length} concentrations)`;
+    statusEl.textContent = `v${MS_PLANNER_VERSION} (${MS_BUILD_DATE}) | Course data loaded (${Object.keys(MS_COURSES).length} courses, ${Object.keys(MS_CONCENTRATIONS).length} concentrations)`;
     terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
+    placeCoreAndMath();
     render();
   } catch (err) {
     // No fallback, per Chris — this isn't mission-critical yet. Just say
     // clearly that it failed and stop, rather than rendering a half-broken
     // page against missing data.
-    statusEl.textContent = `⚠ Failed to load course data (${err.message}). Check your connection and reload — nothing below will work until this succeeds.`;
+    statusEl.textContent = `v${MS_PLANNER_VERSION} (${MS_BUILD_DATE}) | ⚠ Failed to load course data (${err.message}). Check your connection and reload — nothing below will work until this succeeds.`;
     statusEl.style.color = '#FFD9B3';
     statusEl.style.fontWeight = '700';
   }
