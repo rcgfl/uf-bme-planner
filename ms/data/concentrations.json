@@ -1,11 +1,11 @@
 {
-  "schemaVersion": "0.1",
-  "source": "manual — MS program flyer (Design Innovation), placeholders pending grad faculty",
+  "schemaVersion": "0.2",
+  "source": "manual \u2014 MS program flyer (Design Innovation), placeholders pending grad faculty",
   "lastUpdated": "2026-06-29",
   "concentrations": {
     "design_innovation": {
       "title": "Design Innovation, Project Development & Entrepreneurship",
-      "description": "Personal development of leadership competencies for group, organizational, and strategic leadership roles. Introduces entrepreneurship, idea generation, feasibility analysis, and business planning.",
+      "description": "Personal development of leadership competencies for group, organizational, and strategic leadership roles.\nIntroduces entrepreneurship, idea generation, feasibility analysis, and business planning.",
       "courseIds": [
         "BME6018",
         "BME6938_BENCHMARKET",
@@ -15,7 +15,7 @@
         "EGN6640",
         "EGN6642",
         "EGS6626",
-        "EGS6101"
+        "EGS6100"
       ],
       "certificates": [
         {
@@ -32,9 +32,9 @@
               "count": 2,
               "courses": [
                 "EGN6640",
+                "EGS6100",
                 "EGS6039",
-                "EGS6626",
-                "EGS6101"
+                "EGS6626"
               ]
             }
           ]
@@ -42,11 +42,11 @@
       ]
     },
     "placeholder_2": {
-      "title": "Concentration #2 — pending grad faculty",
+      "title": "Concentration #2 \u2014 pending grad faculty",
       "courseIds": []
     },
     "placeholder_3": {
-      "title": "Concentration #3 — pending grad faculty",
+      "title": "Concentration #3 \u2014 pending grad faculty",
       "courseIds": []
     }
   }

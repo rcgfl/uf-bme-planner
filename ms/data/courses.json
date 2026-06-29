@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "0.1",
-  "source": "manual — SOC pulls, department course-listing page, MS program flyer",
+  "schemaVersion": "0.2",
+  "source": "manual \u2014 SOC pulls, department course-listing page, MS program flyer",
   "lastUpdated": "2026-06-29",
   "courses": {
     "BME5401": {
@@ -110,7 +110,7 @@
       ]
     },
     "BME6905": {
-      "title": "BME6905 — Individual Work in Biomedical Engineering (Internship)",
+      "title": "BME6905 \u2014 Individual Work in Biomedical Engineering (Internship)",
       "credits": 3,
       "bmePrefix": true,
       "offered": [
@@ -121,7 +121,7 @@
       "maxCredits": 3
     },
     "BME6907": {
-      "title": "BME6907 — BME Non-Thesis Research Project",
+      "title": "BME6907 \u2014 BME Non-Thesis Research Project",
       "credits": 3,
       "bmePrefix": true,
       "offered": [
@@ -263,7 +263,11 @@
       "variableCredit": false,
       "doubleCountFlag": true,
       "maxCredits": null,
-      "crossListedUndergrad": "EGS4100"
+      "crossListedUndergrad": "EGS4100",
+      "aliases": [
+        "EGS6100"
+      ],
+      "aliasNote": "Listed as EGS 6100 in Engineering Innovation certificate materials; listed as EGS 6101 in current course offerings."
     },
     "EGS6626": {
       "title": "Fundamentals of Engineering Project Management",
