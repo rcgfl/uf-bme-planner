@@ -89,7 +89,7 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
   </div>
 
   <div class="panel">
-    <h2>BME Core — 10 credits</h2>
+    <h2>BME Core — 11 credits</h2>
     <div id="coreFixedList"></div>
     <h2 style="margin-top:14px;font-size:13px">Choose 1 BME Math (3 credits)</h2>
     <div id="coreMathList"></div>
@@ -124,9 +124,19 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <script>
 'use strict';
 
-const MS_PLANNER_VERSION = '0.7';
+const MS_PLANNER_VERSION = '0.8';
 const MS_BUILD_DATE = '2026-06-29';
 // Changelog:
+// 0.8 — Added prereq/background/permission metadata handling and repeatable
+//       BME6938 custom-topic instances. Non-4+1 default term sequence is
+//       now Fall/Spring/Summer (or Spring/Summer/Fall for spring starts),
+//       with Summer treated as the third load-bearing term rather than an
+//       optional insert before a second Fall. BME6018 now respects BME5401
+//       as a real prior-term prereq in default placement and shows a soft
+//       warning if manually placed too early. BME6907 is a 1-credit fixed
+//       Spring project course. BME6938 can be added repeatedly with custom
+//       topic names and credits; specific pathway-listed BME6938 topics can
+//       remain as explicit registry entries.
 // 0.7 — Added course aliases as first-class course identity metadata.
 //       courses.json remains the authoritative registry; concentrations/
 //       certificates may reference either a canonical course id or any alias.
@@ -232,9 +242,20 @@ function formatCourseCode(raw) {
   return m ? `${m[1]} ${m[2]}` : raw;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
 function canonicalCourseId(rawId) {
   const id = normalizeCourseCode(rawId);
   if (!MS_COURSES || !id) return id;
+
+  const inst = id.match(/^(.+?)__(\d+)$/);
+  if (inst) {
+    const base = canonicalCourseId(inst[1]);
+    return `${base}__${inst[2]}`;
+  }
+
   if (MS_COURSES[id]) return id;
 
   const found = Object.entries(MS_COURSES).find(([courseId, course]) =>
@@ -244,26 +265,58 @@ function canonicalCourseId(rawId) {
   return found ? found[0] : id;
 }
 
-function courseRecord(rawId) {
+function courseBaseId(rawId) {
   const id = canonicalCourseId(rawId);
-  return MS_COURSES ? MS_COURSES[id] : null;
+  const inst = id.match(/^(.+?)__(\d+)$/);
+  return inst ? inst[1] : id;
+}
+
+function isCourseInstance(rawId) {
+  return /^(.+?)__(\d+)$/.test(canonicalCourseId(rawId));
+}
+
+function courseRecord(rawId) {
+  const baseId = courseBaseId(rawId);
+  return MS_COURSES ? MS_COURSES[baseId] : null;
+}
+
+function isRepeatableCourse(rawId) {
+  const c = courseRecord(rawId);
+  return !!(c && c.repeatable);
 }
 
 function courseDisplayId(rawId) {
   const id = canonicalCourseId(rawId);
+  const baseId = courseBaseId(id);
   const c = courseRecord(id);
   if (!c) return formatCourseCode(rawId);
 
-  const primary = c.displayId || formatCourseCode(id);
+  const primary = c.displayId || formatCourseCode(baseId);
   const aliases = (c.aliases || []).map(formatCourseCode);
   return aliases.length ? `${primary} (${aliases.join(', ')})` : primary;
+}
+
+function courseTopicTitle(rawId) {
+  const id = canonicalCourseId(rawId);
+  const c = courseRecord(id);
+  if (!c) return '';
+  return topicOverrides[id] || '';
 }
 
 function courseLabel(rawId) {
   const id = canonicalCourseId(rawId);
   const c = courseRecord(id);
   if (!c) return formatCourseCode(rawId);
+  const topic = courseTopicTitle(id);
+  if (isCourseInstance(id) && topic) return `${courseDisplayId(id)} — Special Topics: ${topic} (${courseCredits(id)}cr)`;
   return `${courseDisplayId(id)} — ${c.title} (${courseCredits(id)}cr)`;
+}
+
+function selectedSatisfiesReference(selectedId, referenceId) {
+  const sel = canonicalCourseId(selectedId);
+  const ref = canonicalCourseId(referenceId);
+  if (sel === ref) return true;
+  return isCourseInstance(sel) && courseBaseId(sel) === ref;
 }
 
 function normalizeCourseList(ids) {
@@ -314,7 +367,9 @@ let selections = [];
 // (certificate checkboxes read/write `selections` directly — see render —
 // no separate tracking set; per Chris, checking a course anywhere checks
 // it everywhere it appears.)
-let creditOverrides = {}; // id -> credits, for variableCredit pool entries (BME6905/BME6907, like BME3941 in undergrad) — editable, defaults to the registry value
+let creditOverrides = {}; // id -> credits, including repeatable/custom-topic instances
+let topicOverrides = {}; // repeatable instance id -> user-entered topic/title
+let repeatableInstanceCounter = 0;
 let trackedConcentrations = new Set(['design_innovation']); // multi-trackable, same as BS Themes — purely informational, no credit target of its own
 let fourPlusOne = false;
 let includeSummer = true;
@@ -325,16 +380,26 @@ let termAssignment = {}; // id -> term key
    TERM GENERATION
 ═══════════════════════════════════════════════════════════════════ */
 
-// academicSequence — same primitive the BS planner uses (alternates F/S
-// forward from a start key). Per Chris: the real default sequences are
-// Fall/Spring/Fall (non-4+1) and Fall/Spring (4+1) — or the Spring-start
-// mirror of each, Spring/Fall/Spring and Spring/Fall — not Fall/Spring/
-// Summer. This function needs no special-casing at all for either case;
-// it's just academicSequence() run for 2 or 3 terms.
+// academicSequence alternates Fall/Spring only. chronologicalSequence moves
+// through Fall → Spring → Summer → Fall. Per the clarified MS program plan,
+// non-4+1 students use a true 3-term Fall/Spring/Summer sequence rather
+// than Fall/Spring/Fall; 4+1 students remain on the two academic anchors.
 function academicSequence(startKey, count) {
   let k = startKey;
   const seq = [];
   for (let i=0;i<count;i++){ seq.push(k); k = nextAcademicKey(k); }
+  return seq;
+}
+function nextChronologicalKey(key) {
+  const y=parseInt(key.slice(0,4),10), s=key.slice(4);
+  if (s==='F') return `${y+1}S`;
+  if (s==='S') return `${y}Su`;
+  return `${y}F`;
+}
+function chronologicalSequence(startKey, count) {
+  let k = startKey;
+  const seq = [];
+  for (let i=0;i<count;i++){ seq.push(k); k = nextChronologicalKey(k); }
   return seq;
 }
 
@@ -342,15 +407,10 @@ function buildTermKeys() {
   const yr = document.getElementById('startYear')?.value || '2026';
   const startSeason = document.getElementById('studentStartSeason')?.value || 'F';
   const startKey = `${yr}${startSeason}`;
-  let keys = academicSequence(startKey, fourPlusOne ? 2 : 3);
+  if (!fourPlusOne) return chronologicalSequence(startKey, 3);
+
+  let keys = academicSequence(startKey, 2);
   if (includeSummer) {
-    // Per Chris: Summer is an ADDED extra term, not a replacement for one
-    // of the Fall/Spring anchors, and adding it doesn't shift graduation —
-    // "on the back end of 4+1" (after the lone Spring) or "between spring
-    // and fall" (non-4+1, before the second Fall). Both phrasings describe
-    // the same insertion point: right after the first Spring in the
-    // sequence, which exists exactly once in every realistic 2-3 term plan
-    // regardless of which season the student started in.
     const springIdx = keys.findIndex(k => seasonFromKey(k) === 'S');
     if (springIdx !== -1) {
       const summerKey = `${keys[springIdx].slice(0,4)}Su`;
@@ -394,49 +454,88 @@ function reconcileTermAssignments() {
 // Fall-only course can never be moved to a Spring it isn't offered in);
 // termLoad() reads only already-stored assignments (never recurses into
 // computeDefaultTerm), so placeCoreAndMath()'s ordered pass below is safe.
-function eligibleTermsFor(id) {
-  const c = MS_COURSES[id];
-  if (!terms.length) return [];
-  // Per Chris: Summer eligibility must be explicit, never inferred. Unknown
-  // offering data means "don't restrict Fall/Spring" but never "assume
-  // Summer" — that needs a confirmed 'Su' in the course's own offered list,
-  // same bar as any other season, not a default-open one.
-  if (!c.offered) return terms.filter(t => t.season !== 'Su');
+function eligibleTermsFor(rawId) {
+  const c = courseRecord(rawId);
+  if (!c || !terms.length) return [];
+  if (!c.offered || !c.offered.length) return terms.filter(t => t.season !== 'Su');
   return terms.filter(t => c.offered.includes(t.season));
 }
+function termIndexForKey(key) { return terms.findIndex(t => t.key === key); }
+function plannedIdsForChecks() { return [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections]; }
+function findPlannedIdForReference(refId) {
+  const ref = canonicalCourseId(refId);
+  return plannedIdsForChecks().find(id => selectedSatisfiesReference(id, ref));
+}
+function prereqMinTermIndex(rawId) {
+  const c = courseRecord(rawId);
+  let minIdx = 0;
+  (c?.prereq || []).forEach(pre => {
+    const plannedPre = findPlannedIdForReference(pre) || canonicalCourseId(pre);
+    const preTerm = termAssignment[plannedPre];
+    const preIdx = preTerm ? termIndexForKey(preTerm) : -1;
+    if (preIdx >= 0) minIdx = Math.max(minIdx, preIdx + 1);
+  });
+  return minIdx;
+}
+function prereqWarnings(rawId) {
+  const id = canonicalCourseId(rawId);
+  const c = courseRecord(id);
+  const ownTerm = termAssignment[id];
+  const ownIdx = ownTerm ? termIndexForKey(ownTerm) : -1;
+  if (!c || ownIdx < 0) return [];
+  return (c.prereq || []).map(pre => {
+    const plannedPre = findPlannedIdForReference(pre) || canonicalCourseId(pre);
+    const preTerm = termAssignment[plannedPre];
+    const preIdx = preTerm ? termIndexForKey(preTerm) : -1;
+    if (preIdx < 0) return `Prerequisite ${courseDisplayId(pre)} is not placed in this plan.`;
+    if (ownIdx <= preIdx) return `Prerequisite warning: ${courseDisplayId(pre)} should be completed before ${courseDisplayId(id)}.`;
+    return '';
+  }).filter(Boolean);
+}
 function termLoad(termKey, excludeId=null) {
-  const allIds = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections];
+  const allIds = plannedIdsForChecks();
   return allIds.filter(id => id!==excludeId && termAssignment[id]===termKey)
                .reduce((a,id)=>a+courseCredits(id),0);
 }
-function computeDefaultTerm(id) {
-  const eligible = eligibleTermsFor(id);
-  if (!eligible.length) return terms.length ? terms[0].key : null;
-  // Clinical Correlations: per Chris, defaults to Fall specifically even
-  // though it's offered both terms — but stays user-movable to Spring via
-  // the term-grid dropdown, since eligibleTermsFor() still includes it.
-  if (id === 'BME6018') {
+function termTargetCredits(term) { return term.season === 'Su' ? 6 : 12; }
+function computeDefaultTerm(rawId) {
+  const id = canonicalCourseId(rawId);
+  const seasonEligible = eligibleTermsFor(id);
+  if (!seasonEligible.length) return terms.length ? terms[0].key : null;
+
+  const minIdx = prereqMinTermIndex(id);
+  const prereqEligible = seasonEligible.filter(t => termIndexForKey(t.key) >= minIdx);
+  const eligible = prereqEligible.length ? prereqEligible : seasonEligible;
+
+  if (id === 'BME6018') return eligible[0].key; // earliest term after BME5401; do not skip Spring just to prefer Fall
+  if (id === 'BME6936') {
     const fall = eligible.find(t => t.season === 'F');
     if (fall) return fall.key;
   }
-  if (eligible.length === 1) return eligible[0].key; // e.g. a Fall-only course with one Fall term — nothing to balance
+  if (eligible.length === 1) return eligible[0].key;
+
+  const cr = courseCredits(id) || 0;
   let best = eligible[0];
-  eligible.forEach(t => { if (termLoad(t.key, id) < termLoad(best.key, id)) best = t; });
+  eligible.forEach(t => {
+    const bestScore = Math.max(0, termLoad(best.key, id) + cr - termTargetCredits(best));
+    const tScore = Math.max(0, termLoad(t.key, id) + cr - termTargetCredits(t));
+    if (tScore < bestScore || (tScore === bestScore && termLoad(t.key, id) < termLoad(best.key, id))) best = t;
+  });
   return best.key;
 }
-// Explicit, ordered placement pass for Core + required Math — most season-
-// constrained first (a Fall-only course has only one valid slot; placing
-// it before anything flexible avoids that flexible course accidentally
-// "winning" the only Fall slot on a load-balance tiebreak). Re-run whenever
-// the term sequence or the required Math choice changes; leaves an
-// existing assignment alone if it's still a valid, eligible term.
 function placeCoreAndMath() {
   const ids = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[])]
-    .sort((a,b) => eligibleTermsFor(a).length - eligibleTermsFor(b).length);
+    .sort((a,b) => {
+      const prereqDiff = (courseRecord(a)?.prereq || []).length - (courseRecord(b)?.prereq || []).length;
+      const eligibleDiff = eligibleTermsFor(a).length - eligibleTermsFor(b).length;
+      return prereqDiff || eligibleDiff;
+    });
   ids.forEach(id => {
     const elig = eligibleTermsFor(id);
-    const stillValid = termAssignment[id] && elig.some(t=>t.key===termAssignment[id]);
-    if (!stillValid) termAssignment[id] = computeDefaultTerm(id);
+    const stillValidSeason = termAssignment[id] && elig.some(t=>t.key===termAssignment[id]);
+    const minIdx = prereqMinTermIndex(id);
+    const stillValidPrereq = stillValidSeason && termIndexForKey(termAssignment[id]) >= minIdx;
+    if (!stillValidPrereq) termAssignment[id] = computeDefaultTerm(id);
   });
 }
 
@@ -486,13 +585,13 @@ function computeBuckets() {
   // Electives, up to 13. Concentrations are Themes, not Pathways: no
   // credit target of their own, no gating, multi-trackable, purely a
   // discovery aid layered on top of this same accounting.
-  const bmePrefixSelected = selections.filter(id => MS_COURSES[id].bmePrefix).reduce((a,id)=>a+courseCredits(id),0);
+  const bmePrefixSelected = selections.filter(id => courseRecord(id)?.bmePrefix).reduce((a,id)=>a+courseCredits(id),0);
   const electiveCredits = bmePrefixSelected;
   const totalSelectedCredits = selections.reduce((a,id)=>a+courseCredits(id),0);
   const bmeElectiveCredits = Math.min(6, bmePrefixSelected);
   const specializationCredits = totalSelectedCredits - bmeElectiveCredits;
 
-  const coreCredits = MS_CORE_FIXED_IDS.reduce((a,id)=>a+MS_COURSES[id].credits,0) + (requiredMathId?3:0);
+  const coreCredits = MS_CORE_FIXED_IDS.reduce((a,id)=>a+courseCredits(id),0) + (requiredMathId?courseCredits(requiredMathId):0);
   const allPlacedIds = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections];
 
   return {electiveCredits, bmeElectiveCredits, specializationCredits, coreCredits, allPlacedIds};
@@ -506,7 +605,7 @@ function computeBuckets() {
 // the flat "choose 2 of all 5" version of this was simply wrong, per
 // Chris, conflating a required course with the pool it sits outside of).
 function msGroupStatus(group, selectedIds) {
-  const selectedCount = (group.courses||[]).filter(id=>selectedIds.includes(id)).length;
+  const selectedCount = (group.courses||[]).filter(ref => selectedIds.some(sel => selectedSatisfiesReference(sel, ref))).length;
   if (group.type === 'all') {
     const total = (group.courses||[]).length;
     return {satisfied: selectedCount>=total, detail: `${selectedCount}/${total} required`};
@@ -553,20 +652,33 @@ function renderDashboard(b) {
     tile('Specialization Electives', `${b.specializationCredits} / 13 cr`, specMet, specMet?'Satisfied':'In progress');
 }
 
+function courseBadges(c) {
+  return crossListedBadge(c) + offeringUnknownBadge(c) + instructorPermissionBadge(c);
+}
+function courseAdvisoryHtml(c) {
+  const bits = [];
+  if (c.expectedBackgroundText) bits.push(c.expectedBackgroundText);
+  if (c.instructorPermissionMaySubstitute) bits.push('Consent of instructor may be required.');
+  if (c.offeringNote) bits.push(c.offeringNote);
+  return bits.length ? `<div class="small" style="margin-top:2px;color:#6a4b00">${bits.map(escapeHtml).join(' ')}</div>` : '';
+}
+
 function renderCore() {
-  document.getElementById('coreFixedList').innerHTML = MS_CORE_FIXED_IDS.map(id => `
-    <div class="course-row">
-      <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${MS_COURSES[id].title} (${MS_COURSES[id].credits}cr)</span>
-      <span class="tag tag-core">Core</span></div>
-    </div>`).join('');
+  document.getElementById('coreFixedList').innerHTML = MS_CORE_FIXED_IDS.map(id => {
+    const c = courseRecord(id);
+    return `<div class="course-row">
+      <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${c.title} (${courseCredits(id)}cr)</span>
+      <span class="tag tag-core">Core</span>${courseBadges(c)}${courseAdvisoryHtml(c)}</div>
+    </div>`;
+  }).join('');
 
   document.getElementById('coreMathList').innerHTML = MS_MATH_IDS.map(id => {
-    const c = MS_COURSES[id];
+    const c = courseRecord(id);
     const isRequired = id === requiredMathId;
     return `<div class="course-row">
       <input type="checkbox" ${mathCheckedSet.has(id)?'checked':''} onchange="toggleMath('${id}')">
-      <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${c.title} (${c.credits}cr)</span>
-      ${isRequired?'<span class="tag tag-core">Required Math</span>':(mathCheckedSet.has(id)?'<span class="tag tag-flag">Counts as Elective</span>':'')}</div>
+      <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${c.title} (${courseCredits(id)}cr)</span>
+      ${isRequired?'<span class="tag tag-core">Required Math</span>':(mathCheckedSet.has(id)?'<span class="tag tag-flag">Counts as Elective</span>':'')}${courseBadges(c)}${courseAdvisoryHtml(c)}</div>
     </div>`;
   }).join('');
 }
@@ -577,11 +689,41 @@ function renderCore() {
 // the BS planner's full multi-instance mechanism (one editable value per
 // id, not separate per-occurrence instances) — worth revisiting if this
 // needs to support taking the same variable-credit course more than once.
-function setCourseCredits(id, value) {
+function setCourseCredits(rawId, value) {
+  const id = canonicalCourseId(rawId);
+  const c = courseRecord(id);
   const n = parseInt(value, 10);
-  const cap = MS_COURSES[id].maxCredits || MS_COURSES[id].credits;
-  if (!Number.isInteger(n) || n < 0 || n > cap) { alert(`Enter 0 to ${cap} credits for ${id}.`); render(); return; }
+  const cap = c?.maxCredits || c?.credits || 3;
+  if (!Number.isInteger(n) || n < 0 || n > cap) { alert(`Enter 0 to ${cap} credits for ${courseDisplayId(id)}.`); render(); return; }
   creditOverrides[id] = n;
+  render();
+}
+function setCourseTopic(rawId, value) {
+  const id = canonicalCourseId(rawId);
+  topicOverrides[id] = String(value || '').trim();
+  render();
+}
+function makeRepeatableInstanceId(baseId) {
+  let id;
+  do { repeatableInstanceCounter += 1; id = `${baseId}__${repeatableInstanceCounter}`; } while (selections.includes(id));
+  return id;
+}
+function addRepeatableCourse(rawBaseId) {
+  const baseId = courseBaseId(rawBaseId);
+  const c = courseRecord(baseId);
+  if (!c?.repeatable) return;
+  const topic = prompt(`Enter the topic/title for ${courseDisplayId(baseId)}:`, '');
+  if (topic === null) return;
+  const cap = c.maxCredits || c.credits || 3;
+  const crRaw = prompt(`Enter credits for ${courseDisplayId(baseId)} (0-${cap}):`, String(c.credits || cap));
+  if (crRaw === null) return;
+  const cr = parseInt(crRaw, 10);
+  if (!Number.isInteger(cr) || cr < 0 || cr > cap) { alert(`Enter 0 to ${cap} credits.`); return; }
+  const id = makeRepeatableInstanceId(baseId);
+  selections.push(id);
+  topicOverrides[id] = topic.trim() || c.title;
+  creditOverrides[id] = cr;
+  termAssignment[id] = computeDefaultTerm(id);
   render();
 }
 
@@ -597,6 +739,11 @@ function crossListedBadge(c) {
   return ` <span class="tag tag-flag" title="Cross-listed with ${c.crossListedUndergrad} — likely ineligible for BS+MS double-counting per UF's Combination Degree policy, even if registered under this grad number">Cross-listed</span>`;
 }
 
+function instructorPermissionBadge(c) {
+  if (!c.instructorPermissionMaySubstitute) return '';
+  return ` <span class="tag tag-flag" title="Consent of instructor may be required or may substitute for formal prerequisites">Instructor permission</span>`;
+}
+
 // Per Chris: visible whenever a course has no confirmed offering data at
 // all (not gated behind 4+1 like crossListedBadge — this applies to every
 // student, every course). Placement still happens (Fall/Spring, never
@@ -609,8 +756,8 @@ function offeringUnknownBadge(c) {
 
 function renderSelectionPanel(b) {
   const dd = document.getElementById('courseDropdown');
-  const usedIds = new Set([...MS_CORE_FIXED_IDS, ...MS_MATH_IDS, ...selections]);
-  const available = Object.keys(MS_COURSES).filter(id => !MS_COURSES[id].core && !MS_COURSES[id].mathOption && !usedIds.has(id));
+  const usedIds = new Set([...MS_CORE_FIXED_IDS, ...MS_MATH_IDS, ...selections.map(courseBaseId)]);
+  const available = Object.keys(MS_COURSES).filter(id => !MS_COURSES[id].core && !MS_COURSES[id].mathOption && (MS_COURSES[id].repeatable || !usedIds.has(id)));
   dd.innerHTML = '<option value="">— choose a course —</option>' +
     available.sort().map(id => `<option value="${id}">${courseLabel(id)}</option>`).join('');
 
@@ -618,11 +765,14 @@ function renderSelectionPanel(b) {
     const c = courseRecord(id);
     if (!c) return `<span class="chip">${formatCourseCode(id)} — unknown course<button onclick="removeSelection('${id}')">×</button></span>`;
     const bmeTag = c.bmePrefix ? ' <span class="tag tag-core">BME</span>' : '';
-    const flag = crossListedBadge(c) + offeringUnknownBadge(c);
+    const flag = courseBadges(c);
     const creditEdit = c.variableCredit
       ? ` <input type="number" min="0" max="${c.maxCredits}" value="${courseCredits(id)}" style="width:42px" onchange="setCourseCredits('${id}', this.value)">cr`
       : '';
-    return `<span class="chip">${courseLabel(id)}${bmeTag}${flag}${creditEdit}<button onclick="removeSelection('${id}')">×</button></span>`;
+    const topicEdit = c.customTopic && isCourseInstance(id)
+      ? ` <input type="text" value="${escapeHtml(courseTopicTitle(id))}" placeholder="topic/title" style="width:170px" onchange="setCourseTopic('${id}', this.value)">`
+      : '';
+    return `<span class="chip">${courseLabel(id)}${bmeTag}${flag}${creditEdit}${topicEdit}<button onclick="removeSelection('${id}')">×</button></span>`;
   }).join('') || '<div class="small">No courses selected yet.</div>';
 }
 
@@ -631,7 +781,7 @@ function concentrationCoverage(concId) {
     const c = courseRecord(id);
     return c && !c.core;
   }));
-  return selections.filter(id => ids.has(canonicalCourseId(id))).reduce((a,id)=>a+courseCredits(id),0);
+  return selections.filter(id => [...ids].some(ref => selectedSatisfiesReference(id, ref))).reduce((a,id)=>a+courseCredits(id),0);
 }
 
 function renderConcentrationSelect() {
@@ -656,12 +806,15 @@ function renderConcentrationCard(b) {
         return `<div class="path-course-row"><span class="tag tag-flag">Unknown course</span> ${formatCourseCode(rawId)}</div>`;
       }
       const already = !!c.core;
+      if (c.repeatable) {
+        return `<div class="path-course-row"><span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr) ${courseBadges(c)} <button onclick="addRepeatableCourse('${id}')">Add topic</button>${courseAdvisoryHtml(c)}</div>`;
+      }
       const checked = already || selections.includes(id);
       return `<label class="path-course-row">
         <input type="checkbox" ${checked?'checked':''} ${already?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
         <span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr)
         ${already?'<span class="tag tag-core">Already Core</span>':''}
-        ${crossListedBadge(c)}${offeringUnknownBadge(c)}
+        ${courseBadges(c)}${courseAdvisoryHtml(c)}
       </label>`;
     }).join('');
 
@@ -676,10 +829,13 @@ function renderConcentrationCard(b) {
           if (!c) {
             return `<div class="path-course-row"><span class="tag tag-flag">Unknown course</span> ${formatCourseCode(rawId)}</div>`;
           }
+          if (c.repeatable) {
+            return `<div class="path-course-row"><span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr) ${courseBadges(c)} <button onclick="addRepeatableCourse('${id}')">Add topic</button>${courseAdvisoryHtml(c)}</div>`;
+          }
           return `<label class="path-course-row">
             <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
             <span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr)
-            ${crossListedBadge(c)}${offeringUnknownBadge(c)}
+            ${courseBadges(c)}${courseAdvisoryHtml(c)}
           </label>`;
         }).join('');
         const groupLabel = g.type === 'all' ? 'Required' : `Choose ${g.count||1}`;
@@ -709,7 +865,9 @@ function renderTermGrid(b) {
     return `<div class="term-card">
       <h3>${t.label}</h3>
       ${items.length ? items.map(id => `
-        <div class="term-item">${courseDisplayId(id)} (${courseCredits(id)}cr)${offeringUnknownBadge(MS_COURSES[id])}
+        <div class="term-item"><div style="flex:1">${courseLabel(id)}${courseBadges(courseRecord(id))}
+          ${prereqWarnings(id).map(w=>`<div class="small" style="color:#b00020;margin-top:2px">${escapeHtml(w)}</div>`).join('')}
+          ${courseAdvisoryHtml(courseRecord(id))}</div>
           <select class="term-pick" onchange="setTermAssignment('${id}', this.value)">
             ${eligibleTermsFor(id).map(tt=>`<option value="${tt.key}" ${tt.key===t.key?'selected':''}>${tt.label}</option>`).join('')}
           </select>
@@ -725,7 +883,9 @@ function renderTermGrid(b) {
 function addFromDropdown() {
   const dd = document.getElementById('courseDropdown');
   const id = canonicalCourseId(dd.value);
-  if (!id || selections.includes(id)) return;
+  if (!id) return;
+  if (isRepeatableCourse(id)) { addRepeatableCourse(id); dd.value = ''; return; }
+  if (selections.includes(id)) return;
   selections.push(id);
   termAssignment[id] = computeDefaultTerm(id);
   dd.value = '';
@@ -743,6 +903,7 @@ function addFreeEntry() {
   if (num < 5000) { alert(`${formatCourseCode(raw)} is below the 5000 level. MS coursework must be 5000-level or above.`); return; }
 
   const id = canonicalCourseId(raw);
+  if (isRepeatableCourse(id)) { addRepeatableCourse(id); input.value = ''; return; }
   if (selections.includes(id) || MS_CORE_FIXED_IDS.includes(id)) { alert(`${courseDisplayId(id)} is already in this plan.`); return; }
   if (!MS_COURSES[id]) MS_COURSES[id] = {title:'(free entry — not yet validated against an approved list)', credits:3, bmePrefix: prefix==='BME'};
   selections.push(id);
@@ -756,6 +917,7 @@ function removeSelection(rawId) {
   selections = selections.filter(x => x !== id);
   delete termAssignment[id];
   delete creditOverrides[id];
+  delete topicOverrides[id];
   render();
 }
 
@@ -768,12 +930,14 @@ function toggleConcentrationCourse(rawId) {
   const id = canonicalCourseId(rawId);
   const c = courseRecord(id);
   if (!c || c.core) return;
+  if (c.repeatable) { addRepeatableCourse(id); return; }
   if (selections.includes(id)) { selections = selections.filter(x => x !== id); delete termAssignment[id]; delete creditOverrides[id]; }
   else { selections.push(id); termAssignment[id] = computeDefaultTerm(id); }
   render();
 }
 
-function setTermAssignment(id, key) {
+function setTermAssignment(rawId, key) {
+  const id = canonicalCourseId(rawId);
   if (!eligibleTermsFor(id).some(t=>t.key===key)) return; // shouldn't be reachable via the UI (dropdown is pre-filtered), defensive only
   termAssignment[id] = key;
   render();
