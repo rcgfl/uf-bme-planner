@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UF BME MS Curriculum Planner (Non-Thesis) v0.5</title>
+<title>UF BME MS Curriculum Planner (Non-Thesis) v0.6</title>
 <style>
 *,*::before,*::after{box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;margin:0;background:#f0f2f5;color:#102033;font-size:14px}
@@ -64,7 +64,7 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <body>
 
 <header>
-  <span class="uf-logo">UF</span><h1 id="pageTitle">BME MS Curriculum Planner — Non-Thesis v0.5</h1>
+  <span class="uf-logo">UF</span><h1 id="pageTitle">BME MS Curriculum Planner — Non-Thesis v0.6</h1>
   <div id="dataStatus" class="small" style="color:#fff;opacity:.85;margin-top:2px">Loading course data…</div>
   <div class="controls-bar">
     <label>Student name <input id="studentName" type="text" placeholder="optional" style="width:160px"></label>
@@ -115,6 +115,7 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 
   <div class="panel">
     <h2>Plan of Study</h2>
+    <div class="small">This schedule is a suggestion based on available offering data — always confirm actual course availability with ONE.UF before registering. Courses tagged "⚠ Verify offering" have no confirmed season data at all.</div>
     <div class="term-grid" id="termGrid"></div>
   </div>
 
@@ -123,9 +124,27 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <script>
 'use strict';
 
-const MS_PLANNER_VERSION = '0.5';
+const MS_PLANNER_VERSION = '0.6';
 const MS_BUILD_DATE = '2026-06-29';
 // Changelog:
+// 0.6 — Two fixes, per Chris. (1) Summer eligibility was being inferred for
+//       any course with no confirmed offering data at all (eligibleTermsFor
+//       returned every term, Summer included, when `offered` was unset) —
+//       wrong: Summer should only ever be eligible for a course explicitly
+//       confirmed to run in Summer ('Su' in its own offered list), same bar
+//       as any other season, never a default-open one. Unconfirmed courses
+//       are now only eligible for Fall/Spring. Practical effect, worth
+//       being honest about: no course in courses.json has confirmed Summer
+//       data yet — we've pulled Fall/Spring SOC data repeatedly but never a
+//       Summer one — so Summer is effectively unusable as a placement
+//       target right now regardless of the "Include Summer term" checkbox,
+//       until that data actually exists.
+//       (2) Added a visible "⚠ Verify offering" badge (offeringUnknownBadge)
+//       on any course with no offered data at all — shown on chips,
+//       concentration/certificate rows, and term-grid items, unconditional
+//       (not gated behind 4+1 like the cross-listed badge) — plus a
+//       standing disclaimer above the Plan of Study panel: this is a
+//       suggested schedule, not a guarantee, confirm with ONE.UF.
 // 0.5 — Certificate data model was wrong, per Chris: a certificate isn't
 //       always one flat "choose N of this pool" — Engineering Innovation
 //       (EGN6642) was actually required, with "choose 2" applying only to
@@ -294,7 +313,11 @@ function reconcileTermAssignments() {
 function eligibleTermsFor(id) {
   const c = MS_COURSES[id];
   if (!terms.length) return [];
-  if (!c.offered) return terms.slice(); // unconfirmed offering data — don't restrict, but don't pretend to know either
+  // Per Chris: Summer eligibility must be explicit, never inferred. Unknown
+  // offering data means "don't restrict Fall/Spring" but never "assume
+  // Summer" — that needs a confirmed 'Su' in the course's own offered list,
+  // same bar as any other season, not a default-open one.
+  if (!c.offered) return terms.filter(t => t.season !== 'Su');
   return terms.filter(t => c.offered.includes(t.season));
 }
 function termLoad(termKey, excludeId=null) {
@@ -488,6 +511,16 @@ function crossListedBadge(c) {
   return ` <span class="tag tag-flag" title="Cross-listed with ${c.crossListedUndergrad} — likely ineligible for BS+MS double-counting per UF's Combination Degree policy, even if registered under this grad number">Cross-listed</span>`;
 }
 
+// Per Chris: visible whenever a course has no confirmed offering data at
+// all (not gated behind 4+1 like crossListedBadge — this applies to every
+// student, every course). Placement still happens (Fall/Spring, never
+// Summer without explicit confirmation — see eligibleTermsFor), but the
+// student/advisor should know it's a guess, not a confirmed fact.
+function offeringUnknownBadge(c) {
+  if (c.offered) return '';
+  return ` <span class="tag tag-flag" title="No offering-season data for this course yet — verify with ONE.UF before registering">⚠ Verify offering</span>`;
+}
+
 function renderSelectionPanel(b) {
   const dd = document.getElementById('courseDropdown');
   const usedIds = new Set([...MS_CORE_FIXED_IDS, ...MS_MATH_IDS, ...selections]);
@@ -497,7 +530,7 @@ function renderSelectionPanel(b) {
 
   document.getElementById('selectionChips').innerHTML = selections.map(id => {
     const bmeTag = MS_COURSES[id].bmePrefix ? ' <span class="tag tag-core">BME</span>' : '';
-    const flag = crossListedBadge(MS_COURSES[id]);
+    const flag = crossListedBadge(MS_COURSES[id]) + offeringUnknownBadge(MS_COURSES[id]);
     const creditEdit = MS_COURSES[id].variableCredit
       ? ` <input type="number" min="0" max="${MS_COURSES[id].maxCredits}" value="${courseCredits(id)}" style="width:42px" onchange="setCourseCredits('${id}', this.value)">cr`
       : '';
@@ -533,7 +566,7 @@ function renderConcentrationCard(b) {
         <input type="checkbox" ${checked?'checked':''} ${already?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
         <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
         ${already?'<span class="tag tag-core">Already Core</span>':''}
-        ${crossListedBadge(c)}
+        ${crossListedBadge(c)}${offeringUnknownBadge(c)}
       </label>`;
     }).join('');
 
@@ -547,7 +580,7 @@ function renderConcentrationCard(b) {
           return `<label class="path-course-row">
             <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
             <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
-            ${crossListedBadge(c)}
+            ${crossListedBadge(c)}${offeringUnknownBadge(c)}
           </label>`;
         }).join('');
         const groupLabel = g.type === 'all' ? 'Required' : `Choose ${g.count||1}`;
@@ -577,7 +610,7 @@ function renderTermGrid(b) {
     return `<div class="term-card">
       <h3>${t.label}</h3>
       ${items.length ? items.map(id => `
-        <div class="term-item">${MS_COURSES[id].displayId||id} (${courseCredits(id)}cr)
+        <div class="term-item">${MS_COURSES[id].displayId||id} (${courseCredits(id)}cr)${offeringUnknownBadge(MS_COURSES[id])}
           <select class="term-pick" onchange="setTermAssignment('${id}', this.value)">
             ${eligibleTermsFor(id).map(tt=>`<option value="${tt.key}" ${tt.key===t.key?'selected':''}>${tt.label}</option>`).join('')}
           </select>
