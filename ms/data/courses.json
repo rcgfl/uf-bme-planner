@@ -1,0 +1,186 @@
+{
+  "schemaVersion": "0.1",
+  "source": "manual \u2014 SOC pulls, department course-listing page, MS program flyer",
+  "lastUpdated": "2026-06-28",
+  "courses": {
+    "BME5401": {
+      "title": "Biomedical Engineering and Physiology I",
+      "credits": 3,
+      "bmePrefix": true,
+      "core": true,
+      "offered": [
+        "F"
+      ]
+    },
+    "BME6018": {
+      "title": "Clinical Correlations in BME",
+      "credits": 3,
+      "bmePrefix": true,
+      "core": true,
+      "offered": [
+        "F",
+        "S"
+      ]
+    },
+    "BME6936": {
+      "title": "Biomedical Engineering Seminar",
+      "credits": 1,
+      "bmePrefix": true,
+      "core": true,
+      "offered": [
+        "F",
+        "S"
+      ]
+    },
+    "BME5703": {
+      "title": "Statistical Methods for Biomedical Engineering",
+      "credits": 3,
+      "bmePrefix": true,
+      "mathOption": true
+    },
+    "BME6522": {
+      "title": "Biomedical Multivariate Signal Processing",
+      "credits": 3,
+      "bmePrefix": true,
+      "mathOption": true
+    },
+    "BME6705": {
+      "title": "Mathematical Modeling of Biological and Physiological Systems",
+      "credits": 3,
+      "bmePrefix": true,
+      "mathOption": true,
+      "offered": [
+        "F"
+      ]
+    },
+    "BME6938_MULTIMODALDM": {
+      "title": "BME6938 \u2014 Multimodal Data Mining",
+      "credits": 3,
+      "bmePrefix": true,
+      "mathOption": true,
+      "displayId": "BME6938"
+    },
+    "BME6938_BIOMEDDATA": {
+      "title": "BME6938 \u2014 Biomedical Data",
+      "credits": 3,
+      "bmePrefix": true,
+      "mathOption": true,
+      "displayId": "BME6938"
+    },
+    "BME6938_BENCHMARKET": {
+      "title": "BME6938 \u2014 Bench to Market Commercialization",
+      "credits": 3,
+      "bmePrefix": true,
+      "displayId": "BME6938",
+      "crossListedUndergrad": "BME4931",
+      "doubleCountFlag": true
+    },
+    "BME6010": {
+      "title": "Clinical Immersion",
+      "credits": 3,
+      "bmePrefix": true
+    },
+    "BME6164": {
+      "title": "Magnetic Biomaterials",
+      "credits": 3,
+      "bmePrefix": true
+    },
+    "BME6330": {
+      "title": "Cell and Tissue Engineering",
+      "credits": 3,
+      "bmePrefix": true,
+      "offered": [
+        "F"
+      ]
+    },
+    "BME6360": {
+      "title": "Neural Engineering",
+      "credits": 3,
+      "bmePrefix": true,
+      "offered": [
+        "S"
+      ]
+    },
+    "BME6535": {
+      "title": "Radiological Physics, Measurements, and Dosimetry",
+      "credits": 3,
+      "bmePrefix": true,
+      "offered": [
+        "F"
+      ]
+    },
+    "BME6938_DRUGDELIVERY": {
+      "title": "BME6938 \u2014 Biomaterials for Drug Delivery",
+      "credits": 3,
+      "bmePrefix": true,
+      "displayId": "BME6938"
+    },
+    "BME6938_MUSCLESMOVEMENT": {
+      "title": "BME6938 \u2014 Models, Muscles, & Movement",
+      "credits": 3,
+      "bmePrefix": true,
+      "displayId": "BME6938"
+    },
+    "BME6905": {
+      "title": "BME6905 \u2014 Individual Work in Biomedical Engineering (Internship)",
+      "credits": 3,
+      "bmePrefix": true,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "variableCredit": true,
+      "maxCredits": 3
+    },
+    "BME6907": {
+      "title": "BME6907 \u2014 BME Non-Thesis Research Project",
+      "credits": 3,
+      "bmePrefix": true,
+      "offered": [
+        "S"
+      ],
+      "variableCredit": true,
+      "maxCredits": 3
+    },
+    "EGS6039": {
+      "title": "Engineering Leadership",
+      "credits": 3,
+      "bmePrefix": false,
+      "crossListedUndergrad": "EGS4038",
+      "doubleCountFlag": true
+    },
+    "EGS6681": {
+      "title": "Advanced Engineering Leadership Development",
+      "credits": 3,
+      "bmePrefix": false
+    },
+    "EGN6640": {
+      "title": "Engineering Entrepreneurship",
+      "credits": 3,
+      "bmePrefix": false,
+      "crossListedUndergrad": "EGN4641",
+      "doubleCountFlag": true
+    },
+    "EGN6642": {
+      "title": "Engineering Innovation",
+      "credits": 3,
+      "bmePrefix": false,
+      "crossListedUndergrad": "EGN4643",
+      "doubleCountFlag": true
+    },
+    "EGS6626": {
+      "title": "Fundamentals of Engineering Project Management",
+      "credits": 3,
+      "bmePrefix": false,
+      "crossListedUndergrad": "EGS4625",
+      "doubleCountFlag": true
+    },
+    "EGS6100": {
+      "title": "Divergent Thinking",
+      "credits": 3,
+      "bmePrefix": false,
+      "crossListedUndergrad": "EGS4100",
+      "doubleCountFlag": true
+    }
+  }
+}

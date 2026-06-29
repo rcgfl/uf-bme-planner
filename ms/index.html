@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UF BME MS Curriculum Planner (Non-Thesis)</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;margin:0;background:#f0f2f5;color:#102033;font-size:14px}
+header{background:#0021A5;color:#fff;padding:12px 20px}
+header .uf-logo{font-weight:900;font-size:20px;letter-spacing:.5px;color:#FA4616}
+header h1{margin:4px 0 0;font-size:16px;font-weight:700;color:#fff;display:inline-block;margin-left:12px}
+.controls-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.controls-bar label{color:#fff;display:flex;align-items:center;gap:5px}
+.controls-bar input[type=text],.controls-bar select,.controls-bar input[type=number]{font-size:13px;padding:4px 6px;border:1px solid #b8c0cc;border-radius:5px}
+.controls-bar button{font-size:13px;padding:5px 10px;border:1px solid #fff;border-radius:5px;background:#FA4616;color:#fff;cursor:pointer;font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:20px}
+.panel{background:#fff;border:1px solid #d6dbe4;border-radius:8px;padding:16px 18px;margin-bottom:18px}
+.panel h2{margin:0 0 10px;font-size:15px;color:#0021A5}
+.small{font-size:12px;color:#666678}
+
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px}
+.tile{border-radius:8px;padding:14px 16px;border:2px solid #0021A5;background:#fff;color:#102033}
+.tile.met{background:#1b5e20;border-color:#1b5e20;color:#fff}
+.tile .tile-label{font-size:12px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.tile .tile-value{font-size:22px;font-weight:800}
+.tile .tile-detail{font-size:11px;margin-top:2px;opacity:.9}
+.tile .glyph{font-weight:900}
+
+button{font-size:13px;padding:5px 10px;border:1px solid #b8c0cc;border-radius:5px;background:#fff;color:#102033;cursor:pointer}
+button:hover{background:#eef3ff;border-color:#3467eb}
+select,input[type=text]{font-size:13px;padding:5px 8px;border:1px solid #b8c0cc;border-radius:5px}
+
+.course-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #eef0f4}
+.course-row:last-child{border-bottom:none}
+.course-row input[type=checkbox]{margin-top:3px}
+.course-id{font-weight:700;font-size:13px}
+.course-title{font-size:13px}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:6px}
+.tag-core{background:#e3e8ff;color:#0021A5}
+.tag-flag{background:#fdecee;color:#b00020}
+.term-pick{font-size:11px;padding:2px 4px;border:1px solid #b8c0cc;border-radius:4px;margin-left:auto}
+
+.chip{background:#eef1f8;border:1px solid #c7cee0;border-radius:14px;padding:3px 10px;font-size:12px;display:inline-flex;align-items:center;gap:6px;margin:3px 4px 3px 0}
+.chip button{border:0;background:transparent;color:#b00020;font-weight:700;cursor:pointer;padding:0 2px;font-size:13px}
+
+details.spec-card{border:1px solid #d6dbe4;border-radius:8px;padding:10px 14px;margin-top:4px}
+details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0021A5;padding:4px 0}
+
+/* "path-group"/"path-course-row" — same names+shape as the BS planner's
+   minor/certificate checkbox rendering (renderGroupRowsHtml), ported
+   directly rather than re-derived. */
+.path-group{margin-top:10px;padding:10px 12px;background:#f7f8fc;border:1px dashed #b8c0cc;border-radius:6px}
+.path-course-row{display:block;font-size:13px;padding:4px 0;cursor:pointer}
+.path-course-row input{margin-right:6px}
+
+.term-grid{display:grid;gap:12px;margin-top:10px}
+.term-card{border:1px solid #d6dbe4;border-radius:8px;padding:10px 12px;background:#f7f8fc;min-height:120px}
+.term-card h3{margin:0 0 8px;font-size:13px;color:#0021A5}
+.term-card .empty{font-size:12px;color:#999;font-style:italic}
+.term-item{font-size:12px;padding:4px 6px;background:#fff;border:1px solid #e0e4ec;border-radius:5px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="uf-logo">UF</span><h1>BME MS Curriculum Planner — Non-Thesis</h1>
+  <div id="dataStatus" class="small" style="color:#fff;opacity:.85;margin-top:2px">Loading course data…</div>
+  <div class="controls-bar">
+    <label>Student name <input id="studentName" type="text" placeholder="optional" style="width:160px"></label>
+    <span style="display:flex;align-items:center;gap:4px;white-space:nowrap;color:#fff">Start
+      <select id="studentStartSeason" aria-label="Start season">
+        <option value="F" selected>Fall</option>
+        <option value="S">Spring</option>
+      </select>
+      <input id="startYear" type="number" value="2026" aria-label="Start year" style="width:72px">
+    </span>
+    <label><input type="checkbox" id="fourPlusOne" onchange="toggleFourPlusOne()"> 4+1 (2-term schedule)</label>
+    <label><input type="checkbox" id="includeSummer" checked onchange="toggleSummer()"> Include Summer term</label>
+    <button onclick="applyStartTerm()">Apply start / reset plan</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="panel">
+    <h2>Degree Progress</h2>
+    <div class="dashboard" id="dashboard"></div>
+  </div>
+
+  <div class="panel">
+    <h2>BME Core — 10 credits</h2>
+    <div id="coreFixedList"></div>
+    <h2 style="margin-top:14px;font-size:13px">Choose 1 BME Math (3 credits)</h2>
+    <div id="coreMathList"></div>
+  </div>
+
+  <div class="panel">
+    <h2>BME Electives &amp; Concentration Courses</h2>
+    <div class="small">First 2 BME-prefix courses selected anywhere on this panel satisfy BME Electives (6cr); everything else counts toward the active Concentration below (13cr) if it's on that Concentration's list.</div>
+    <div style="display:flex;gap:8px;margin:10px 0">
+      <select id="courseDropdown"><option value="">— choose a course —</option></select>
+      <button onclick="addFromDropdown()">Add</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="text" id="freeEntryCode" placeholder="Or type a course code (e.g. EGN6938)">
+      <button onclick="addFreeEntry()">Add</button>
+    </div>
+    <div id="selectionChips"></div>
+
+    <h2 style="margin-top:16px;font-size:13px">Concentration — 13 credits</h2>
+    <select id="concentrationSelect" onchange="selectConcentration(this.value)"></select>
+    <div id="concentrationCard" style="margin-top:10px"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Plan of Study</h2>
+    <div class="term-grid" id="termGrid"></div>
+  </div>
+
+</main>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════════
+   TERM-KEY PRIMITIVES — ported verbatim from the BS planner
+   (termLabelFromKey, seasonFromKey, nextAcademicKey) rather than
+   re-derived, per Chris.
+═══════════════════════════════════════════════════════════════════ */
+
+function termLabelFromKey(k) {
+  const y=k.slice(0,4), s=k.slice(4);
+  return (s==='F'?'Fall':s==='S'?'Spring':'Summer')+' '+y;
+}
+function seasonFromKey(k) { return k.endsWith('F')?'F':k.endsWith('S')?'S':'Su'; }
+function nextAcademicKey(key) {
+  const y=parseInt(key.slice(0,4),10), s=key.slice(4);
+  if(s==='F') return `${y+1}S`;
+  return `${y}F`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   COURSE REGISTRY — adds `offered` (confirmed from SOC pulls where
+   known; absent = not yet confirmed, treated as flexible) so term
+   placement can actually be season-aware rather than arbitrary.
+═══════════════════════════════════════════════════════════════════ */
+
+// Live data, fetched from this planner's own /ms/data/ subfolder in the
+// same repo (rcgfl/uf-bme-planner) — separate from the BS planner's /data
+// folder, so filenames don't need an ms- prefix to avoid colliding with
+// it. This file is meant to be saved as /ms/index.html in that repo.
+// Deliberately no embedded fallback — per Chris, this tool isn't
+// mission-critical yet; a clear "failed to load" indicator and stopping
+// there is the right amount of robustness for now. Revisit if that
+// changes once this is actually being relied on day-to-day.
+const MS_DATA_URLS = {
+  courses: 'https://raw.githubusercontent.com/rcgfl/uf-bme-planner/refs/heads/main/ms/data/courses.json',
+  concentrations: 'https://raw.githubusercontent.com/rcgfl/uf-bme-planner/refs/heads/main/ms/data/concentrations.json'
+};
+let MS_COURSES = null;
+let MS_CONCENTRATIONS = null;
+let MS_CORE_FIXED_IDS = [];
+let MS_MATH_IDS = [];
+
+const KNOWN_PREFIXES = new Set(['BME','EGN','EGS','EML','MAE','GMS','ECH','MSE','CHE','ABE','EEL','CHM','BSC','PHC']);
+
+function courseLabel(id) {
+  const c = MS_COURSES[id];
+  if (!c) return id;
+  return `${c.displayId || id} — ${c.title} (${courseCredits(id)}cr)`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════════ */
+
+let mathCheckedSet = new Set();
+let requiredMathId = null;
+let selections = [];
+// (certificate checkboxes read/write `selections` directly — see render —
+// no separate tracking set; per Chris, checking a course anywhere checks
+// it everywhere it appears.)
+let creditOverrides = {}; // id -> credits, for variableCredit pool entries (BME6905/BME6907, like BME3941 in undergrad) — editable, defaults to the registry value
+let activeConcentration = 'design_innovation';
+let fourPlusOne = false;
+let includeSummer = true;
+let terms = []; // [{key,label,season}], rebuilt by applyStartTerm()
+let termAssignment = {}; // id -> term key
+
+/* ═══════════════════════════════════════════════════════════════════
+   TERM GENERATION
+═══════════════════════════════════════════════════════════════════ */
+
+// academicSequence — same primitive the BS planner uses (alternates F/S
+// forward from a start key). Per Chris: the real default sequences are
+// Fall/Spring/Fall (non-4+1) and Fall/Spring (4+1) — or the Spring-start
+// mirror of each, Spring/Fall/Spring and Spring/Fall — not Fall/Spring/
+// Summer. This function needs no special-casing at all for either case;
+// it's just academicSequence() run for 2 or 3 terms.
+function academicSequence(startKey, count) {
+  let k = startKey;
+  const seq = [];
+  for (let i=0;i<count;i++){ seq.push(k); k = nextAcademicKey(k); }
+  return seq;
+}
+
+function buildTermKeys() {
+  const yr = document.getElementById('startYear')?.value || '2026';
+  const startSeason = document.getElementById('studentStartSeason')?.value || 'F';
+  const startKey = `${yr}${startSeason}`;
+  let keys = academicSequence(startKey, fourPlusOne ? 2 : 3);
+  if (includeSummer) {
+    // Per Chris: Summer is an ADDED extra term, not a replacement for one
+    // of the Fall/Spring anchors, and adding it doesn't shift graduation —
+    // "on the back end of 4+1" (after the lone Spring) or "between spring
+    // and fall" (non-4+1, before the second Fall). Both phrasings describe
+    // the same insertion point: right after the first Spring in the
+    // sequence, which exists exactly once in every realistic 2-3 term plan
+    // regardless of which season the student started in.
+    const springIdx = keys.findIndex(k => seasonFromKey(k) === 'S');
+    if (springIdx !== -1) {
+      const summerKey = `${keys[springIdx].slice(0,4)}Su`;
+      keys = [...keys.slice(0,springIdx+1), summerKey, ...keys.slice(springIdx+1)];
+    }
+  }
+  return keys;
+}
+
+function applyStartTerm() {
+  if (!confirm('Reset the plan of study to the new start term? Manual term placements will be cleared.')) return;
+  terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
+  termAssignment = {};
+  render();
+}
+
+function toggleFourPlusOne() {
+  fourPlusOne = document.getElementById('fourPlusOne').checked;
+  terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
+  reconcileTermAssignments();
+  render();
+}
+function toggleSummer() {
+  includeSummer = document.getElementById('includeSummer').checked;
+  terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
+  reconcileTermAssignments();
+  render();
+}
+function reconcileTermAssignments() {
+  const validKeys = new Set(terms.map(t=>t.key));
+  Object.keys(termAssignment).forEach(id => { if (!validKeys.has(termAssignment[id])) delete termAssignment[id]; });
+}
+
+// Season-aware default placement — first term in the current sequence
+// whose season matches one of the course's confirmed offered seasons;
+// undetermined (no `offered` data yet) defaults to the first term rather
+// than guessing, and is never overridden once a manual choice exists.
+function defaultTermFor(id) {
+  const c = MS_COURSES[id];
+  if (!terms.length) return null;
+  if (!c.offered) return terms[0].key;
+  const match = terms.find(t => c.offered.includes(t.season));
+  return (match || terms[0]).key;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MATH RECONCILIATION (unchanged from prior pass — already verified)
+═══════════════════════════════════════════════════════════════════ */
+
+function reconcileMath() {
+  if (requiredMathId && !mathCheckedSet.has(requiredMathId)) requiredMathId = null;
+  if (!requiredMathId) {
+    const candidate = MS_MATH_IDS.find(id => mathCheckedSet.has(id));
+    if (candidate) { requiredMathId = candidate; selections = selections.filter(id => id !== candidate); }
+  }
+  MS_MATH_IDS.forEach(id => {
+    const shouldBeInPool = mathCheckedSet.has(id) && id !== requiredMathId;
+    const isInPool = selections.includes(id);
+    if (shouldBeInPool && !isInPool) { selections.push(id); termAssignment[id] = defaultTermFor(id); }
+    if (!shouldBeInPool && isInPool) { selections = selections.filter(x => x !== id); delete termAssignment[id]; }
+  });
+}
+function toggleMath(id) {
+  if (mathCheckedSet.has(id)) mathCheckedSet.delete(id); else mathCheckedSet.add(id);
+  reconcileMath();
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUCKET COMPUTATION
+═══════════════════════════════════════════════════════════════════ */
+
+function courseCredits(id) {
+  return creditOverrides[id] != null ? creditOverrides[id] : MS_COURSES[id].credits;
+}
+
+function computeBuckets() {
+  // Restored per Chris: dashboard buckets should match the published
+  // degree structure (6cr BME Electives, 13cr Concentration), not a
+  // combined 19cr pool. First 2 BME-prefix pool entries (any surface,
+  // selection order) satisfy Electives; the rest count toward the active
+  // Concentration only if that course is on its list — same as before the
+  // brief "10+19+1" simplification.
+  const bmeEntries = selections.filter(id => MS_COURSES[id].bmePrefix);
+  const firstTwo = new Set(bmeEntries.slice(0,2));
+  const electiveCredits = [...firstTwo].reduce((a,id)=>a+courseCredits(id),0);
+
+  const conc = MS_CONCENTRATIONS[activeConcentration];
+  const concIdSet = new Set((conc.courseIds||[]).filter(id => !MS_COURSES[id].core));
+  const concentrationCredits = selections.filter(id => !firstTwo.has(id) && concIdSet.has(id))
+                                 .reduce((a,id)=>a+courseCredits(id),0);
+
+  const coreCredits = MS_CORE_FIXED_IDS.reduce((a,id)=>a+MS_COURSES[id].credits,0) + (requiredMathId?3:0);
+  const allPlacedIds = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections];
+
+  return {firstTwo, electiveCredits, concentrationCredits, coreCredits, allPlacedIds};
+}
+
+// "choose N" group status — same shape/semantics as the BS planner's
+// default pathwayGroupStatus() branch (count-based, not credit-based),
+// applied here to the certificate.
+function msGroupStatus(group, selectedIds) {
+  const selectedCount = (group.courses||[]).filter(id=>selectedIds.includes(id)).length;
+  const count = group.count||1;
+  return {satisfied: selectedCount>=count, detail: `${selectedCount}/${count} chosen`};
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════════ */
+
+function render() {
+  const b = computeBuckets();
+  renderDashboard(b);
+  renderCore();
+  renderSelectionPanel(b);
+  renderConcentrationSelect();
+  renderConcentrationCard(b);
+  renderTermGrid(b);
+}
+
+function tile(label, value, met, detail) {
+  return `<div class="tile ${met?'met':''}">
+    <div class="tile-label"><span class="glyph">${met?'✓':'—'}</span> ${label}</div>
+    <div class="tile-value">${value}</div>
+    <div class="tile-detail">${detail}</div>
+  </div>`;
+}
+
+function renderDashboard(b) {
+  const coreMet = !!requiredMathId;
+  const electiveMet = b.electiveCredits >= 6;
+  const concTarget = MS_CONCENTRATIONS[activeConcentration].creditTarget || 13;
+  const concMet = b.concentrationCredits >= concTarget;
+  document.getElementById('dashboard').innerHTML =
+    tile('BME Core', `${b.coreCredits} / 10 cr`, coreMet, coreMet?'Satisfied':'Select 1 BME Math') +
+    tile('BME Electives', `${b.electiveCredits} / 6 cr`, electiveMet, `${[...b.firstTwo].length} of 2 BME-prefix slots filled`) +
+    tile('Concentration', `${b.concentrationCredits} / ${concTarget} cr`, concMet, MS_CONCENTRATIONS[activeConcentration].title.split(',')[0]);
+}
+
+function renderCore() {
+  document.getElementById('coreFixedList').innerHTML = MS_CORE_FIXED_IDS.map(id => `
+    <div class="course-row">
+      <div><span class="course-id">${id}</span> <span class="course-title">${MS_COURSES[id].title} (${MS_COURSES[id].credits}cr)</span>
+      <span class="tag tag-core">Core</span></div>
+    </div>`).join('');
+
+  document.getElementById('coreMathList').innerHTML = MS_MATH_IDS.map(id => {
+    const c = MS_COURSES[id];
+    const isRequired = id === requiredMathId;
+    return `<div class="course-row">
+      <input type="checkbox" ${mathCheckedSet.has(id)?'checked':''} onchange="toggleMath('${id}')">
+      <div><span class="course-id">${c.displayId||id}</span> <span class="course-title">${c.title} (${c.credits}cr)</span>
+      ${isRequired?'<span class="tag tag-core">Required Math</span>':(mathCheckedSet.has(id)?'<span class="tag tag-flag">Counts as Elective</span>':'')}</div>
+    </div>`;
+  }).join('');
+}
+
+// Variable-credit handling for BME6905/BME6907 — same nature as BME3941 in
+// undergrad (per Chris): an ordinary elective-pool entry whose actual
+// credit value is editable rather than fixed at 3. Simplified relative to
+// the BS planner's full multi-instance mechanism (one editable value per
+// id, not separate per-occurrence instances) — worth revisiting if this
+// needs to support taking the same variable-credit course more than once.
+function setCourseCredits(id, value) {
+  const n = parseInt(value, 10);
+  const cap = MS_COURSES[id].maxCredits || MS_COURSES[id].credits;
+  if (!Number.isInteger(n) || n < 0 || n > cap) { alert(`Enter 0 to ${cap} credits for ${id}.`); render(); return; }
+  creditOverrides[id] = n;
+  render();
+}
+
+// Per UF's Combination Degree policy: "any graduate course cross-listed at
+// the undergraduate level" is ineligible for BS+MS double-counting,
+// regardless of which number a 4+1 student actually registers under. Only
+// relevant to 4+1 students — for everyone else this is an ordinary,
+// perfectly fine MS course, so the badge stays hidden unless 4+1 is
+// checked, and explains itself via tooltip rather than just saying
+// "Cross-listed" with no context.
+function crossListedBadge(c) {
+  if (!c.doubleCountFlag || !fourPlusOne) return '';
+  return ` <span class="tag tag-flag" title="Cross-listed with ${c.crossListedUndergrad} — likely ineligible for BS+MS double-counting per UF's Combination Degree policy, even if registered under this grad number">Cross-listed</span>`;
+}
+
+function renderSelectionPanel(b) {
+  const dd = document.getElementById('courseDropdown');
+  const usedIds = new Set([...MS_CORE_FIXED_IDS, ...MS_MATH_IDS, ...selections]);
+  const available = Object.keys(MS_COURSES).filter(id => !MS_COURSES[id].core && !MS_COURSES[id].mathOption && !usedIds.has(id));
+  dd.innerHTML = '<option value="">— choose a course —</option>' +
+    available.sort().map(id => `<option value="${id}">${courseLabel(id)}</option>`).join('');
+
+  document.getElementById('selectionChips').innerHTML = selections.map(id => {
+    const inElectives = b.firstTwo.has(id);
+    const bmeTag = MS_COURSES[id].bmePrefix ? ' <span class="tag tag-core">BME</span>' : '';
+    const flag = crossListedBadge(MS_COURSES[id]);
+    const creditEdit = MS_COURSES[id].variableCredit
+      ? ` <input type="number" min="0" max="${MS_COURSES[id].maxCredits}" value="${courseCredits(id)}" style="width:42px" onchange="setCourseCredits('${id}', this.value)">cr`
+      : '';
+    return `<span class="chip">${courseLabel(id)}${inElectives?' <b>(Elective)</b>':''}${bmeTag}${flag}${creditEdit}<button onclick="removeSelection('${id}')">×</button></span>`;
+  }).join('') || '<div class="small">No courses selected yet.</div>';
+}
+
+function renderConcentrationSelect() {
+  const sel = document.getElementById('concentrationSelect');
+  sel.innerHTML = Object.entries(MS_CONCENTRATIONS).map(([id,s]) =>
+    `<option value="${id}" ${id===activeConcentration?'selected':''}>${s.title}</option>`).join('');
+}
+
+function renderConcentrationCard(b) {
+  const spec = MS_CONCENTRATIONS[activeConcentration];
+  const el = document.getElementById('concentrationCard');
+  if (!spec.courseIds.length) {
+    el.innerHTML = `<details class="spec-card" open><summary>${spec.title}</summary>
+      <div class="small" style="padding:10px 0">No course list yet — pending grad faculty specialization depths.</div></details>`;
+    return;
+  }
+  const rows = spec.courseIds.map(id => {
+    const c = MS_COURSES[id];
+    const already = !!c.core;
+    const checked = already || selections.includes(id);
+    return `<label class="path-course-row">
+      <input type="checkbox" ${checked?'checked':''} ${already?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
+      <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
+      ${already?'<span class="tag tag-core">Already Core</span>':''}
+      ${crossListedBadge(c)}
+    </label>`;
+  }).join('');
+
+  let certHtml = '';
+  if (spec.certificate) {
+    const status = msGroupStatus(spec.certificate.group, selections);
+    const certRows = spec.certificate.group.courses.map(id => {
+      const c = MS_COURSES[id];
+      return `<label class="path-course-row">
+        <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
+        <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
+        ${crossListedBadge(c)}
+      </label>`;
+    }).join('');
+    // Same "path-group" shape as the BS planner's minor/certificate
+    // rendering — label + status line + checkbox rows. Per Chris: checking
+    // a course here is the exact same action as checking it in the
+    // specialization list above (same toggleConcentrationCourse call, same
+    // `selections` state) — one checkbox state per course, just rendered
+    // in two places when a course happens to appear on both lists.
+    certHtml = `<div class="path-group">
+      <div class="small" style="font-weight:700;margin-top:0">${spec.certificate.title} — ${status.detail}${status.satisfied?' ✓':''}</div>
+      ${certRows}
+    </div>`;
+  }
+
+  el.innerHTML = `<details class="spec-card" open>
+    <summary>${spec.title}</summary>
+    <div class="small" style="margin:8px 0">${spec.description}</div>
+    ${rows}
+    ${certHtml}
+  </details>`;
+}
+
+function renderTermGrid(b) {
+  const grid = document.getElementById('termGrid');
+  grid.style.gridTemplateColumns = `repeat(${terms.length || 1}, 1fr)`;
+  if (!terms.length) { grid.innerHTML = '<div class="small">Click "Apply start / reset plan" above to generate terms.</div>'; return; }
+  grid.innerHTML = terms.map(t => {
+    const items = b.allPlacedIds.filter(id => (termAssignment[id] || defaultTermFor(id)) === t.key);
+    return `<div class="term-card">
+      <h3>${t.label}</h3>
+      ${items.length ? items.map(id => `
+        <div class="term-item">${MS_COURSES[id].displayId||id} (${courseCredits(id)}cr)
+          <select class="term-pick" onchange="setTermAssignment('${id}', this.value)">
+            ${terms.map(tt=>`<option value="${tt.key}" ${tt.key===t.key?'selected':''}>${tt.label}</option>`).join('')}
+          </select>
+        </div>`).join('') : '<div class="empty">Nothing placed yet</div>'}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACTIONS
+═══════════════════════════════════════════════════════════════════ */
+
+function addFromDropdown() {
+  const dd = document.getElementById('courseDropdown');
+  const id = dd.value;
+  if (!id || selections.includes(id)) return;
+  selections.push(id);
+  termAssignment[id] = defaultTermFor(id);
+  dd.value = '';
+  render();
+}
+
+function addFreeEntry() {
+  const input = document.getElementById('freeEntryCode');
+  const raw = (input.value||'').trim().toUpperCase();
+  const m = raw.match(/^([A-Z]{3})(\d{4})$/);
+  if (!m) { alert('Enter a course code as 3 letters + 4 digits (e.g. EGN6938).'); return; }
+  const [, prefix, numStr] = m;
+  const num = parseInt(numStr, 10);
+  if (!KNOWN_PREFIXES.has(prefix)) { alert(`"${prefix}" isn't a recognized prefix yet. If it's correct, this list needs updating.`); return; }
+  if (num < 5000) { alert(`${raw} is below the 5000 level. MS coursework must be 5000-level or above.`); return; }
+  if (selections.includes(raw) || MS_CORE_FIXED_IDS.includes(raw)) { alert(`${raw} is already in this plan.`); return; }
+  if (!MS_COURSES[raw]) MS_COURSES[raw] = {title:'(free entry — not yet validated against an approved list)', credits:3, bmePrefix: prefix==='BME'};
+  selections.push(raw);
+  termAssignment[raw] = defaultTermFor(raw);
+  input.value = '';
+  render();
+}
+
+function removeSelection(id) {
+  selections = selections.filter(x => x !== id);
+  delete termAssignment[id];
+  delete creditOverrides[id];
+  render();
+}
+
+function selectConcentration(id) {
+  activeConcentration = id;
+  render();
+}
+
+function toggleConcentrationCourse(id) {
+  if (MS_COURSES[id].core) return;
+  if (selections.includes(id)) { selections = selections.filter(x => x !== id); delete termAssignment[id]; delete creditOverrides[id]; }
+  else { selections.push(id); termAssignment[id] = defaultTermFor(id); }
+  render();
+}
+
+function setTermAssignment(id, key) {
+  termAssignment[id] = key;
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════════ */
+
+async function loadMsData() {
+  const statusEl = document.getElementById('dataStatus');
+  try {
+    const [coursesRes, concRes] = await Promise.all([
+      fetch(MS_DATA_URLS.courses, {cache:'no-cache'}),
+      fetch(MS_DATA_URLS.concentrations, {cache:'no-cache'})
+    ]);
+    if (!coursesRes.ok || !concRes.ok) throw new Error(`HTTP ${coursesRes.status}/${concRes.status}`);
+    const coursesJson = await coursesRes.json();
+    const concJson = await concRes.json();
+    MS_COURSES = coursesJson.courses;
+    MS_CONCENTRATIONS = concJson.concentrations;
+    MS_CORE_FIXED_IDS = Object.keys(MS_COURSES).filter(id => MS_COURSES[id].core);
+    MS_MATH_IDS = Object.keys(MS_COURSES).filter(id => MS_COURSES[id].mathOption);
+    statusEl.textContent = `Course data loaded (${Object.keys(MS_COURSES).length} courses, ${Object.keys(MS_CONCENTRATIONS).length} concentrations)`;
+    terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
+    render();
+  } catch (err) {
+    // No fallback, per Chris — this isn't mission-critical yet. Just say
+    // clearly that it failed and stop, rather than rendering a half-broken
+    // page against missing data.
+    statusEl.textContent = `⚠ Failed to load course data (${err.message}). Check your connection and reload — nothing below will work until this succeeds.`;
+    statusEl.style.color = '#FFD9B3';
+    statusEl.style.fontWeight = '700';
+  }
+}
+
+loadMsData();
+</script>
+</body>
+</html>
