@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.2",
+  "schemaVersion": "0.3",
   "source": "manual \u2014 SOC pulls, department course-listing page, MS program flyer",
   "lastUpdated": "2026-06-29",
   "courses": {
@@ -32,7 +32,13 @@
       "mathOption": true,
       "offered": [
         "S"
-      ]
+      ],
+      "expectedBackground": [
+        "calculus",
+        "linear algebra",
+        "basic statistics"
+      ],
+      "expectedBackgroundText": "Knowledge of calculus, linear algebra, and basic statistics expected."
     },
     "BME6010": {
       "title": "Clinical Immersion",
@@ -47,6 +53,9 @@
       "offered": [
         "F",
         "S"
+      ],
+      "prereq": [
+        "BME5401"
       ]
     },
     "BME6164": {
@@ -81,7 +90,8 @@
       "bmePrefix": true,
       "offered": [
         "S"
-      ]
+      ],
+      "instructorPermissionMaySubstitute": true
     },
     "BME6522": {
       "title": "Biomedical Multivariate Signal Processing",
@@ -90,7 +100,12 @@
       "mathOption": true,
       "offered": [
         "F"
-      ]
+      ],
+      "expectedBackground": [
+        "multivariate calculus",
+        "basic statistics"
+      ],
+      "expectedBackgroundText": "Knowledge of multivariate calculus and basic statistics expected."
     },
     "BME6535": {
       "title": "Radiological Physics, Measurements, and Dosimetry",
@@ -107,7 +122,13 @@
       "mathOption": true,
       "offered": [
         "F"
-      ]
+      ],
+      "expectedBackground": [
+        "calculus",
+        "linear algebra",
+        "differential equations"
+      ],
+      "expectedBackgroundText": "Knowledge of calculus, linear algebra, and differential equations expected."
     },
     "BME6905": {
       "title": "BME6905 \u2014 Individual Work in Biomedical Engineering (Internship)",
@@ -121,14 +142,15 @@
       "maxCredits": 3
     },
     "BME6907": {
-      "title": "BME6907 \u2014 BME Non-Thesis Research Project",
-      "credits": 3,
+      "title": "BME Non-Thesis Research Project",
+      "credits": 1,
       "bmePrefix": true,
       "offered": [
         "S"
       ],
-      "variableCredit": true,
-      "maxCredits": 3
+      "variableCredit": false,
+      "maxCredits": null,
+      "core": true
     },
     "BME6936": {
       "title": "Biomedical Engineering Seminar",
@@ -139,6 +161,22 @@
         "F",
         "S"
       ]
+    },
+    "BME6938": {
+      "displayId": "BME 6938",
+      "title": "Special Topics in Biomedical Engineering",
+      "credits": 3,
+      "bmePrefix": true,
+      "offered": [
+        "F",
+        "S",
+        "Su"
+      ],
+      "variableCredit": true,
+      "maxCredits": 3,
+      "repeatable": true,
+      "customTopic": true,
+      "offeringNote": "Special topics vary by term; enter the topic title and verify actual availability in ONE.UF."
     },
     "BME6938_BENCHMARKET": {
       "title": "Special Topics: Bench to Market Commercialization",
@@ -152,68 +190,9 @@
       "variableCredit": false,
       "doubleCountFlag": true,
       "maxCredits": null,
-      "displayId": "BME6938",
-      "crossListedUndergrad": "BME4931"
-    },
-    "BME6938_BIOMEDDATA": {
-      "title": "Special Topics: Biomedical Data",
-      "credits": 3,
-      "offered": [],
-      "core": false,
-      "mathOption": true,
-      "bmePrefix": true,
-      "variableCredit": false,
-      "doubleCountFlag": false,
-      "maxCredits": null,
-      "displayId": "BME6938"
-    },
-    "BME6938_DRUGDELIVERY": {
-      "title": "Special Topics: Biomaterials for Drug Delivery",
-      "credits": 3,
-      "offered": [],
-      "core": false,
-      "mathOption": false,
-      "bmePrefix": true,
-      "variableCredit": false,
-      "doubleCountFlag": false,
-      "maxCredits": null,
-      "displayId": "BME6938"
-    },
-    "BME6938_MEDICALAI": {
-      "title": "Special Topics: Medical AI",
-      "credits": 3,
-      "offered": [],
-      "core": false,
-      "mathOption": false,
-      "bmePrefix": true,
-      "variableCredit": false,
-      "doubleCountFlag": false,
-      "maxCredits": null,
-      "displayId": "BME6938"
-    },
-    "BME6938_MULTIMODALDM": {
-      "title": "Special Topics: Multimodal Data Mining",
-      "credits": 3,
-      "offered": [],
-      "core": false,
-      "mathOption": true,
-      "bmePrefix": true,
-      "variableCredit": false,
-      "doubleCountFlag": false,
-      "maxCredits": null,
-      "displayId": "BME6938"
-    },
-    "BME6938_MUSCLESMOVEMENT": {
-      "title": "Special Topics: Models, Muscles, & Movement",
-      "credits": 3,
-      "offered": [],
-      "core": false,
-      "mathOption": false,
-      "bmePrefix": true,
-      "variableCredit": false,
-      "doubleCountFlag": false,
-      "maxCredits": null,
-      "displayId": "BME6938"
+      "displayId": "BME 6938",
+      "crossListedUndergrad": "BME4931",
+      "offeringNote": "Specific special topics course retained because it is explicitly listed in concentration/certificate materials."
     },
     "EGN6640": {
       "title": "Engineering Entrepreneurship",
