@@ -15,7 +15,7 @@
         "EGN6640",
         "EGN6642",
         "EGS6626",
-        "EGS6100"
+        "EGS6101"
       ],
       "certificates": [
         {
@@ -32,9 +32,9 @@
               "count": 2,
               "courses": [
                 "EGN6640",
-                "EGS6100",
                 "EGS6039",
-                "EGS6626"
+                "EGS6626",
+                "EGS6101"
               ]
             }
           ]
