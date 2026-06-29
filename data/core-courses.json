@@ -851,6 +851,25 @@
       "equivalentCreditOnly": true,
       "notes": "Honors equivalent of MAC2312. UF awards credit for at most one of MAC2312, MAC2512, or MAC3473."
     },
+    "MAC3474": {
+      "title": "Honors Calculus 3",
+      "credits": 4,
+      "offered": [
+        "F",
+        "S"
+      ],
+      "prereq": [
+        "MAC2312"
+      ],
+      "id": "MAC3474",
+      "coreq": [],
+      "placeholder": false,
+      "approvedBmeElective": false,
+      "provisional": false,
+      "offeringAdvisory": false,
+      "equivalentCreditOnly": true,
+      "notes": "Honors equivalent of MAC2313. UF awards credit for at most one of MAC2313 or MAC3474."
+    },
     "MAP2302": {
       "title": "Elementary Differential Equations",
       "credits": 3,
