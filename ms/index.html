@@ -109,8 +109,8 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
     <div id="selectionChips"></div>
 
     <h2 style="margin-top:16px;font-size:13px">Concentration — 13 credits</h2>
-    <select id="concentrationSelect" onchange="selectConcentration(this.value)"></select>
-    <div id="concentrationCard" style="margin-top:10px"></div>
+    <div id="concentrationTrackList" class="small" style="margin-bottom:8px"></div>
+    <div id="concentrationCards" style="margin-top:10px"></div>
   </div>
 
   <div class="panel">
@@ -182,7 +182,7 @@ let selections = [];
 // no separate tracking set; per Chris, checking a course anywhere checks
 // it everywhere it appears.)
 let creditOverrides = {}; // id -> credits, for variableCredit pool entries (BME6905/BME6907, like BME3941 in undergrad) — editable, defaults to the registry value
-let activeConcentration = 'design_innovation';
+let trackedConcentrations = new Set(['design_innovation']); // multi-trackable, same as BS Themes — purely informational, no credit target of its own
 let fourPlusOne = false;
 let includeSummer = true;
 let terms = []; // [{key,label,season}], rebuilt by applyStartTerm()
@@ -295,25 +295,27 @@ function courseCredits(id) {
 }
 
 function computeBuckets() {
-  // Restored per Chris: dashboard buckets should match the published
-  // degree structure (6cr BME Electives, 13cr Concentration), not a
-  // combined 19cr pool. First 2 BME-prefix pool entries (any surface,
-  // selection order) satisfy Electives; the rest count toward the active
-  // Concentration only if that course is on its list — same as before the
-  // brief "10+19+1" simplification.
-  const bmeEntries = selections.filter(id => MS_COURSES[id].bmePrefix);
-  const firstTwo = new Set(bmeEntries.slice(0,2));
-  const electiveCredits = [...firstTwo].reduce((a,id)=>a+courseCredits(id),0);
-
-  const conc = MS_CONCENTRATIONS[activeConcentration];
-  const concIdSet = new Set((conc.courseIds||[]).filter(id => !MS_COURSES[id].core));
-  const concentrationCredits = selections.filter(id => !firstTwo.has(id) && concIdSet.has(id))
-                                 .reduce((a,id)=>a+courseCredits(id),0);
+  // Per Chris: this is pure accounting, nothing more. BME Electives (6cr)
+  // and Specialization Electives (13cr) aren't two different course pools
+  // a student picks from — they're two running totals off ONE shared pool.
+  // The first 6 credits' worth of BME-prefix selections (any surface, any
+  // order — credit-capped, not "first N courses", so a sub-3cr variable-
+  // credit course like BME6905 doesn't distort the count) satisfy BME
+  // Electives; literally everything else selected — BME-prefix or not, on
+  // a tracked concentration's list or not — satisfies Specialization
+  // Electives, up to 13. Concentrations are Themes, not Pathways: no
+  // credit target of their own, no gating, multi-trackable, purely a
+  // discovery aid layered on top of this same accounting.
+  const bmePrefixSelected = selections.filter(id => MS_COURSES[id].bmePrefix).reduce((a,id)=>a+courseCredits(id),0);
+  const electiveCredits = bmePrefixSelected;
+  const totalSelectedCredits = selections.reduce((a,id)=>a+courseCredits(id),0);
+  const bmeElectiveCredits = Math.min(6, bmePrefixSelected);
+  const specializationCredits = totalSelectedCredits - bmeElectiveCredits;
 
   const coreCredits = MS_CORE_FIXED_IDS.reduce((a,id)=>a+MS_COURSES[id].credits,0) + (requiredMathId?3:0);
   const allPlacedIds = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections];
 
-  return {firstTwo, electiveCredits, concentrationCredits, coreCredits, allPlacedIds};
+  return {electiveCredits, bmeElectiveCredits, specializationCredits, coreCredits, allPlacedIds};
 }
 
 // "choose N" group status — same shape/semantics as the BS planner's
@@ -349,13 +351,12 @@ function tile(label, value, met, detail) {
 
 function renderDashboard(b) {
   const coreMet = !!requiredMathId;
-  const electiveMet = b.electiveCredits >= 6;
-  const concTarget = MS_CONCENTRATIONS[activeConcentration].creditTarget || 13;
-  const concMet = b.concentrationCredits >= concTarget;
+  const electiveMet = b.bmeElectiveCredits >= 6;
+  const specMet = b.specializationCredits >= 13;
   document.getElementById('dashboard').innerHTML =
     tile('BME Core', `${b.coreCredits} / 10 cr`, coreMet, coreMet?'Satisfied':'Select 1 BME Math') +
-    tile('BME Electives', `${b.electiveCredits} / 6 cr`, electiveMet, `${[...b.firstTwo].length} of 2 BME-prefix slots filled`) +
-    tile('Concentration', `${b.concentrationCredits} / ${concTarget} cr`, concMet, MS_CONCENTRATIONS[activeConcentration].title.split(',')[0]);
+    tile('BME Electives', `${b.bmeElectiveCredits} / 6 cr`, electiveMet, `${b.electiveCredits} cr BME-prefix selected total`) +
+    tile('Specialization Electives', `${b.specializationCredits} / 13 cr`, specMet, specMet?'Satisfied':'In progress');
 }
 
 function renderCore() {
@@ -410,71 +411,71 @@ function renderSelectionPanel(b) {
     available.sort().map(id => `<option value="${id}">${courseLabel(id)}</option>`).join('');
 
   document.getElementById('selectionChips').innerHTML = selections.map(id => {
-    const inElectives = b.firstTwo.has(id);
     const bmeTag = MS_COURSES[id].bmePrefix ? ' <span class="tag tag-core">BME</span>' : '';
     const flag = crossListedBadge(MS_COURSES[id]);
     const creditEdit = MS_COURSES[id].variableCredit
       ? ` <input type="number" min="0" max="${MS_COURSES[id].maxCredits}" value="${courseCredits(id)}" style="width:42px" onchange="setCourseCredits('${id}', this.value)">cr`
       : '';
-    return `<span class="chip">${courseLabel(id)}${inElectives?' <b>(Elective)</b>':''}${bmeTag}${flag}${creditEdit}<button onclick="removeSelection('${id}')">×</button></span>`;
+    return `<span class="chip">${courseLabel(id)}${bmeTag}${flag}${creditEdit}<button onclick="removeSelection('${id}')">×</button></span>`;
   }).join('') || '<div class="small">No courses selected yet.</div>';
 }
 
+function concentrationCoverage(concId) {
+  const ids = new Set((MS_CONCENTRATIONS[concId].courseIds||[]).filter(id => !MS_COURSES[id].core));
+  return selections.filter(id => ids.has(id)).reduce((a,id)=>a+courseCredits(id),0);
+}
+
 function renderConcentrationSelect() {
-  const sel = document.getElementById('concentrationSelect');
-  sel.innerHTML = Object.entries(MS_CONCENTRATIONS).map(([id,s]) =>
-    `<option value="${id}" ${id===activeConcentration?'selected':''}>${s.title}</option>`).join('');
+  document.getElementById('concentrationTrackList').innerHTML = Object.entries(MS_CONCENTRATIONS).map(([id,s]) =>
+    `<label style="margin-right:14px"><input type="checkbox" ${trackedConcentrations.has(id)?'checked':''} onchange="toggleTrackConcentration('${id}')"> ${s.title}</label>`).join('');
 }
 
 function renderConcentrationCard(b) {
-  const spec = MS_CONCENTRATIONS[activeConcentration];
-  const el = document.getElementById('concentrationCard');
-  if (!spec.courseIds.length) {
-    el.innerHTML = `<details class="spec-card" open><summary>${spec.title}</summary>
-      <div class="small" style="padding:10px 0">No course list yet — pending grad faculty specialization depths.</div></details>`;
-    return;
-  }
-  const rows = spec.courseIds.map(id => {
-    const c = MS_COURSES[id];
-    const already = !!c.core;
-    const checked = already || selections.includes(id);
-    return `<label class="path-course-row">
-      <input type="checkbox" ${checked?'checked':''} ${already?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
-      <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
-      ${already?'<span class="tag tag-core">Already Core</span>':''}
-      ${crossListedBadge(c)}
-    </label>`;
-  }).join('');
+  const el = document.getElementById('concentrationCards');
+  if (!trackedConcentrations.size) { el.innerHTML = '<div class="small">Not tracking any concentrations.</div>'; return; }
 
-  let certHtml = '';
-  if (spec.certificate) {
-    const status = msGroupStatus(spec.certificate.group, selections);
-    const certRows = spec.certificate.group.courses.map(id => {
+  el.innerHTML = [...trackedConcentrations].map(concId => {
+    const spec = MS_CONCENTRATIONS[concId];
+    if (!spec.courseIds.length) {
+      return `<details class="spec-card" open><summary>${spec.title}</summary>
+        <div class="small" style="padding:10px 0">No course list yet — pending grad faculty specialization depths.</div></details>`;
+    }
+    const rows = spec.courseIds.map(id => {
       const c = MS_COURSES[id];
+      const already = !!c.core;
+      const checked = already || selections.includes(id);
       return `<label class="path-course-row">
-        <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
+        <input type="checkbox" ${checked?'checked':''} ${already?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
         <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
+        ${already?'<span class="tag tag-core">Already Core</span>':''}
         ${crossListedBadge(c)}
       </label>`;
     }).join('');
-    // Same "path-group" shape as the BS planner's minor/certificate
-    // rendering — label + status line + checkbox rows. Per Chris: checking
-    // a course here is the exact same action as checking it in the
-    // specialization list above (same toggleConcentrationCourse call, same
-    // `selections` state) — one checkbox state per course, just rendered
-    // in two places when a course happens to appear on both lists.
-    certHtml = `<div class="path-group">
-      <div class="small" style="font-weight:700;margin-top:0">${spec.certificate.title} — ${status.detail}${status.satisfied?' ✓':''}</div>
-      ${certRows}
-    </div>`;
-  }
 
-  el.innerHTML = `<details class="spec-card" open>
-    <summary>${spec.title}</summary>
-    <div class="small" style="margin:8px 0">${spec.description}</div>
-    ${rows}
-    ${certHtml}
-  </details>`;
+    let certHtml = '';
+    if (spec.certificate) {
+      const status = msGroupStatus(spec.certificate.group, selections);
+      const certRows = spec.certificate.group.courses.map(id => {
+        const c = MS_COURSES[id];
+        return `<label class="path-course-row">
+          <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
+          <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
+          ${crossListedBadge(c)}
+        </label>`;
+      }).join('');
+      certHtml = `<div class="path-group">
+        <div class="small" style="font-weight:700;margin-top:0">${spec.certificate.title} — ${status.detail}${status.satisfied?' ✓':''}</div>
+        ${certRows}
+      </div>`;
+    }
+
+    return `<details class="spec-card" open>
+      <summary>${spec.title} — ${concentrationCoverage(concId)}cr selected</summary>
+      <div class="small" style="margin:8px 0">${spec.description}</div>
+      ${rows}
+      ${certHtml}
+    </details>`;
+  }).join('');
 }
 
 function renderTermGrid(b) {
@@ -533,8 +534,8 @@ function removeSelection(id) {
   render();
 }
 
-function selectConcentration(id) {
-  activeConcentration = id;
+function toggleTrackConcentration(id) {
+  if (trackedConcentrations.has(id)) trackedConcentrations.delete(id); else trackedConcentrations.add(id);
   render();
 }
 
