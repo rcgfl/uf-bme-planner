@@ -124,9 +124,17 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <script>
 'use strict';
 
-const MS_PLANNER_VERSION = '0.6';
+const MS_PLANNER_VERSION = '0.7';
 const MS_BUILD_DATE = '2026-06-29';
 // Changelog:
+// 0.7 — Added course aliases as first-class course identity metadata.
+//       courses.json remains the authoritative registry; concentrations/
+//       certificates may reference either a canonical course id or any alias.
+//       The planner canonicalizes those references at load, stores/counts/
+//       schedules only the canonical id, and displays aliases publicly in
+//       parentheses after the canonical number (e.g., EGS 6101 (EGS 6100)).
+//       This avoids crashes and double-counting when two authoritative UF
+//       sources disagree on the course number.
 // 0.6 — Two fixes, per Chris. (1) Summer eligibility was being inferred for
 //       any course with no confirmed offering data at all (eligibleTermsFor
 //       returned every term, Summer included, when `offered` was unset) —
@@ -214,10 +222,86 @@ let MS_MATH_IDS = [];
 
 const KNOWN_PREFIXES = new Set(['BME','EGN','EGS','EML','MAE','GMS','ECH','MSE','CHE','ABE','EEL','CHM','BSC','PHC']);
 
-function courseLabel(id) {
-  const c = MS_COURSES[id];
-  if (!c) return id;
-  return `${c.displayId || id} — ${c.title} (${courseCredits(id)}cr)`;
+function normalizeCourseCode(raw) {
+  return String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function formatCourseCode(raw) {
+  const id = normalizeCourseCode(raw);
+  const m = id.match(/^([A-Z]{3})(\d{4})$/);
+  return m ? `${m[1]} ${m[2]}` : raw;
+}
+
+function canonicalCourseId(rawId) {
+  const id = normalizeCourseCode(rawId);
+  if (!MS_COURSES || !id) return id;
+  if (MS_COURSES[id]) return id;
+
+  const found = Object.entries(MS_COURSES).find(([courseId, course]) =>
+    (course.aliases || []).some(alias => normalizeCourseCode(alias) === id)
+  );
+
+  return found ? found[0] : id;
+}
+
+function courseRecord(rawId) {
+  const id = canonicalCourseId(rawId);
+  return MS_COURSES ? MS_COURSES[id] : null;
+}
+
+function courseDisplayId(rawId) {
+  const id = canonicalCourseId(rawId);
+  const c = courseRecord(id);
+  if (!c) return formatCourseCode(rawId);
+
+  const primary = c.displayId || formatCourseCode(id);
+  const aliases = (c.aliases || []).map(formatCourseCode);
+  return aliases.length ? `${primary} (${aliases.join(', ')})` : primary;
+}
+
+function courseLabel(rawId) {
+  const id = canonicalCourseId(rawId);
+  const c = courseRecord(id);
+  if (!c) return formatCourseCode(rawId);
+  return `${courseDisplayId(id)} — ${c.title} (${courseCredits(id)}cr)`;
+}
+
+function normalizeCourseList(ids) {
+  const seen = new Set();
+  return (ids || []).map(canonicalCourseId).filter(id => {
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function normalizeLoadedConcentrations() {
+  Object.values(MS_CONCENTRATIONS || {}).forEach(conc => {
+    conc.courseIds = normalizeCourseList(conc.courseIds);
+    (conc.certificates || []).forEach(cert => {
+      (cert.groups || []).forEach(group => {
+        group.courses = normalizeCourseList(group.courses);
+      });
+    });
+  });
+}
+
+function validateLoadedConcentrations() {
+  const problems = [];
+  Object.entries(MS_CONCENTRATIONS || {}).forEach(([concId, conc]) => {
+    (conc.courseIds || []).forEach(id => {
+      if (!MS_COURSES[id]) problems.push(`${concId}: unknown course ${id}`);
+    });
+    (conc.certificates || []).forEach(cert => {
+      (cert.groups || []).forEach(group => {
+        (group.courses || []).forEach(id => {
+          if (!MS_COURSES[id]) problems.push(`${concId} / ${cert.title}: unknown course ${id}`);
+        });
+      });
+    });
+  });
+  if (problems.length) console.warn('MS planner data reference problems:', problems);
+  return problems;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -384,8 +468,10 @@ function toggleMath(id) {
    BUCKET COMPUTATION
 ═══════════════════════════════════════════════════════════════════ */
 
-function courseCredits(id) {
-  return creditOverrides[id] != null ? creditOverrides[id] : MS_COURSES[id].credits;
+function courseCredits(rawId) {
+  const id = canonicalCourseId(rawId);
+  const c = courseRecord(id);
+  return creditOverrides[id] != null ? creditOverrides[id] : (c ? c.credits : 0);
 }
 
 function computeBuckets() {
@@ -470,7 +556,7 @@ function renderDashboard(b) {
 function renderCore() {
   document.getElementById('coreFixedList').innerHTML = MS_CORE_FIXED_IDS.map(id => `
     <div class="course-row">
-      <div><span class="course-id">${id}</span> <span class="course-title">${MS_COURSES[id].title} (${MS_COURSES[id].credits}cr)</span>
+      <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${MS_COURSES[id].title} (${MS_COURSES[id].credits}cr)</span>
       <span class="tag tag-core">Core</span></div>
     </div>`).join('');
 
@@ -479,7 +565,7 @@ function renderCore() {
     const isRequired = id === requiredMathId;
     return `<div class="course-row">
       <input type="checkbox" ${mathCheckedSet.has(id)?'checked':''} onchange="toggleMath('${id}')">
-      <div><span class="course-id">${c.displayId||id}</span> <span class="course-title">${c.title} (${c.credits}cr)</span>
+      <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${c.title} (${c.credits}cr)</span>
       ${isRequired?'<span class="tag tag-core">Required Math</span>':(mathCheckedSet.has(id)?'<span class="tag tag-flag">Counts as Elective</span>':'')}</div>
     </div>`;
   }).join('');
@@ -529,18 +615,23 @@ function renderSelectionPanel(b) {
     available.sort().map(id => `<option value="${id}">${courseLabel(id)}</option>`).join('');
 
   document.getElementById('selectionChips').innerHTML = selections.map(id => {
-    const bmeTag = MS_COURSES[id].bmePrefix ? ' <span class="tag tag-core">BME</span>' : '';
-    const flag = crossListedBadge(MS_COURSES[id]) + offeringUnknownBadge(MS_COURSES[id]);
-    const creditEdit = MS_COURSES[id].variableCredit
-      ? ` <input type="number" min="0" max="${MS_COURSES[id].maxCredits}" value="${courseCredits(id)}" style="width:42px" onchange="setCourseCredits('${id}', this.value)">cr`
+    const c = courseRecord(id);
+    if (!c) return `<span class="chip">${formatCourseCode(id)} — unknown course<button onclick="removeSelection('${id}')">×</button></span>`;
+    const bmeTag = c.bmePrefix ? ' <span class="tag tag-core">BME</span>' : '';
+    const flag = crossListedBadge(c) + offeringUnknownBadge(c);
+    const creditEdit = c.variableCredit
+      ? ` <input type="number" min="0" max="${c.maxCredits}" value="${courseCredits(id)}" style="width:42px" onchange="setCourseCredits('${id}', this.value)">cr`
       : '';
     return `<span class="chip">${courseLabel(id)}${bmeTag}${flag}${creditEdit}<button onclick="removeSelection('${id}')">×</button></span>`;
   }).join('') || '<div class="small">No courses selected yet.</div>';
 }
 
 function concentrationCoverage(concId) {
-  const ids = new Set((MS_CONCENTRATIONS[concId].courseIds||[]).filter(id => !MS_COURSES[id].core));
-  return selections.filter(id => ids.has(id)).reduce((a,id)=>a+courseCredits(id),0);
+  const ids = new Set((MS_CONCENTRATIONS[concId].courseIds||[]).filter(id => {
+    const c = courseRecord(id);
+    return c && !c.core;
+  }));
+  return selections.filter(id => ids.has(canonicalCourseId(id))).reduce((a,id)=>a+courseCredits(id),0);
 }
 
 function renderConcentrationSelect() {
@@ -558,13 +649,17 @@ function renderConcentrationCard(b) {
       return `<details class="spec-card" open><summary>${spec.title}</summary>
         <div class="small" style="padding:10px 0">No course list yet — pending grad faculty specialization depths.</div></details>`;
     }
-    const rows = spec.courseIds.map(id => {
-      const c = MS_COURSES[id];
+    const rows = spec.courseIds.map(rawId => {
+      const id = canonicalCourseId(rawId);
+      const c = courseRecord(id);
+      if (!c) {
+        return `<div class="path-course-row"><span class="tag tag-flag">Unknown course</span> ${formatCourseCode(rawId)}</div>`;
+      }
       const already = !!c.core;
       const checked = already || selections.includes(id);
       return `<label class="path-course-row">
         <input type="checkbox" ${checked?'checked':''} ${already?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
-        <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
+        <span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr)
         ${already?'<span class="tag tag-core">Already Core</span>':''}
         ${crossListedBadge(c)}${offeringUnknownBadge(c)}
       </label>`;
@@ -575,11 +670,15 @@ function renderConcentrationCard(b) {
       const certStatus = msCertificateStatus(cert, selections);
       const groupsHtml = (cert.groups||[]).map((g, gi) => {
         const gStatus = msGroupStatus(g, selections);
-        const rows = (g.courses||[]).map(id => {
-          const c = MS_COURSES[id];
+        const rows = (g.courses||[]).map(rawId => {
+          const id = canonicalCourseId(rawId);
+          const c = courseRecord(id);
+          if (!c) {
+            return `<div class="path-course-row"><span class="tag tag-flag">Unknown course</span> ${formatCourseCode(rawId)}</div>`;
+          }
           return `<label class="path-course-row">
             <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
-            <span class="course-id">${c.displayId||id}</span> ${c.title} (${c.credits}cr)
+            <span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr)
             ${crossListedBadge(c)}${offeringUnknownBadge(c)}
           </label>`;
         }).join('');
@@ -610,7 +709,7 @@ function renderTermGrid(b) {
     return `<div class="term-card">
       <h3>${t.label}</h3>
       ${items.length ? items.map(id => `
-        <div class="term-item">${MS_COURSES[id].displayId||id} (${courseCredits(id)}cr)${offeringUnknownBadge(MS_COURSES[id])}
+        <div class="term-item">${courseDisplayId(id)} (${courseCredits(id)}cr)${offeringUnknownBadge(MS_COURSES[id])}
           <select class="term-pick" onchange="setTermAssignment('${id}', this.value)">
             ${eligibleTermsFor(id).map(tt=>`<option value="${tt.key}" ${tt.key===t.key?'selected':''}>${tt.label}</option>`).join('')}
           </select>
@@ -625,7 +724,7 @@ function renderTermGrid(b) {
 
 function addFromDropdown() {
   const dd = document.getElementById('courseDropdown');
-  const id = dd.value;
+  const id = canonicalCourseId(dd.value);
   if (!id || selections.includes(id)) return;
   selections.push(id);
   termAssignment[id] = computeDefaultTerm(id);
@@ -635,22 +734,25 @@ function addFromDropdown() {
 
 function addFreeEntry() {
   const input = document.getElementById('freeEntryCode');
-  const raw = (input.value||'').trim().toUpperCase();
+  const raw = normalizeCourseCode(input.value);
   const m = raw.match(/^([A-Z]{3})(\d{4})$/);
   if (!m) { alert('Enter a course code as 3 letters + 4 digits (e.g. EGN6938).'); return; }
   const [, prefix, numStr] = m;
   const num = parseInt(numStr, 10);
   if (!KNOWN_PREFIXES.has(prefix)) { alert(`"${prefix}" isn't a recognized prefix yet. If it's correct, this list needs updating.`); return; }
-  if (num < 5000) { alert(`${raw} is below the 5000 level. MS coursework must be 5000-level or above.`); return; }
-  if (selections.includes(raw) || MS_CORE_FIXED_IDS.includes(raw)) { alert(`${raw} is already in this plan.`); return; }
-  if (!MS_COURSES[raw]) MS_COURSES[raw] = {title:'(free entry — not yet validated against an approved list)', credits:3, bmePrefix: prefix==='BME'};
-  selections.push(raw);
-  termAssignment[raw] = computeDefaultTerm(raw);
+  if (num < 5000) { alert(`${formatCourseCode(raw)} is below the 5000 level. MS coursework must be 5000-level or above.`); return; }
+
+  const id = canonicalCourseId(raw);
+  if (selections.includes(id) || MS_CORE_FIXED_IDS.includes(id)) { alert(`${courseDisplayId(id)} is already in this plan.`); return; }
+  if (!MS_COURSES[id]) MS_COURSES[id] = {title:'(free entry — not yet validated against an approved list)', credits:3, bmePrefix: prefix==='BME'};
+  selections.push(id);
+  termAssignment[id] = computeDefaultTerm(id);
   input.value = '';
   render();
 }
 
-function removeSelection(id) {
+function removeSelection(rawId) {
+  const id = canonicalCourseId(rawId);
   selections = selections.filter(x => x !== id);
   delete termAssignment[id];
   delete creditOverrides[id];
@@ -662,8 +764,10 @@ function toggleTrackConcentration(id) {
   render();
 }
 
-function toggleConcentrationCourse(id) {
-  if (MS_COURSES[id].core) return;
+function toggleConcentrationCourse(rawId) {
+  const id = canonicalCourseId(rawId);
+  const c = courseRecord(id);
+  if (!c || c.core) return;
   if (selections.includes(id)) { selections = selections.filter(x => x !== id); delete termAssignment[id]; delete creditOverrides[id]; }
   else { selections.push(id); termAssignment[id] = computeDefaultTerm(id); }
   render();
@@ -702,6 +806,8 @@ async function loadMsData() {
     const concJson = await concRes.json();
     MS_COURSES = coursesJson.courses;
     MS_CONCENTRATIONS = concJson.concentrations;
+    normalizeLoadedConcentrations();
+    validateLoadedConcentrations();
     MS_CORE_FIXED_IDS = Object.keys(MS_COURSES).filter(id => MS_COURSES[id].core);
     MS_MATH_IDS = Object.keys(MS_COURSES).filter(id => MS_COURSES[id].mathOption);
     statusEl.textContent = `v${MS_PLANNER_VERSION} (${MS_BUILD_DATE}) | Course data loaded (${Object.keys(MS_COURSES).length} courses, ${Object.keys(MS_CONCENTRATIONS).length} concentrations)`;
