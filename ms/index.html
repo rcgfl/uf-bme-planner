@@ -88,6 +88,16 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
     <div class="dashboard" id="dashboard"></div>
   </div>
 
+  <div class="panel" id="fourPlusOneCompletedPanel" style="display:none">
+    <h2>Previously Completed Graduate Coursework</h2>
+    <div class="small">For 4+1 students, select graduate courses already completed as part of the undergraduate degree. These courses count toward MS requirements where appropriate but are not placed on the schedule below.</div>
+    <div style="display:flex;gap:8px;margin:10px 0">
+      <select id="completedCourseDropdown"><option value="">— choose a completed course —</option></select>
+      <button onclick="addCompletedCourse()">Add completed</button>
+    </div>
+    <div id="completedCourseChips"></div>
+  </div>
+
   <div class="panel">
     <h2>BME Core — 11 credits</h2>
     <div id="coreFixedList"></div>
@@ -97,7 +107,7 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 
   <div class="panel">
     <h2>BME Electives &amp; Concentration Courses</h2>
-    <div class="small">First 2 BME-prefix courses selected anywhere on this panel satisfy BME Electives (6cr); everything else counts toward the active Concentration below (13cr) if it's on that Concentration's list.</div>
+    <div class="small">Select at least 2 BME-prefix in this panel to satisfy BME Electives (6cr); total (19cr) is required to satisfy degree requirements. The concentration and subsequent certificate lists can also be used to select electives that enhance depth in targeted areas of BME.</div>
     <div style="display:flex;gap:8px;margin:10px 0">
       <select id="courseDropdown"><option value="">— choose a course —</option></select>
       <button onclick="addFromDropdown()">Add</button>
@@ -124,9 +134,10 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <script>
 'use strict';
 
-const MS_PLANNER_VERSION = '0.8';
-const MS_BUILD_DATE = '2026-06-29';
+const MS_PLANNER_VERSION = '0.9';
+const MS_BUILD_DATE = '2026-06-30';
 // Changelog:
+// 0.9 — Updated electives explanatory text, suppressed retained-topic notes, and added a 4+1-only previously completed coursework panel. Completed courses count toward core/elective accounting and prerequisite satisfaction but are removed from scheduler placement.
 // 0.8 — Added prereq/background/permission metadata handling and repeatable
 //       BME6938 custom-topic instances. Non-4+1 default term sequence is
 //       now Fall/Spring/Summer (or Spring/Summer/Fall for spring starts),
@@ -364,6 +375,7 @@ function validateLoadedConcentrations() {
 let mathCheckedSet = new Set();
 let requiredMathId = null;
 let selections = [];
+let completedCourses = new Set(); // 4+1: completed graduate courses count toward degree accounting but are never placed on the scheduler
 // (certificate checkboxes read/write `selections` directly — see render —
 // no separate tracking set; per Chris, checking a course anywhere checks
 // it everywhere it appears.)
@@ -461,7 +473,29 @@ function eligibleTermsFor(rawId) {
   return terms.filter(t => c.offered.includes(t.season));
 }
 function termIndexForKey(key) { return terms.findIndex(t => t.key === key); }
-function plannedIdsForChecks() { return [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections]; }
+function activeCompletedCourses() { return fourPlusOne ? completedCourses : new Set(); }
+function isCompletedCourse(rawId) { return activeCompletedCourses().has(canonicalCourseId(rawId)); }
+function completedMathId() { return MS_MATH_IDS.find(id => activeCompletedCourses().has(id)) || null; }
+function effectiveRequiredMathId() { return requiredMathId || completedMathId(); }
+function electiveAccountingIds() {
+  const reqMath = effectiveRequiredMathId();
+  const ids = [...selections, ...activeCompletedCourses()].map(canonicalCourseId);
+  const seen = new Set();
+  return ids.filter(id => {
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return !MS_CORE_FIXED_IDS.includes(id) && id !== reqMath;
+  });
+}
+function placedIdsForSchedule() {
+  const reqMath = effectiveRequiredMathId();
+  return [
+    ...MS_CORE_FIXED_IDS.filter(id => !activeCompletedCourses().has(id)),
+    ...(reqMath && !activeCompletedCourses().has(reqMath) ? [reqMath] : []),
+    ...selections.filter(id => !activeCompletedCourses().has(canonicalCourseId(id)))
+  ];
+}
+function plannedIdsForChecks() { return [...placedIdsForSchedule(), ...activeCompletedCourses()]; }
 function findPlannedIdForReference(refId) {
   const ref = canonicalCourseId(refId);
   return plannedIdsForChecks().find(id => selectedSatisfiesReference(id, ref));
@@ -471,6 +505,7 @@ function prereqMinTermIndex(rawId) {
   let minIdx = 0;
   (c?.prereq || []).forEach(pre => {
     const plannedPre = findPlannedIdForReference(pre) || canonicalCourseId(pre);
+    if (activeCompletedCourses().has(canonicalCourseId(plannedPre))) return;
     const preTerm = termAssignment[plannedPre];
     const preIdx = preTerm ? termIndexForKey(preTerm) : -1;
     if (preIdx >= 0) minIdx = Math.max(minIdx, preIdx + 1);
@@ -479,12 +514,14 @@ function prereqMinTermIndex(rawId) {
 }
 function prereqWarnings(rawId) {
   const id = canonicalCourseId(rawId);
+  if (activeCompletedCourses().has(id)) return [];
   const c = courseRecord(id);
   const ownTerm = termAssignment[id];
   const ownIdx = ownTerm ? termIndexForKey(ownTerm) : -1;
   if (!c || ownIdx < 0) return [];
   return (c.prereq || []).map(pre => {
     const plannedPre = findPlannedIdForReference(pre) || canonicalCourseId(pre);
+    if (activeCompletedCourses().has(canonicalCourseId(plannedPre))) return '';
     const preTerm = termAssignment[plannedPre];
     const preIdx = preTerm ? termIndexForKey(preTerm) : -1;
     if (preIdx < 0) return `Prerequisite ${courseDisplayId(pre)} is not placed in this plan.`;
@@ -493,7 +530,7 @@ function prereqWarnings(rawId) {
   }).filter(Boolean);
 }
 function termLoad(termKey, excludeId=null) {
-  const allIds = plannedIdsForChecks();
+  const allIds = placedIdsForSchedule();
   return allIds.filter(id => id!==excludeId && termAssignment[id]===termKey)
                .reduce((a,id)=>a+courseCredits(id),0);
 }
@@ -524,7 +561,7 @@ function computeDefaultTerm(rawId) {
   return best.key;
 }
 function placeCoreAndMath() {
-  const ids = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[])]
+  const ids = [...MS_CORE_FIXED_IDS, ...(effectiveRequiredMathId()?[effectiveRequiredMathId()]:[])]
     .sort((a,b) => {
       const prereqDiff = (courseRecord(a)?.prereq || []).length - (courseRecord(b)?.prereq || []).length;
       const eligibleDiff = eligibleTermsFor(a).length - eligibleTermsFor(b).length;
@@ -535,6 +572,7 @@ function placeCoreAndMath() {
     const stillValidSeason = termAssignment[id] && elig.some(t=>t.key===termAssignment[id]);
     const minIdx = prereqMinTermIndex(id);
     const stillValidPrereq = stillValidSeason && termIndexForKey(termAssignment[id]) >= minIdx;
+    if (activeCompletedCourses().has(id)) { delete termAssignment[id]; return; }
     if (!stillValidPrereq) termAssignment[id] = computeDefaultTerm(id);
   });
 }
@@ -544,13 +582,13 @@ function placeCoreAndMath() {
 ═══════════════════════════════════════════════════════════════════ */
 
 function reconcileMath() {
-  if (requiredMathId && !mathCheckedSet.has(requiredMathId)) requiredMathId = null;
+  if (requiredMathId && (!mathCheckedSet.has(requiredMathId) || activeCompletedCourses().has(requiredMathId))) requiredMathId = null;
   if (!requiredMathId) {
     const candidate = MS_MATH_IDS.find(id => mathCheckedSet.has(id));
     if (candidate) { requiredMathId = candidate; selections = selections.filter(id => id !== candidate); }
   }
   MS_MATH_IDS.forEach(id => {
-    const shouldBeInPool = mathCheckedSet.has(id) && id !== requiredMathId;
+    const shouldBeInPool = mathCheckedSet.has(id) && id !== requiredMathId && !activeCompletedCourses().has(id);
     const isInPool = selections.includes(id);
     if (shouldBeInPool && !isInPool) { selections.push(id); termAssignment[id] = computeDefaultTerm(id); }
     if (!shouldBeInPool && isInPool) { selections = selections.filter(x => x !== id); delete termAssignment[id]; }
@@ -585,16 +623,18 @@ function computeBuckets() {
   // Electives, up to 13. Concentrations are Themes, not Pathways: no
   // credit target of their own, no gating, multi-trackable, purely a
   // discovery aid layered on top of this same accounting.
-  const bmePrefixSelected = selections.filter(id => courseRecord(id)?.bmePrefix).reduce((a,id)=>a+courseCredits(id),0);
+  const electiveIds = electiveAccountingIds();
+  const bmePrefixSelected = electiveIds.filter(id => courseRecord(id)?.bmePrefix).reduce((a,id)=>a+courseCredits(id),0);
   const electiveCredits = bmePrefixSelected;
-  const totalSelectedCredits = selections.reduce((a,id)=>a+courseCredits(id),0);
+  const totalSelectedCredits = electiveIds.reduce((a,id)=>a+courseCredits(id),0);
   const bmeElectiveCredits = Math.min(6, bmePrefixSelected);
   const specializationCredits = totalSelectedCredits - bmeElectiveCredits;
 
-  const coreCredits = MS_CORE_FIXED_IDS.reduce((a,id)=>a+courseCredits(id),0) + (requiredMathId?courseCredits(requiredMathId):0);
-  const allPlacedIds = [...MS_CORE_FIXED_IDS, ...(requiredMathId?[requiredMathId]:[]), ...selections];
+  const reqMath = effectiveRequiredMathId();
+  const coreCredits = MS_CORE_FIXED_IDS.reduce((a,id)=>a+courseCredits(id),0) + (reqMath?courseCredits(reqMath):0);
+  const allPlacedIds = placedIdsForSchedule();
 
-  return {electiveCredits, bmeElectiveCredits, specializationCredits, coreCredits, allPlacedIds};
+  return {electiveCredits, bmeElectiveCredits, specializationCredits, coreCredits, allPlacedIds, electiveIds, reqMath};
 }
 
 // Group status for one group within a certificate. 'all' = every listed
@@ -627,6 +667,7 @@ function msCertificateStatus(cert, selectedIds) {
 function render() {
   const b = computeBuckets();
   renderDashboard(b);
+  renderCompletedPanel();
   renderCore();
   renderSelectionPanel(b);
   renderConcentrationSelect();
@@ -643,13 +684,35 @@ function tile(label, value, met, detail) {
 }
 
 function renderDashboard(b) {
-  const coreMet = !!requiredMathId;
+  const coreTarget = MS_CORE_FIXED_IDS.reduce((a,id)=>a+courseCredits(id),0) + 3;
+  const coreMet = !!effectiveRequiredMathId();
   const electiveMet = b.bmeElectiveCredits >= 6;
   const specMet = b.specializationCredits >= 13;
   document.getElementById('dashboard').innerHTML =
-    tile('BME Core', `${b.coreCredits} / 10 cr`, coreMet, coreMet?'Satisfied':'Select 1 BME Math') +
+    tile('BME Core', `${b.coreCredits} / ${coreTarget} cr`, coreMet, coreMet?'Satisfied':'Select 1 BME Math') +
     tile('BME Electives', `${b.bmeElectiveCredits} / 6 cr`, electiveMet, `${b.electiveCredits} cr BME-prefix selected total`) +
     tile('Specialization Electives', `${b.specializationCredits} / 13 cr`, specMet, specMet?'Satisfied':'In progress');
+}
+
+
+function renderCompletedPanel() {
+  const panel = document.getElementById('fourPlusOneCompletedPanel');
+  if (!panel) return;
+  panel.style.display = fourPlusOne ? '' : 'none';
+  if (!fourPlusOne) return;
+
+  const dd = document.getElementById('completedCourseDropdown');
+  const used = new Set([...completedCourses, ...selections.map(canonicalCourseId)]);
+  const available = Object.keys(MS_COURSES).filter(id => !used.has(id));
+  dd.innerHTML = '<option value="">— choose a completed course —</option>' +
+    available.sort().map(id => `<option value="${id}">${courseLabel(id)}</option>`).join('');
+
+  document.getElementById('completedCourseChips').innerHTML = [...completedCourses].sort().map(id => {
+    const c = courseRecord(id);
+    const coreTag = MS_CORE_FIXED_IDS.includes(id) || MS_MATH_IDS.includes(id) ? ' <span class="tag tag-core">Counts as Core</span>' : '';
+    const bmeTag = c?.bmePrefix && !coreTag ? ' <span class="tag tag-core">Counts toward BME elective credits</span>' : '';
+    return `<span class="chip">${courseLabel(id)}${coreTag}${bmeTag}<button onclick="removeCompletedCourse('${id}')">×</button></span>`;
+  }).join('') || '<div class="small">No previously completed graduate coursework selected.</div>';
 }
 
 function courseBadges(c) {
@@ -659,7 +722,7 @@ function courseAdvisoryHtml(c) {
   const bits = [];
   if (c.expectedBackgroundText) bits.push(c.expectedBackgroundText);
   if (c.instructorPermissionMaySubstitute) bits.push('Consent of instructor may be required.');
-  if (c.offeringNote) bits.push(c.offeringNote);
+  if (c.offeringNote && !/explicitly listed in concentration\/certificate materials/i.test(c.offeringNote)) bits.push(c.offeringNote);
   return bits.length ? `<div class="small" style="margin-top:2px;color:#6a4b00">${bits.map(escapeHtml).join(' ')}</div>` : '';
 }
 
@@ -668,7 +731,7 @@ function renderCore() {
     const c = courseRecord(id);
     return `<div class="course-row">
       <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${c.title} (${courseCredits(id)}cr)</span>
-      <span class="tag tag-core">Core</span>${courseBadges(c)}${courseAdvisoryHtml(c)}</div>
+      <span class="tag tag-core">Core</span>${activeCompletedCourses().has(id)?'<span class="tag tag-core">Completed</span>':''}${courseBadges(c)}${courseAdvisoryHtml(c)}</div>
     </div>`;
   }).join('');
 
@@ -676,9 +739,9 @@ function renderCore() {
     const c = courseRecord(id);
     const isRequired = id === requiredMathId;
     return `<div class="course-row">
-      <input type="checkbox" ${mathCheckedSet.has(id)?'checked':''} onchange="toggleMath('${id}')">
+      <input type="checkbox" ${mathCheckedSet.has(id)||activeCompletedCourses().has(id)?'checked':''} ${activeCompletedCourses().has(id)?'disabled':''} onchange="toggleMath('${id}')">
       <div><span class="course-id">${courseDisplayId(id)}</span> <span class="course-title">${c.title} (${courseCredits(id)}cr)</span>
-      ${isRequired?'<span class="tag tag-core">Required Math</span>':(mathCheckedSet.has(id)?'<span class="tag tag-flag">Counts as Elective</span>':'')}${courseBadges(c)}${courseAdvisoryHtml(c)}</div>
+      ${activeCompletedCourses().has(id)?'<span class="tag tag-core">Completed</span>':(isRequired?'<span class="tag tag-core">Required Math</span>':(mathCheckedSet.has(id)?'<span class="tag tag-flag">Counts as Elective</span>':''))}${courseBadges(c)}${courseAdvisoryHtml(c)}</div>
     </div>`;
   }).join('');
 }
@@ -781,7 +844,7 @@ function concentrationCoverage(concId) {
     const c = courseRecord(id);
     return c && !c.core;
   }));
-  return selections.filter(id => [...ids].some(ref => selectedSatisfiesReference(id, ref))).reduce((a,id)=>a+courseCredits(id),0);
+  return electiveAccountingIds().filter(id => [...ids].some(ref => selectedSatisfiesReference(id, ref))).reduce((a,id)=>a+courseCredits(id),0);
 }
 
 function renderConcentrationSelect() {
@@ -809,20 +872,21 @@ function renderConcentrationCard(b) {
       if (c.repeatable) {
         return `<div class="path-course-row"><span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr) ${courseBadges(c)} <button onclick="addRepeatableCourse('${id}')">Add topic</button>${courseAdvisoryHtml(c)}</div>`;
       }
-      const checked = already || selections.includes(id);
+      const completed = activeCompletedCourses().has(id);
+      const checked = already || completed || selections.includes(id);
       return `<label class="path-course-row">
-        <input type="checkbox" ${checked?'checked':''} ${already?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
+        <input type="checkbox" ${checked?'checked':''} ${(already||completed)?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
         <span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr)
-        ${already?'<span class="tag tag-core">Already Core</span>':''}
+        ${already?'<span class="tag tag-core">Already Core</span>':''}${completed?'<span class="tag tag-core">Completed</span>':''}
         ${courseBadges(c)}${courseAdvisoryHtml(c)}
       </label>`;
     }).join('');
 
     let certsHtml = '';
     (spec.certificates||[]).forEach(cert => {
-      const certStatus = msCertificateStatus(cert, selections);
+      const certStatus = msCertificateStatus(cert, plannedIdsForChecks());
       const groupsHtml = (cert.groups||[]).map((g, gi) => {
-        const gStatus = msGroupStatus(g, selections);
+        const gStatus = msGroupStatus(g, plannedIdsForChecks());
         const rows = (g.courses||[]).map(rawId => {
           const id = canonicalCourseId(rawId);
           const c = courseRecord(id);
@@ -833,7 +897,7 @@ function renderConcentrationCard(b) {
             return `<div class="path-course-row"><span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr) ${courseBadges(c)} <button onclick="addRepeatableCourse('${id}')">Add topic</button>${courseAdvisoryHtml(c)}</div>`;
           }
           return `<label class="path-course-row">
-            <input type="checkbox" ${selections.includes(id)?'checked':''} onchange="toggleConcentrationCourse('${id}')">
+            <input type="checkbox" ${selections.includes(id)||activeCompletedCourses().has(id)?'checked':''} ${activeCompletedCourses().has(id)?'disabled':''} onchange="toggleConcentrationCourse('${id}')">
             <span class="course-id">${courseDisplayId(id)}</span> ${c.title} (${c.credits}cr)
             ${courseBadges(c)}${courseAdvisoryHtml(c)}
           </label>`;
@@ -880,12 +944,36 @@ function renderTermGrid(b) {
    ACTIONS
 ═══════════════════════════════════════════════════════════════════ */
 
+
+function addCompletedCourse() {
+  const dd = document.getElementById('completedCourseDropdown');
+  const id = canonicalCourseId(dd.value);
+  if (!id || !MS_COURSES[id]) return;
+  completedCourses.add(id);
+  selections = selections.filter(x => canonicalCourseId(x) !== id);
+  mathCheckedSet.delete(id);
+  if (requiredMathId === id) requiredMathId = null;
+  delete termAssignment[id];
+  delete creditOverrides[id];
+  delete topicOverrides[id];
+  dd.value = '';
+  placeCoreAndMath();
+  render();
+}
+
+function removeCompletedCourse(rawId) {
+  const id = canonicalCourseId(rawId);
+  completedCourses.delete(id);
+  placeCoreAndMath();
+  render();
+}
+
 function addFromDropdown() {
   const dd = document.getElementById('courseDropdown');
   const id = canonicalCourseId(dd.value);
   if (!id) return;
   if (isRepeatableCourse(id)) { addRepeatableCourse(id); dd.value = ''; return; }
-  if (selections.includes(id)) return;
+  if (activeCompletedCourses().has(id) || selections.includes(id)) return;
   selections.push(id);
   termAssignment[id] = computeDefaultTerm(id);
   dd.value = '';
@@ -904,7 +992,7 @@ function addFreeEntry() {
 
   const id = canonicalCourseId(raw);
   if (isRepeatableCourse(id)) { addRepeatableCourse(id); input.value = ''; return; }
-  if (selections.includes(id) || MS_CORE_FIXED_IDS.includes(id)) { alert(`${courseDisplayId(id)} is already in this plan.`); return; }
+  if (activeCompletedCourses().has(id) || selections.includes(id) || MS_CORE_FIXED_IDS.includes(id)) { alert(`${courseDisplayId(id)} is already in this plan.`); return; }
   if (!MS_COURSES[id]) MS_COURSES[id] = {title:'(free entry — not yet validated against an approved list)', credits:3, bmePrefix: prefix==='BME'};
   selections.push(id);
   termAssignment[id] = computeDefaultTerm(id);
@@ -929,7 +1017,7 @@ function toggleTrackConcentration(id) {
 function toggleConcentrationCourse(rawId) {
   const id = canonicalCourseId(rawId);
   const c = courseRecord(id);
-  if (!c || c.core) return;
+  if (!c || c.core || activeCompletedCourses().has(id)) return;
   if (c.repeatable) { addRepeatableCourse(id); return; }
   if (selections.includes(id)) { selections = selections.filter(x => x !== id); delete termAssignment[id]; delete creditOverrides[id]; }
   else { selections.push(id); termAssignment[id] = computeDefaultTerm(id); }
