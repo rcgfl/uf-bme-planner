@@ -76,8 +76,9 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
       <input id="startYear" type="number" value="2026" aria-label="Start year" style="width:72px">
     </span>
     <label><input type="checkbox" id="fourPlusOne" onchange="toggleFourPlusOne()"> 4+1 (2-term schedule)</label>
-    <label><input type="checkbox" id="includeSummer" checked onchange="toggleSummer()"> Include Summer term</label>
+    <label id="includeSummerLabel" title="Only applies to 4+1 plans"><input type="checkbox" id="includeSummer" onchange="toggleSummer()" disabled> Add Summer term (4+1 only)</label>
     <button onclick="applyStartTerm()">Apply start / shift terms</button>
+    <button onclick="resetPlanner()" title="Clear all selections and return planner to default start state">Reset plan</button>
   </div>
 </header>
 
@@ -135,9 +136,10 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <script>
 'use strict';
 
-const MS_PLANNER_VERSION = '0.10';
+const MS_PLANNER_VERSION = '0.12';
 const MS_BUILD_DATE = '2026-06-30';
 // Changelog:
+// 0.12 — Clarified Summer-term control: standard/non-4+1 plans always use the three-term Fall/Spring/Summer (or Spring/Summer/Fall) sequence, so the Summer checkbox is disabled and unchecked unless 4+1 is active. 4+1 still defaults to two academic terms; checking Summer explicitly adds the summer term.
 // 0.10 — UI cleanup: renamed Concentration heading to remove a misleading credit target, added offering-season labels in concentration/certificate lists with ONE.UF caveat, made certificate details collapsed by default, and clarified the start control as shifting/rebuilding terms rather than a full reset.
 // 0.9 — Updated electives explanatory text, suppressed retained-topic notes, and added a 4+1-only previously completed coursework panel. Completed courses count toward core/elective accounting and prerequisite satisfaction but are removed from scheduler placement.
 // 0.8 — Added prereq/background/permission metadata handling and repeatable
@@ -386,7 +388,7 @@ let topicOverrides = {}; // repeatable instance id -> user-entered topic/title
 let repeatableInstanceCounter = 0;
 let trackedConcentrations = new Set(['design_innovation']); // multi-trackable, same as BS Themes — purely informational, no credit target of its own
 let fourPlusOne = false;
-let includeSummer = true;
+let includeSummer = false;
 let terms = []; // [{key,label,season}], rebuilt by applyStartTerm()
 let termAssignment = {}; // id -> term key
 
@@ -442,15 +444,69 @@ function applyStartTerm() {
   render();
 }
 
+function resetPlanner() {
+  if (!confirm('Reset the planner to its default empty state? This clears selected courses, completed coursework, custom topics/credits, math choices, and all term placements.')) return;
+  const nameEl = document.getElementById('studentName');
+  const seasonEl = document.getElementById('studentStartSeason');
+  const yearEl = document.getElementById('startYear');
+  const fourPlusOneEl = document.getElementById('fourPlusOne');
+  const includeSummerEl = document.getElementById('includeSummer');
+
+  if (nameEl) nameEl.value = '';
+  if (seasonEl) seasonEl.value = 'F';
+  if (yearEl) yearEl.value = '2026';
+  if (fourPlusOneEl) fourPlusOneEl.checked = false;
+  if (includeSummerEl) { includeSummerEl.checked = false; includeSummerEl.disabled = true; }
+
+  mathCheckedSet = new Set();
+  requiredMathId = null;
+  selections = [];
+  completedCourses = new Set();
+  creditOverrides = {};
+  topicOverrides = {};
+  repeatableInstanceCounter = 0;
+  trackedConcentrations = new Set(['design_innovation']);
+  fourPlusOne = false;
+  includeSummer = false;
+  syncSummerControl();
+  termAssignment = {};
+  terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
+  placeCoreAndMath();
+  render();
+}
+
+function syncSummerControl() {
+  const cb = document.getElementById('includeSummer');
+  const label = document.getElementById('includeSummerLabel');
+  if (!cb) return;
+  cb.disabled = !fourPlusOne;
+  if (!fourPlusOne) {
+    cb.checked = false;
+    includeSummer = false;
+  }
+  if (label) {
+    label.style.opacity = fourPlusOne ? '1' : '.55';
+    label.title = fourPlusOne
+      ? 'Optional: add Summer as a third term to the 4+1 plan.'
+      : 'Standard MS plans already use Fall/Spring/Summer or Spring/Summer/Fall; this control only applies to 4+1 plans.';
+  }
+}
 function toggleFourPlusOne() {
   fourPlusOne = document.getElementById('fourPlusOne').checked;
+  // 4+1 defaults to two academic terms; Summer is opt-in only after the 4+1 mode is active.
+  includeSummer = false;
+  const includeSummerEl = document.getElementById('includeSummer');
+  if (includeSummerEl) includeSummerEl.checked = false;
+  syncSummerControl();
   terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
   reconcileTermAssignments();
   placeCoreAndMath();
   render();
 }
 function toggleSummer() {
-  includeSummer = document.getElementById('includeSummer').checked;
+  const includeSummerEl = document.getElementById('includeSummer');
+  includeSummer = fourPlusOne && !!includeSummerEl?.checked;
+  syncSummerControl();
   terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
   reconcileTermAssignments();
   placeCoreAndMath();
@@ -1073,6 +1129,7 @@ async function loadMsData() {
     MS_MATH_IDS = Object.keys(MS_COURSES).filter(id => MS_COURSES[id].mathOption);
     statusEl.textContent = `v${MS_PLANNER_VERSION} (${MS_BUILD_DATE}) | Course data loaded (${Object.keys(MS_COURSES).length} courses, ${Object.keys(MS_CONCENTRATIONS).length} concentrations)`;
     terms = buildTermKeys().map(key => ({key, label: termLabelFromKey(key), season: seasonFromKey(key)}));
+    syncSummerControl();
     placeCoreAndMath();
     render();
   } catch (err) {
