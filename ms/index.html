@@ -136,9 +136,12 @@ details.spec-card summary{cursor:pointer;font-weight:700;font-size:14px;color:#0
 <script>
 'use strict';
 
-const MS_PLANNER_VERSION = '0.12';
+const MS_PLANNER_VERSION = '0.13';
 const MS_BUILD_DATE = '2026-06-30';
 // Changelog:
+// 0.13 — Concentration tracking now defaults to none selected, and Reset
+//        Plan returns concentration tracking to none selected rather than Design
+//        Innovation.
 // 0.12 — Clarified Summer-term control: standard/non-4+1 plans always use the three-term Fall/Spring/Summer (or Spring/Summer/Fall) sequence, so the Summer checkbox is disabled and unchecked unless 4+1 is active. 4+1 still defaults to two academic terms; checking Summer explicitly adds the summer term.
 // 0.10 — UI cleanup: renamed Concentration heading to remove a misleading credit target, added offering-season labels in concentration/certificate lists with ONE.UF caveat, made certificate details collapsed by default, and clarified the start control as shifting/rebuilding terms rather than a full reset.
 // 0.9 — Updated electives explanatory text, suppressed retained-topic notes, and added a 4+1-only previously completed coursework panel. Completed courses count toward core/elective accounting and prerequisite satisfaction but are removed from scheduler placement.
@@ -386,7 +389,7 @@ let completedCourses = new Set(); // 4+1: completed graduate courses count towar
 let creditOverrides = {}; // id -> credits, including repeatable/custom-topic instances
 let topicOverrides = {}; // repeatable instance id -> user-entered topic/title
 let repeatableInstanceCounter = 0;
-let trackedConcentrations = new Set(['design_innovation']); // multi-trackable, same as BS Themes — purely informational, no credit target of its own
+let trackedConcentrations = new Set(); // multi-trackable, same as BS Themes — purely informational, no credit target of its own; default is no concentration selected
 let fourPlusOne = false;
 let includeSummer = false;
 let terms = []; // [{key,label,season}], rebuilt by applyStartTerm()
@@ -465,7 +468,7 @@ function resetPlanner() {
   creditOverrides = {};
   topicOverrides = {};
   repeatableInstanceCounter = 0;
-  trackedConcentrations = new Set(['design_innovation']);
+  trackedConcentrations = new Set();
   fourPlusOne = false;
   includeSummer = false;
   syncSummerControl();
