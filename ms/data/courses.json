@@ -1,7 +1,7 @@
 {
   "schemaVersion": "0.3",
-  "source": "manual \u2014 SOC pulls, department course-listing page, MS program flyer",
-  "lastUpdated": "2026-06-30",
+  "source": "manual — SOC pulls, department course-listing page, MS program flyer",
+  "lastUpdated": "2026-06-29",
   "courses": {
     "BME5401": {
       "title": "Biomedical Engineering and Physiology I",
@@ -131,7 +131,7 @@
       "expectedBackgroundText": "Knowledge of calculus, linear algebra, and differential equations expected."
     },
     "BME6905": {
-      "title": "BME6905 \u2014 Individual Work in Biomedical Engineering (Internship)",
+      "title": "BME6905 — Individual Work in Biomedical Engineering (Internship)",
       "credits": 3,
       "bmePrefix": true,
       "offered": [
@@ -169,8 +169,7 @@
       "bmePrefix": true,
       "offered": [
         "F",
-        "S",
-        "Su"
+        "S"
       ],
       "variableCredit": true,
       "maxCredits": 3,
@@ -192,6 +191,43 @@
       "maxCredits": null,
       "displayId": "BME 6938",
       "crossListedUndergrad": "BME4931"
+    },
+    "BME6938_BMEDATA": {
+      "title": "Special Topics: Biomedical Data",
+      "credits": 3,
+      "offered": [],
+      "core": false,
+      "mathOption": true,
+      "bmePrefix": true,
+      "variableCredit": false,
+      "doubleCountFlag": false,
+      "instructorPermissionMaySubstitute": false,
+      "repeatable": false,
+      "customTopic": false,
+      "maxCredits": null
+    },
+    "BME6938_DATAMINE": {
+      "title": "Special Topics: Multimodal Data Mining",
+      "credits": 3,
+      "offered": [
+        "S"
+      ],
+      "core": false,
+      "mathOption": true,
+      "bmePrefix": true,
+      "variableCredit": false,
+      "doubleCountFlag": false,
+      "instructorPermissionMaySubstitute": false,
+      "repeatable": false,
+      "customTopic": false,
+      "expectedBackground": [
+        "MATLAB",
+        "Python",
+        "Computer Programming"
+      ],
+      "expectedBackgroundText": "Foundational knowledge in MATLAB or python and computer programming",
+      "maxCredits": null,
+      "displayId": "BME6938"
     },
     "EGN6640": {
       "title": "Engineering Entrepreneurship",
