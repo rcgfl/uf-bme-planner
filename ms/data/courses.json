@@ -204,7 +204,8 @@
       "instructorPermissionMaySubstitute": false,
       "repeatable": false,
       "customTopic": false,
-      "maxCredits": null
+      "maxCredits": null,
+      "displayId": "BME6938"
     },
     "BME6938_DATAMINE": {
       "title": "Special Topics: Multimodal Data Mining",
